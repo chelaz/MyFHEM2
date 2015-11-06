@@ -1,0 +1,24 @@
+{
+    "appKeys": {
+        "dummy": 0
+    },
+    "capabilities": [
+        ""
+    ],
+    "companyName": "chelaz.de",
+    "longName": "MyFHEM2",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "MyFHEM2",
+    "targetPlatforms": [
+        "basalt"
+    ],
+    "uuid": "4e59c19e-724d-46b9-a4c6-20bbdb200cc1",
+    "versionLabel": "0.1",
+    "watchapp": {
+        "watchface": false
+    }
+}
