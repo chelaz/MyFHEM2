@@ -21,6 +21,7 @@ Pebble.addEventListener('appmessage',
     if (e.payload[0xabbababe]) {
       console.log('Received URL: ' + e.payload[0xabbababe]);
       var response = HTTPGET(e.payload[0xabbababe]);
+      console.log('Received response: ' + response);
     } else {
       console.log('Received URL not known');
       console.log('Received message: ' + JSON.stringify(e.payload));

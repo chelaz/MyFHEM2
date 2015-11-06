@@ -1,5 +1,10 @@
 #include <pebble.h>
 
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+// FHEM definitions ////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 typedef enum {
   COM_KITCHEN_LIGHT_TOGGLE   =0,
@@ -61,46 +66,27 @@ static struct _Feature_Ctrl_Map
 };
 
 
-static Window *window;
-//static TextLayer *text_layer;
-
-/*
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Select");
-}
-
-static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Up");
-}
-
-static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Down");
-}
-
-static void click_config_provider(void *context) {
-  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
-}
-*/
-
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-// AppMessage ////////////////////////////////////////////////////////////
+// AppMessage //////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+static void inbox_received_callback(DictionaryIterator *iterator, void *context)
+{
 
 }
-static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+static void inbox_dropped_callback(AppMessageResult reason, void *context)
+{
   APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
 }
 
-static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
+static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context)
+{
   APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
 }
 
-static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
+static void outbox_sent_callback(DictionaryIterator *iterator, void *context)
+{
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
 
@@ -117,18 +103,14 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 #define NUM_VOICE_MENU_ITEMS 1
 
 
-// static Window *s_main_window;
 static SimpleMenuLayer *s_simple_menu_layer;
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
 static SimpleMenuItem s_first_menu_items[NUM_COM];
 static SimpleMenuItem s_second_menu_items[NUM_VOICE_MENU_ITEMS];
 // static GBitmap *s_menu_icon_image;
 
-static bool s_special_flag = false;
-static int s_hit_count = 0;
 
 static const uint32_t FHEM_STRING_KEY = 0xabbababe;
-static const char *URL = "http://mypi:8083/fhem?cmd=set%20FS20_fr_bel%20toggle";
 
 static void menu_select_callback(int index, void *ctx) {
   // s_first_menu_items[index].subtitle = "You've hit select here!";
@@ -142,38 +124,21 @@ static void menu_select_callback(int index, void *ctx) {
   else
     app_message_outbox_send();
 
-  return;
-
-  switch(index) {
-  case COM_KITCHEN_LIGHT_TOGGLE:
-    s_first_menu_items[index].subtitle = "Kitchen toggle";
-    APP_LOG(APP_LOG_LEVEL_INFO, "Kitchen toggle");
-
-    // Begin dictionary
-    DictionaryIterator *iter;
-    app_message_outbox_begin(&iter);
-
-    // Add a key-value pair
-    // dict_write_uint8(iter, 0, 0);
-
-    DictionaryResult Res;
-    if ((Res=dict_write_cstring(iter, FHEM_STRING_KEY, URL)) != DICT_OK)
-      APP_LOG(APP_LOG_LEVEL_INFO, "Dict write cstring error!");
-    else
-      app_message_outbox_send();
-
-    break;
-  case COM_LIVINGROOMLIGHT_TOGGLE:
-    s_first_menu_items[index].subtitle = "Living room toggle";
-    break;
-  default:
-    s_first_menu_items[index].subtitle = "???";
-  }
-
+  
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
 
-static void special_select_callback(int index, void *ctx) {
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+// TODO: dictate API       /////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+static bool s_special_flag = false;
+static int s_hit_count = 0;
+
+static void special_select_callback(int index, void *ctx)
+{
   // Of course, you can do more complicated things in a menu item select callback
   // Here, we have a simple toggle
   s_special_flag = !s_special_flag;
@@ -193,7 +158,15 @@ static void special_select_callback(int index, void *ctx) {
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
 
-static void main_window_load(Window *window) {
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+// main window load/unload /////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+static void main_window_load(Window *window)
+{
 
   for (int i=0; i < NUM_COM; i++) {
     s_first_menu_items[i] = (SimpleMenuItem) {
@@ -203,29 +176,6 @@ static void main_window_load(Window *window) {
     };
   }
 
-  /*
-  s_first_menu_items[COM_KITCHEN_LIGHT_TOGGLE] = (SimpleMenuItem) {
-    .title    = "Küche",
-    .subtitle = "Licht an/aus",
-    .callback = menu_select_callback,
-
-  };
-  s_first_menu_items[COM_LIVINGROOMLIGHT_TOGGLE] = (SimpleMenuItem) {
-    .title    = "Wohnzimmer",
-    .subtitle = "Licht an/aus",
-    .callback = menu_select_callback,
-  };
-  s_first_menu_items[COM_FOOR_RED] = (SimpleMenuItem) {
-    .title = "Flur",
-    .subtitle = "rot",
-    .callback = menu_select_callback,
-  };
-  s_first_menu_items[COM_FOOR_OFF] = (SimpleMenuItem) {
-    .title = "Flur",
-    .subtitle = "aus",
-    .callback = menu_select_callback,
-  };
-  */
 
   s_second_menu_items[0] = (SimpleMenuItem) {
     .title = "Dictate",
@@ -253,42 +203,29 @@ static void main_window_load(Window *window) {
 ////////////////////////////////////////////////////////////////////
 
 
-
-
-
-/*
-static void window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_bounds(window_layer);
-
-  text_layer = text_layer_create((GRect) { .origin = { 0, 72 }, .size = { bounds.size.w, 20 } });
-  text_layer_set_text(text_layer, "Press a button");
-  text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(text_layer));
-}
-*/
-
 void main_window_unload(Window *window)
 {
   simple_menu_layer_destroy(s_simple_menu_layer);
-  // gbitmap_destroy(s_menu_icon_image);
 }
 
-/*
-static void window_unload(Window *window) {
-  text_layer_destroy(text_layer);
-}
-*/
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+// init / deinit / main ////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+static Window *s_window;
 
 static void init(void) {
-  window = window_create();
-  // window_set_click_config_provider(window, click_config_provider);
-  window_set_window_handlers(window, (WindowHandlers) {
-    .load = main_window_load,
+  s_window = window_create();
+
+  window_set_window_handlers(s_window, (WindowHandlers) {
+    .load   = main_window_load,
     .unload = main_window_unload,
   });
   const bool animated = true;
-  window_stack_push(window, animated);
+  window_stack_push(s_window, animated);
 
   app_message_register_inbox_received(inbox_received_callback);
   app_message_register_inbox_dropped(inbox_dropped_callback);
@@ -301,13 +238,13 @@ static void init(void) {
 }
 
 static void deinit(void) {
-  window_destroy(window);
+  window_destroy(s_window);
 }
 
 int main(void) {
   init();
 
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", window);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", s_window);
 
   app_event_loop();
   deinit();
