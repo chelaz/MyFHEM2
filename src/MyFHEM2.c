@@ -33,7 +33,7 @@ static struct _Feature_Ctrl_Map
 } Feature_Ctrl_Map[] = {
   { COM_KITCHEN_LIGHT_TOGGLE,
     "Küche",
-    "Licht uumschalten", NULL,
+    "Licht umschalten", NULL,
     "FS20_fr_bel", "toggle"},
   { COM_LIVINGROOMLIGHT_TOGGLE,
     "Wohnzimmer",
@@ -159,8 +159,38 @@ static void menu_select_callback(int index, void *ctx) {
 static bool s_special_flag = false;
 static int s_hit_count = 0;
 
+static DictationSession *s_dictation_session;
+static char s_dictation_text[512];
+
+static void dictation_session_callback(DictationSession *session, DictationSessionStatus status, 
+                                       char *transcription, void *context)
+{
+  // Print the results of a transcription attempt                                     
+  APP_LOG(APP_LOG_LEVEL_INFO, "Dictation status: %d", (int)status);
+  
+  SimpleMenuItem *menu_item = &s_second_menu_items[0];
+
+  if(status == DictationSessionStatusSuccess) {
+    // Display the dictated text
+    snprintf(s_dictation_text, sizeof(s_dictation_text), "%s", transcription);
+    menu_item->subtitle = s_dictation_text;
+    layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+
+  } else {
+    // Display the reason for any error
+    static char s_failed_buff[128];
+    snprintf(s_failed_buff, sizeof(s_failed_buff), "Transcription failed.\n\nReason:\n%d", 
+           (int)status);
+    menu_item->subtitle = s_failed_buff;
+    layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+  }
+}
+
+
 static void special_select_callback(int index, void *ctx)
 {
+  dictation_session_start(s_dictation_session);
+  
   // Of course, you can do more complicated things in a menu item select callback
   // Here, we have a simple toggle
   s_special_flag = !s_special_flag;
@@ -230,6 +260,14 @@ static void main_window_load(Window *window)
   s_simple_menu_layer = simple_menu_layer_create(bounds, window, s_menu_sections, NUM_MENU_SECTIONS, NULL);
 
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
+  
+  // correct positon here?
+  s_dictation_session = dictation_session_create(sizeof(s_dictation_text), 
+                                               dictation_session_callback, NULL);
+  // Disable the confirmation screen
+  dictation_session_enable_confirmation(s_dictation_session, false);
+  // Disable error dialogs
+  dictation_session_enable_error_dialogs(s_dictation_session, false);
 }
 ////////////////////////////////////////////////////////////////////
 
