@@ -7,7 +7,8 @@
 ////////////////////////////////////////////////////////////////////
 
 const char FHEM_URL[] = "http://mypi:8083/fhem";
-  
+
+/*
 typedef enum {
   COM_KITCHEN_LIGHT_TOGGLE   =0,
   COM_LIVINGROOMLIGHT_TOGGLE,
@@ -20,60 +21,64 @@ typedef enum {
   COM_ALL_OFF,
   NUM_COM
 } Commands_type;
-
+*/
 
 static struct _Feature_Ctrl_Map
 {
-  long        ID;
+  // long        ID;
   const char* Room;
   const char* Description;
   const char* URL; // if used
   const char* Device;
   const char* Command;
 } Feature_Ctrl_Map[] = {
-  { COM_KITCHEN_LIGHT_TOGGLE,
+  { // COM_KITCHEN_LIGHT_TOGGLE,
     "Küche",
     "Licht umschalten", NULL,
     "FS20_fr_bel", "toggle"},
-  { COM_LIVINGROOMLIGHT_TOGGLE,
+  { // COM_LIVINGROOMLIGHT_TOGGLE,
     "Wohnzimmer",
     "Licht an/aus", NULL,
     "FS20_fz_bel", "toggle" },
-  { COM_FOOR_RED,
+  { // COM_FOOR_RED,
     "Flur",
     "rot", NULL,
    /* "http://mypi:8083/fhem?cmd=set%20HueFlur1%20rgb%20FF0000&XHR=1" },*/
     "HueFlur1", "rgb%20FF0000" },
-  { COM_FOOR_ORANGE,
+  { // COM_FOOR_ORANGE,
     "Flur",
     "orange",
     "cmd=set%20HueFlur1%20rgb%20FF830A&XHR=1",
     NULL, NULL },
-  { COM_FOOR_OFF,
+  { //COM_FOOR_OFF,
     "Flur",
     "aus",
     "cmd=set%20HueFlur1%20off&XHR=1",
     NULL, NULL },
-  { COM_SLEEPINGROOM_RED,
+  { //COM_SLEEPINGROOM_RED,
     "Schlafzimmer",
     "rot",
     "cmd=set%20HueSchlafzimmer1%20rgb%20FF0000&XHR=1",
     NULL, NULL },
-  { COM_SLEEPINGROOM_OFF,
+  { //COM_SLEEPINGROOM_OFF,
     "Schlafzimmer",
     "aus",
     "cmd=set%20HueSchlafzimmer1%20off&XHR=1",
     NULL, NULL },
-  { COM_RADIO_ON,
+  { //COM_RADIO_ON,
     "Radio",
     "an", NULL,
     "FS20_Remote_Radio", "on"},
-  { COM_ALL_OFF,
+  { //COM_ALL_OFF,
     "Alles",
     "aus", NULL,
     "dummy_all", "off"},
 };
 
+int GetNumComs()
+{
+  return sizeof(Feature_Ctrl_Map) / sizeof(struct _Feature_Ctrl_Map);
+}
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -110,7 +115,7 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context)
 
 #define NUM_MENU_SECTIONS 2
 #define NUM_MENU_ITEMS_FAVOURITES 2
-
+#define NUM_COM 32
 
 static SimpleMenuLayer *s_simple_menu_layer;
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
@@ -156,6 +161,60 @@ static void menu_select_callback(int index, void *ctx) {
 // TODO: dictate API       /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
+
+int ParseText(char DictationText[], char* Words[], int MaxNumWords)
+{
+  char* p, *pb = 0;
+  
+  // char* Words[64];
+  int NumWords=0;
+  
+  // split text
+  for (p=pb=DictationText; *p != 0 && NumWords < MaxNumWords; p++) {
+    if (*p == ' ') {
+      // found separator
+      Words[NumWords++] = pb;
+      pb=p+1;
+      *p=0;
+    }
+  }
+  if (*p == 0 && pb != p) {
+      Words[NumWords++] = pb;
+  }
+  
+  // print split words
+#if 0
+  APP_LOG(APP_LOG_LEVEL_INFO, "Split words: %d", NumWords);
+  for (int i=0; i < NumWords; i++) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "\tWord '%s'", Words[i]);
+  }
+#endif
+  return NumWords;
+}
+
+int FindRoom(const char Word[], int StartIdx)
+{
+  for (int i=StartIdx; i < GetNumComs(); i++) {
+    if (strcmp(Word, Feature_Ctrl_Map[i].Room) ==0)
+      return i;
+  }
+  return -1;
+}
+
+void ExamineText(char Text[])
+{
+  char* Words[64];
+  int NumWords=ParseText(Text, Words, 64);
+  
+  APP_LOG(APP_LOG_LEVEL_INFO, "Examine words %d", NumWords);
+  for (int i=0; i < NumWords; i++) {
+    int CmdIdx = FindRoom(Words[i], 0);
+    if (CmdIdx >= 0)
+      APP_LOG(APP_LOG_LEVEL_INFO, "\t%s at %d", Words[i], CmdIdx);
+  }
+}
+
+
 static bool s_special_flag = false;
 static int s_hit_count = 0;
 
@@ -215,6 +274,18 @@ static void volume_select_callback(int index, void* ctx)
   SimpleMenuItem *menu_item = &s_second_menu_items[index];
   menu_item->subtitle = "Not yet implemented";
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+
+  char* Words[64];
+  int NumWords=ParseText("Hallo Michi. Wie gehts?", Words, 64);
+
+    // print split words
+  APP_LOG(APP_LOG_LEVEL_INFO, "Split words: %d", NumWords);
+  for (int i=0; i < NumWords; i++) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "\tWord '%s'", Words[i]);
+  }
+  
+  ExamineText("Finde das Wort Flur in diesem Satz");
+
 }
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -225,7 +296,8 @@ static void volume_select_callback(int index, void* ctx)
 static void main_window_load(Window *window)
 {
   //window_set_background_color(window, GColorYellow);
-  for (int i=0; i < NUM_COM; i++) {
+
+  for (int i=0; i < GetNumComs(); i++) {
     s_first_menu_items[i] = (SimpleMenuItem) {
       .title    = Feature_Ctrl_Map[i].Room,
       .subtitle = Feature_Ctrl_Map[i].Description,
@@ -250,7 +322,7 @@ static void main_window_load(Window *window)
   };
   s_menu_sections[1] = (SimpleMenuSection) {
     .title = "Direct Commands",
-    .num_items = NUM_COM,
+    .num_items = GetNumComs(),
     .items = s_first_menu_items,
   };
 
