@@ -201,17 +201,61 @@ int FindRoom(const char Word[], int StartIdx)
   return -1;
 }
 
-void ExamineText(char Text[])
+// returns current word index in Words
+// Example:
+//   CmdIdx     = 0
+//   Words      = Turn Kitchen Light on
+//   CurWordIdx = 2 (Kitchen pos +1)
+//   NumWords   = 4
+int MatchRoomWords(int CmdIdx, char* Words[], int CurWordIdx, int NumWords)
 {
+  if (CurWordIdx >= NumWords)
+    return NumWords;
+  char* DescrWords[8];
+  char Description[256];
+  strncpy(Description, Feature_Ctrl_Map[CmdIdx].Description, 256);
+  APP_LOG(APP_LOG_LEVEL_INFO, "\t\tDescription %s", Description);
+  int NumDescrWords=ParseText(Description, DescrWords, 8);
+  APP_LOG(APP_LOG_LEVEL_INFO, "\t\t NumWords %d", NumDescrWords);
+  // DescrWords = Light on, NumDescrWords = 2
+  
+  int j = 0;
+  for (int i=CurWordIdx; i < NumWords; i++){
+    if (strcmp(Words[i], DescrWords[j]) == 0) {
+      APP_LOG(APP_LOG_LEVEL_INFO, "\t\t[%d/%d]Match description word: %s at %d", j, NumDescrWords, DescrWords[j], i);
+      j++;
+      if (j == NumDescrWords) {
+        // perfect match
+        return i;
+      }
+    }
+  }
+  APP_LOG(APP_LOG_LEVEL_INFO, "\t\tNo final match j=%d", j);
+  return NumWords;
+}
+
+
+// returns found command index
+int ExamineText(char Text[])
+{
+  APP_LOG(APP_LOG_LEVEL_INFO, "Examine words in %s", Text);
   char* Words[64];
   int NumWords=ParseText(Text, Words, 64);
   
-  APP_LOG(APP_LOG_LEVEL_INFO, "Examine words %d", NumWords);
+  APP_LOG(APP_LOG_LEVEL_INFO, "\t NumWords %d", NumWords);
   for (int i=0; i < NumWords; i++) {
     int CmdIdx = FindRoom(Words[i], 0);
-    if (CmdIdx >= 0)
+    if (CmdIdx >= 0) {
       APP_LOG(APP_LOG_LEVEL_INFO, "\t%s at %d", Words[i], CmdIdx);
+      int CurWordIdx = MatchRoomWords(CmdIdx, Words, ++i, NumWords);
+      if (CurWordIdx == NumWords) { // not found, continue
+        continue;
+      }
+      APP_LOG(APP_LOG_LEVEL_INFO, "\tFound room idx %d. Last word: %s", CmdIdx, Words[CurWordIdx]);
+      return CmdIdx;
+    }
   }
+  return -1;
 }
 
 
@@ -285,7 +329,7 @@ static void volume_select_callback(int index, void* ctx)
   }
   
   ExamineText("Finde das Wort Flur in diesem Satz");
-
+  ExamineText("In der Küche das Licht umschalten");
 }
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
