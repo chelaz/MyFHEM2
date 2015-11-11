@@ -9,68 +9,71 @@
 
 const char FHEM_URL[] = "http://mypi:8083/fhem";
 
-/*
-typedef enum {
-  COM_KITCHEN_LIGHT_TOGGLE   =0,
-  COM_LIVINGROOMLIGHT_TOGGLE,
-  COM_FOOR_RED,
-  COM_FOOR_ORANGE,
-  COM_FOOR_OFF,
-  COM_SLEEPINGROOM_RED,
-  COM_SLEEPINGROOM_OFF,
-  COM_RADIO_ON,
-  COM_ALL_OFF,
-  NUM_COM
-} Commands_type;
-*/
 
 static struct _Feature_Ctrl_Map
 {
-  // long        ID;
   const char* Room;
   const char* Description;
   const char* URL; // if used
   const char* Device;
   const char* Command;
 } Feature_Ctrl_Map[] = {
-  { // COM_KITCHEN_LIGHT_TOGGLE,
+  {
     "Küche",
     "Licht umschalten", NULL,
     "FS20_fr_bel", "toggle"},
-  { // COM_LIVINGROOMLIGHT_TOGGLE,
+  {
     "Wohnzimmer",
     "Licht an/aus", NULL,
     "FS20_fz_bel", "toggle" },
-  { // COM_FOOR_RED,
+  {
     "Flur",
     "rot", NULL,
    /* "http://mypi:8083/fhem?cmd=set%20HueFlur1%20rgb%20FF0000&XHR=1" },*/
     "HueFlur1", "rgb%20FF0000" },
-  { // COM_FOOR_ORANGE,
+  {
     "Flur",
     "orange",
     "cmd=set%20HueFlur1%20rgb%20FF830A&XHR=1",
     NULL, NULL },
-  { //COM_FOOR_OFF,
+  {
     "Flur",
     "aus",
     "cmd=set%20HueFlur1%20off&XHR=1",
     NULL, NULL },
-  { //COM_SLEEPINGROOM_RED,
+  {
     "Schlafzimmer",
     "rot",
     "cmd=set%20HueSchlafzimmer1%20rgb%20FF0000&XHR=1",
     NULL, NULL },
-  { //COM_SLEEPINGROOM_OFF,
+  {
     "Schlafzimmer",
     "aus",
     "cmd=set%20HueSchlafzimmer1%20off&XHR=1",
     NULL, NULL },
-  { //COM_RADIO_ON,
+  {
+    "Lautstärke",
+    "lauter", NULL,
+    "FS20_0000_VolUp", "on"},
+  {
+    "Lautstärke",
+    "leiser", NULL,
+    "FS20_0001_VolDown", "on"},
+  {
+    "Radio",
+    "leiser",
+    "cmd=%22mpc.sh+-q+-h+lora+volume+-10%22",
+    NULL, NULL },
+  {
+    "Radio",
+    "lauter",
+    "cmd=%22mpc.sh+-q+-h+lora+volume+%2B10%22",
+    NULL, NULL },
+  {
     "Radio",
     "an", NULL,
     "FS20_Remote_Radio", "on"},
-  { //COM_ALL_OFF,
+  {
     "Alles",
     "aus", NULL,
     "dummy_all", "off"},
@@ -80,6 +83,8 @@ int GetNumComs()
 {
   return sizeof(Feature_Ctrl_Map) / sizeof(struct _Feature_Ctrl_Map);
 }
+
+
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -124,23 +129,11 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context)
 
 
 
-
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-// MENU ////////////////////////////////////////////////////////////
+// FHEM ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-
-#define NUM_MENU_SECTIONS 2
-#define NUM_MENU_ITEMS_FAVOURITES 2
-#define NUM_COM 32
-
-static SimpleMenuLayer *s_simple_menu_layer;
-static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
-static SimpleMenuItem s_first_menu_items[NUM_COM];
-static SimpleMenuItem s_second_menu_items[NUM_MENU_ITEMS_FAVOURITES];
-// static GBitmap *s_menu_icon_image;
-
 void BuildFhemURL(const int index, char URL[], int size)
 {
   if (Feature_Ctrl_Map[index].URL)
@@ -151,9 +144,9 @@ void BuildFhemURL(const int index, char URL[], int size)
   }
 }
 
-static void menu_select_callback(int index, void *ctx) {
-  // s_first_menu_items[index].subtitle = "You've hit select here!";
 
+void SendCom(int index)
+{
   char URL[1024];
   BuildFhemURL(index, URL, 1024);
   
@@ -180,6 +173,33 @@ static void menu_select_callback(int index, void *ctx) {
   }
   
   app_message_outbox_send();
+}
+
+
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+// MENU ////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+#define NUM_MENU_SECTIONS 2
+#define NUM_MENU_ITEMS_FAVOURITES 2
+#define NUM_COM 32
+
+static SimpleMenuLayer *s_simple_menu_layer;
+static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
+static SimpleMenuItem s_first_menu_items[NUM_COM];
+static SimpleMenuItem s_second_menu_items[NUM_MENU_ITEMS_FAVOURITES];
+// static GBitmap *s_menu_icon_image;
+
+
+
+static void menu_select_callback(int index, void *ctx)
+{
+  // s_first_menu_items[index].subtitle = "You've hit select here!";
+
+  SendCom(index);
   
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
@@ -242,8 +262,10 @@ int MatchRoomWords(int CmdIdx, char* Words[], int CurWordIdx, int NumWords)
     return NumWords;
   char* DescrWords[8];
   char Description[256];
-  strncpy(Description, Feature_Ctrl_Map[CmdIdx].Description, 256);
+
+  strncpy(Description, Feature_Ctrl_Map[CmdIdx].Description, 255);
   APP_LOG(APP_LOG_LEVEL_INFO, "\t\tDescription %s", Description);
+
   int NumDescrWords=ParseText(Description, DescrWords, 8);
   APP_LOG(APP_LOG_LEVEL_INFO, "\t\t NumWords %d", NumDescrWords);
   // DescrWords = Light on, NumDescrWords = 2
@@ -265,23 +287,32 @@ int MatchRoomWords(int CmdIdx, char* Words[], int CurWordIdx, int NumWords)
 
 
 // returns found command index
-int ExamineText(char Text[])
+int ExamineText(const char Text2Examine[])
 {
+  char Text[128];
+
+  strncpy(Text, Text2Examine, 127);
+
   APP_LOG(APP_LOG_LEVEL_INFO, "Examine words in %s", Text);
   char* Words[64];
   int NumWords=ParseText(Text, Words, 64);
-  
+
   APP_LOG(APP_LOG_LEVEL_INFO, "\t NumWords %d", NumWords);
+  
+  // example: "Im Flur Licht aus"
   for (int i=0; i < NumWords; i++) {
-    int CmdIdx = FindRoom(Words[i], 0);
-    if (CmdIdx >= 0) {
-      APP_LOG(APP_LOG_LEVEL_INFO, "\t%s at %d", Words[i], CmdIdx);
-      int CurWordIdx = MatchRoomWords(CmdIdx, Words, ++i, NumWords);
-      if (CurWordIdx == NumWords) { // not found, continue
-        continue;
+    for (int j=0; j < GetNumComs(); j++) {
+      int CmdIdx = FindRoom(Words[i], j);
+      if (CmdIdx >= 0) {
+	// Flur: i = 1, CmdIdx = 2 (we have to find 4)
+	APP_LOG(APP_LOG_LEVEL_INFO, "\t%s at %d", Words[i], CmdIdx);
+	int CurWordIdx = MatchRoomWords(CmdIdx, Words, i+1, NumWords);
+	if (CurWordIdx == NumWords) { // not found, continue	
+	  continue;
+	}
+	APP_LOG(APP_LOG_LEVEL_INFO, "\tFound room idx %d. Last word: %s", CmdIdx, Words[CurWordIdx]);
+	return CmdIdx;
       }
-      APP_LOG(APP_LOG_LEVEL_INFO, "\tFound room idx %d. Last word: %s", CmdIdx, Words[CurWordIdx]);
-      return CmdIdx;
     }
   }
   return -1;
@@ -307,6 +338,10 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     snprintf(s_dictation_text, sizeof(s_dictation_text), "%s", transcription);
     menu_item->subtitle = s_dictation_text;
     layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+    
+    int CmdIdx = -1;
+    if ((CmdIdx=ExamineText(s_dictation_text)) != -1)
+      SendCom(CmdIdx);
 
   } else {
     // Display the reason for any error
@@ -348,6 +383,7 @@ static void volume_select_callback(int index, void* ctx)
   menu_item->subtitle = "Not yet implemented";
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 
+#if 0
   char* Words[64];
   int NumWords=ParseText("Hallo Michi. Wie gehts?", Words, 64);
 
@@ -356,9 +392,22 @@ static void volume_select_callback(int index, void* ctx)
   for (int i=0; i < NumWords; i++) {
     APP_LOG(APP_LOG_LEVEL_INFO, "\tWord '%s'", Words[i]);
   }
-  
-  ExamineText("Finde das Wort Flur in diesem Satz");
+#endif
+  //  ExamineText("Finde das Wort Flur in diesem Satz");
   ExamineText("In der Küche das Licht umschalten");
+  ExamineText("Im Flur das Licht aus");
+  ExamineText("Im Flur das Licht orange");
+  ExamineText("Im Flur das Licht rot anschalten");
+  ExamineText("Im Flur das Licht anschalten");
+#if 0
+  APP_LOG(APP_LOG_LEVEL_INFO, ".. finished. Now Description test");
+  char* DescrWords[8];
+  char  Description[256];
+  strncpy(Description, Feature_Ctrl_Map[0].Description, 255);
+  APP_LOG(APP_LOG_LEVEL_INFO, "\t\tDescription %s", Description);
+  int NumDescrWords=ParseText(Description, DescrWords, 8);
+  APP_LOG(APP_LOG_LEVEL_INFO, "\t\t NumWords %d", NumDescrWords);
+#endif
 }
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -408,7 +457,7 @@ static void main_window_load(Window *window)
   
   // correct positon here?
   s_dictation_session = dictation_session_create(sizeof(s_dictation_text), 
-                                               dictation_session_callback, NULL);
+						 dictation_session_callback, NULL);
   // Disable the confirmation screen
   dictation_session_enable_confirmation(s_dictation_session, false);
   // Disable error dialogs
