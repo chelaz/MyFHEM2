@@ -1,5 +1,6 @@
 #include <pebble.h>
 
+
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 // FHEM definitions ////////////////////////////////////////////////
@@ -85,10 +86,27 @@ int GetNumComs()
 // AppMessage //////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-static void inbox_received_callback(DictionaryIterator *iterator, void *context)
-{
+static const uint32_t FHEM_URL_KEY     = 0;
+static const uint32_t FHEM_COM_ID_KEY  = 1;
+static const uint32_t FHEM_RESP_KEY    = 2;
 
+static void inbox_received_callback(DictionaryIterator *iterator, void *context)
+{  
+  Tuple *data;
+
+  int index = -1;
+  if ((data=dict_find(iterator, FHEM_COM_ID_KEY)) != NULL) {
+    index = (int)data->value->int32;
+  }
+
+  if ((data = dict_find(iterator, FHEM_RESP_KEY)) != NULL) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", (char*)data->value->cstring, index);
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
+  }
 }
+
+
 static void inbox_dropped_callback(AppMessageResult reason, void *context)
 {
   APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
@@ -123,9 +141,6 @@ static SimpleMenuItem s_first_menu_items[NUM_COM];
 static SimpleMenuItem s_second_menu_items[NUM_MENU_ITEMS_FAVOURITES];
 // static GBitmap *s_menu_icon_image;
 
-
-static const uint32_t FHEM_STRING_KEY = 0xabbababe;
-
 void BuildFhemURL(const int index, char URL[], int size)
 {
   if (Feature_Ctrl_Map[index].URL)
@@ -145,12 +160,26 @@ static void menu_select_callback(int index, void *ctx) {
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
 
-  DictionaryResult Res;
-  if ((Res=dict_write_cstring(iter, FHEM_STRING_KEY, URL)) != DICT_OK)
-    APP_LOG(APP_LOG_LEVEL_INFO, "Dict write cstring error!");
-  else
-    app_message_outbox_send();
+#if 0
+  if (!iter) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Error creating outbound message!");
+    // Error creating outbound message
+    return;
+  }
+#endif
 
+  DictionaryResult Res;
+  if ((Res=dict_write_cstring(iter, FHEM_URL_KEY, URL)) != DICT_OK) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Dict write url error!");
+    return;
+  }
+  
+  if ((Res=dict_write_int(iter, FHEM_COM_ID_KEY, &index, sizeof(int), true)) != DICT_OK) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Dict write com id error!");
+    return;
+  }
+  
+  app_message_outbox_send();
   
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
@@ -417,8 +446,9 @@ static void init(void) {
   app_message_register_outbox_failed(outbox_failed_callback);
   app_message_register_outbox_sent(outbox_sent_callback);
 
-  app_message_open(app_message_inbox_size_maximum(),
-		   app_message_outbox_size_maximum());
+  /*  app_message_open(app_message_inbox_size_maximum(),
+      app_message_outbox_size_maximum()); */
+  app_message_open(128, 128);
 
 }
 

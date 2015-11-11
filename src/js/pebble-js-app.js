@@ -1,3 +1,5 @@
+// https://developer.getpebble.com/guides/pebble-apps/pebblekit-js/js-app-comm/
+// https://developer.getpebble.com/guides/pebble-apps/communications/appmessage/
 
 function HTTPGET(url) {
     var req = new XMLHttpRequest();
@@ -18,10 +20,16 @@ Pebble.addEventListener('ready',
 Pebble.addEventListener('appmessage',
   function(e) {
     // 
-    if (e.payload[0xabbababe]) {
-      console.log('Received URL: ' + e.payload[0xabbababe]);
-      var response = HTTPGET(e.payload[0xabbababe]);
+    if (e.payload['FHEM_URL_KEY']) {
+      console.log('Received URL: ' + e.payload['FHEM_URL_KEY']);
+      var response = HTTPGET(e.payload['FHEM_URL_KEY']);
       console.log('Received response: ' + response);
+      if (response != null)
+	Pebble.sendAppMessage({ 'FHEM_RESP_KEY'   :  'success' },
+			      { 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'] });
+      else
+	Pebble.sendAppMessage({ 'FHEM_RESP_KEY' :  'not connected' });  
+      
     } else {
       console.log('Received URL not known');
       console.log('Received message: ' + JSON.stringify(e.payload));
