@@ -1,5 +1,13 @@
 #include <pebble.h>
 
+////////////////////////////////////////////////////////////////////
+// Documentation ///////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+// Vibe pulses:
+//   short:  command successfully sent to server
+//   long:   send command: failed (general error)
+//           dictate: (general error)
+//   double: dictate: command not found
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -105,7 +113,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   if ((data = dict_find(iterator, FHEM_RESP_KEY)) != NULL) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", (char*)data->value->cstring, index);
+    char* result = (char*)data->value->cstring;
+    APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, index);
+    if (!strcmp("success", result))
+      vibes_short_pulse(); // OK
+    else
+      vibes_long_pulse();
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
   }
@@ -340,10 +353,14 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
     
     int CmdIdx = -1;
-    if ((CmdIdx=ExamineText(s_dictation_text)) != -1)
+    if ((CmdIdx=ExamineText(s_dictation_text)) != -1) {
       SendCom(CmdIdx);
+    } else {
+      vibes_double_pulse();
+    }
 
   } else {
+    vibes_long_pulse();
     // Display the reason for any error
     static char s_failed_buff[128];
     snprintf(s_failed_buff, sizeof(s_failed_buff), "Transcription failed.\n\nReason:\n%d", 
