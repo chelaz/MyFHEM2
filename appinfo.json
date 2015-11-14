@@ -27,12 +27,12 @@
        "media": [
 	 {         
           "type": "png",
-          "name": "RESOURCE_ID_IMAGE_MENU_ICON_OK",
+          "name": "IMAGE_MENU_ICON_OK",
           "file": "images/menu_icon_ok.png"
          },
 	 {
           "type": "png",
-          "name": "RESOURCE_ID_IMAGE_MENU_ICON_FAILED",
+          "name": "IMAGE_MENU_ICON_FAILED",
           "file": "images/menu_icon_failed.png"
          }
        ]
