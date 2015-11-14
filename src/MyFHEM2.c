@@ -4,7 +4,8 @@
 // Documentation ///////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 // Vibe pulses:
-//   short:  command successfully sent to server
+//   -       command successfully sent to server via menu (no vibe)
+//   short:  command successfully sent to server via dictation
 //   long:   send command: failed (general error)
 //           dictate: (general error)
 //   double: dictate: command not found
@@ -18,14 +19,14 @@
 const char FHEM_URL[] = "http://mypi:8083/fhem";
 
 
-static struct _Feature_Ctrl_Map
+static struct _Coms_Map
 {
   const char* Room;
   const char* Description;
   const char* URL; // if used
   const char* Device;
   const char* Command;
-} Feature_Ctrl_Map[] = {
+} Coms_Map[] = {
   {
     "Küche",
     "Licht umschalten", NULL,
@@ -82,6 +83,14 @@ static struct _Feature_Ctrl_Map
     "an", NULL,
     "FS20_Remote_Radio", "on"},
   {
+    "Küche",
+    "Licht an", NULL,
+    "FS20_fr_bel", "on"},
+  {
+    "Küche",
+    "Licht aus", NULL,
+    "FS20_fr_bel", "off"},
+  {
     "Alles",
     "aus", NULL,
     "dummy_all", "off"},
@@ -89,7 +98,7 @@ static struct _Feature_Ctrl_Map
 
 int GetNumComs()
 {
-  return sizeof(Feature_Ctrl_Map) / sizeof(struct _Feature_Ctrl_Map);
+  return sizeof(Coms_Map) / sizeof(struct _Coms_Map);
 }
 
 
@@ -116,7 +125,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     char* result = (char*)data->value->cstring;
     APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, index);
     if (!strcmp("success", result))
-      vibes_short_pulse(); // OK
+      ; //
     else
       vibes_long_pulse();
   } else {
@@ -149,43 +158,50 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context)
 ////////////////////////////////////////////////////////////////////
 void BuildFhemURL(const int index, char URL[], int size)
 {
-  if (Feature_Ctrl_Map[index].URL)
-    snprintf(URL, size, "%s?%s", FHEM_URL, Feature_Ctrl_Map[index].URL);
+  if (Coms_Map[index].URL)
+    snprintf(URL, size, "%s?%s", FHEM_URL, Coms_Map[index].URL);
   else {
     snprintf(URL, size, "%s?cmd=set%%20%s%%20%s", FHEM_URL, 
-             Feature_Ctrl_Map[index].Device, Feature_Ctrl_Map[index].Command);
+             Coms_Map[index].Device, Coms_Map[index].Command);
   }
 }
 
 
-void SendCom(int index)
+bool SendCom(int index)
 {
   char URL[1024];
   BuildFhemURL(index, URL, 1024);
   
+  AppMessageResult Res = APP_MSG_OK;
+    
   DictionaryIterator *iter;
-  app_message_outbox_begin(&iter);
+  if ((Res=app_message_outbox_begin(&iter)) != APP_MSG_OK) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "app_message_outbox_begin: %d", Res);   
+    return false;
+  }
 
-#if 0
   if (!iter) {
     APP_LOG(APP_LOG_LEVEL_ERROR, "Error creating outbound message!");
-    // Error creating outbound message
-    return;
+    return false;
   }
-#endif
 
-  DictionaryResult Res;
-  if ((Res=dict_write_cstring(iter, FHEM_URL_KEY, URL)) != DICT_OK) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Dict write url error!");
-    return;
+  DictionaryResult ResDict;
+  if ((ResDict=dict_write_cstring(iter, FHEM_URL_KEY, URL)) != DICT_OK) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Dict write url error: %d!", ResDict);
+    return false;
   }
   
-  if ((Res=dict_write_int(iter, FHEM_COM_ID_KEY, &index, sizeof(int), true)) != DICT_OK) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Dict write com id error!");
-    return;
+  
+  if ((ResDict=dict_write_int(iter, FHEM_COM_ID_KEY, &index, sizeof(int), true)) != DICT_OK) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Dict write com id error: %d", ResDict);
+    return false;
   }
   
-  app_message_outbox_send();
+  if (app_message_outbox_send() != APP_MSG_OK) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "app_message_outbox_send: %d", Res);   
+    return false;
+  }
+  return true;
 }
 
 
@@ -204,13 +220,43 @@ static SimpleMenuLayer *s_simple_menu_layer;
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
 static SimpleMenuItem s_first_menu_items[NUM_COM];
 static SimpleMenuItem s_second_menu_items[NUM_MENU_ITEMS_FAVOURITES];
-// static GBitmap *s_menu_icon_image;
 
+static GBitmap *s_menu_icon_image_ok;
+static GBitmap *s_menu_icon_image_failed;
 
 
 static void menu_select_callback(int index, void *ctx)
 {
   // s_first_menu_items[index].subtitle = "You've hit select here!";
+
+#if 0
+  GRect invisible_rect = GRect(0, 0, 5, 5);
+  GRect visible_rect = GRect(10, 0, 5, 5);
+
+  // test
+  // .a = 1
+  GColor invisible = (GColor){
+    .a = 0b01,
+    .r = 0b11,
+    .g = 0b10,
+    .b = 0b00
+  };
+
+  // .a = 2
+  GColor visible = (GColor){ .argb = 0b10111000 };
+
+  // Fill with these colors
+  graphics_context_set_fill_color(ctx, invisible);
+  graphics_fill_rect(ctx, invisible_rect, GCornerNone, 0);
+  graphics_context_set_fill_color(ctx, visible);
+  graphics_fill_rect(ctx, visible_rect, GCornerNone, 0);
+
+  // Draw outlines
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_draw_rect(ctx, invisible_rect);
+  graphics_draw_rect(ctx, visible_rect);
+#endif
+  
 
   SendCom(index);
   
@@ -257,7 +303,7 @@ int ParseText(char DictationText[], char* Words[], int MaxNumWords)
 int FindRoom(const char Word[], int StartIdx)
 {
   for (int i=StartIdx; i < GetNumComs(); i++) {
-    if (strcmp(Word, Feature_Ctrl_Map[i].Room) ==0)
+    if (strcmp(Word, Coms_Map[i].Room) ==0)
       return i;
   }
   return -1;
@@ -276,7 +322,7 @@ int MatchRoomWords(int CmdIdx, char* Words[], int CurWordIdx, int NumWords)
   char* DescrWords[8];
   char Description[256];
 
-  strncpy(Description, Feature_Ctrl_Map[CmdIdx].Description, 255);
+  strncpy(Description, Coms_Map[CmdIdx].Description, 255);
   APP_LOG(APP_LOG_LEVEL_INFO, "\t\tDescription %s", Description);
 
   int NumDescrWords=ParseText(Description, DescrWords, 8);
@@ -354,7 +400,10 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     
     int CmdIdx = -1;
     if ((CmdIdx=ExamineText(s_dictation_text)) != -1) {
-      SendCom(CmdIdx);
+      if (SendCom(CmdIdx))
+	vibes_short_pulse(); // OK
+      else
+	vibes_long_pulse();
     } else {
       vibes_double_pulse();
     }
@@ -420,7 +469,7 @@ static void volume_select_callback(int index, void* ctx)
   APP_LOG(APP_LOG_LEVEL_INFO, ".. finished. Now Description test");
   char* DescrWords[8];
   char  Description[256];
-  strncpy(Description, Feature_Ctrl_Map[0].Description, 255);
+  strncpy(Description, Coms_Map[0].Description, 255);
   APP_LOG(APP_LOG_LEVEL_INFO, "\t\tDescription %s", Description);
   int NumDescrWords=ParseText(Description, DescrWords, 8);
   APP_LOG(APP_LOG_LEVEL_INFO, "\t\t NumWords %d", NumDescrWords);
@@ -434,13 +483,17 @@ static void volume_select_callback(int index, void* ctx)
 
 static void main_window_load(Window *window)
 {
+  s_menu_icon_image_ok     = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MENU_ICON_OK);
+  s_menu_icon_image_failed = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MENU_ICON_FAILED);
+
   //window_set_background_color(window, GColorYellow);
 
   for (int i=0; i < GetNumComs(); i++) {
     s_first_menu_items[i] = (SimpleMenuItem) {
-      .title    = Feature_Ctrl_Map[i].Room,
-      .subtitle = Feature_Ctrl_Map[i].Description,
+      .title    = Coms_Map[i].Room,
+      .subtitle = Coms_Map[i].Description,
       .callback = menu_select_callback,
+      .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
     };
   }
 
@@ -486,6 +539,8 @@ static void main_window_load(Window *window)
 void main_window_unload(Window *window)
 {
   simple_menu_layer_destroy(s_simple_menu_layer);
+  gbitmap_destroy(s_menu_icon_image_ok);
+  gbitmap_destroy(s_menu_icon_image_failed);
 }
 
 
