@@ -102,6 +102,17 @@ int GetNumComs()
 }
 
 
+// here ok?
+#define NUM_MENU_SECTIONS 2
+#define NUM_MENU_ITEMS_FAVOURITES 2
+#define NUM_COM 32
+
+static GBitmap *s_menu_icon_image_ok;
+static GBitmap *s_menu_icon_image_failed;
+static SimpleMenuItem s_first_menu_items[NUM_COM];
+static SimpleMenuItem s_second_menu_items[NUM_MENU_ITEMS_FAVOURITES];
+static SimpleMenuLayer *s_simple_menu_layer;
+
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -124,10 +135,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if ((data = dict_find(iterator, FHEM_RESP_KEY)) != NULL) {
     char* result = (char*)data->value->cstring;
     APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, index);
-    if (!strcmp("success", result))
-      ; //
-    else
+    if (!strcmp("success", result)) {
+      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL);
+    } else {
+      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_failed, NULL);      
       vibes_long_pulse();
+    }
+    layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
   }
@@ -212,18 +226,10 @@ bool SendCom(int index)
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-#define NUM_MENU_SECTIONS 2
-#define NUM_MENU_ITEMS_FAVOURITES 2
-#define NUM_COM 32
 
-static SimpleMenuLayer *s_simple_menu_layer;
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
-static SimpleMenuItem s_first_menu_items[NUM_COM];
-static SimpleMenuItem s_second_menu_items[NUM_MENU_ITEMS_FAVOURITES];
 
-static GBitmap *s_menu_icon_image_ok;
-static GBitmap *s_menu_icon_image_failed;
-
+// icons moved from here
 
 static void menu_select_callback(int index, void *ctx)
 {
@@ -258,8 +264,11 @@ static void menu_select_callback(int index, void *ctx)
 #endif
   
 
-  SendCom(index);
-  
+  if (SendCom(index))
+    s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL);
+  else
+    s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_failed, NULL);
+      
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
 
