@@ -101,6 +101,16 @@ int GetNumComs()
   return sizeof(Coms_Map) / sizeof(struct _Coms_Map);
 }
 
+typedef enum _StatusIconType {
+  UNKNOWN = -1,
+  FAILED  = 0,
+  OK      = 1,
+  SEND    = 2,
+  OFF     = 3,
+  ON      = 4,  
+} StatusIconType;
+
+
 
 // here ok?
 #define NUM_MENU_SECTIONS 2
@@ -109,9 +119,16 @@ int GetNumComs()
 
 static GBitmap *s_menu_icon_image_ok;
 static GBitmap *s_menu_icon_image_failed;
+static GBitmap *s_menu_icon_image_send;
+static GBitmap *s_menu_icon_image_off;
+static GBitmap *s_menu_icon_image_on;
 static SimpleMenuItem s_first_menu_items[NUM_COM];
 static SimpleMenuItem s_second_menu_items[NUM_MENU_ITEMS_FAVOURITES];
 static SimpleMenuLayer *s_simple_menu_layer;
+
+
+// forward declaration
+bool set_menu_icon(int index, StatusIconType Type);
 
 
 ////////////////////////////////////////////////////////////////////
@@ -231,6 +248,34 @@ static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
 
 // icons moved from here
 
+
+// forward declaration
+bool set_menu_icon(int index, StatusIconType Type)
+{
+  switch(Type) {
+    default:
+    case UNKNOWN:
+      return false;
+    case FAILED:
+      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_failed, NULL);
+      break;
+    case OK:
+      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL);
+      break;
+    case SEND:
+      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_send, NULL);
+      break;
+    case OFF:
+      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_off, NULL);
+      break;
+    case ON:
+      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_on, NULL);
+      break;
+  }
+  return true;
+}
+
+
 static void menu_select_callback(int index, void *ctx)
 {
   // s_first_menu_items[index].subtitle = "You've hit select here!";
@@ -265,9 +310,11 @@ static void menu_select_callback(int index, void *ctx)
   
 
   if (SendCom(index))
-    s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL);
+    set_menu_icon(index, SEND);
+    // s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL);
   else
-    s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_failed, NULL);
+    set_menu_icon(index, FAILED);
+    // s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_failed, NULL);
       
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
@@ -494,6 +541,9 @@ static void main_window_load(Window *window)
 {
   s_menu_icon_image_ok     = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MENU_ICON_OK);
   s_menu_icon_image_failed = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MENU_ICON_FAILED);
+  s_menu_icon_image_send   = gbitmap_create_with_resource(RESOURCE_ID_MENU_ICON_SEND);
+  s_menu_icon_image_off    = gbitmap_create_with_resource(RESOURCE_ID_STATUS_OFF);
+  s_menu_icon_image_on     = gbitmap_create_with_resource(RESOURCE_ID_STATUS_ON);
 
   //window_set_background_color(window, GColorYellow);
 
@@ -502,7 +552,7 @@ static void main_window_load(Window *window)
       .title    = Coms_Map[i].Room,
       .subtitle = Coms_Map[i].Description,
       .callback = menu_select_callback,
-      .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
+      // .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
     };
   }
 
@@ -548,8 +598,11 @@ static void main_window_load(Window *window)
 void main_window_unload(Window *window)
 {
   simple_menu_layer_destroy(s_simple_menu_layer);
-  gbitmap_destroy(s_menu_icon_image_ok);
+  gbitmap_destroy(s_menu_icon_image_on);
+  gbitmap_destroy(s_menu_icon_image_off);
+  gbitmap_destroy(s_menu_icon_image_send);
   gbitmap_destroy(s_menu_icon_image_failed);
+  gbitmap_destroy(s_menu_icon_image_ok);
 }
 
 

@@ -13,6 +13,36 @@
     "resources": {
         "media": [
             {
+                "file": "images/status_off",
+                "name": "STATUS_OFF",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "png"
+            },
+            {
+                "file": "images/status_on",
+                "name": "STATUS_ON",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "png"
+            },
+            {
+                "file": "images/menu_icon_send.png",
+                "name": "MENU_ICON_SEND",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "png"
+            },
+            {
                 "file": "images/menu_icon_ok.png",
                 "name": "IMAGE_MENU_ICON_OK",
                 "targetPlatforms": [
