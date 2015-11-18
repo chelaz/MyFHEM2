@@ -136,9 +136,10 @@ bool set_menu_icon(MenuType Menu, int index, StatusIconType Status);
 // AppMessage //////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-static const uint32_t FHEM_URL_KEY     = 0;
-static const uint32_t FHEM_COM_ID_KEY  = 1;
-static const uint32_t FHEM_RESP_KEY    = 2;
+static const uint32_t FHEM_URL_KEY       = 0;
+static const uint32_t FHEM_COM_ID_KEY    = 1;
+static const uint32_t FHEM_RESP_KEY      = 2;
+static const uint32_t FHEM_URL_GET_STATE = 3;
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 {  
@@ -196,11 +197,16 @@ void BuildFhemURL(const int index, char URL[], int size)
   }
 }
 
+void BuildFhemStatusURL(const int index, char URL[], int size)
+{
+  snprintf(URL, size, "%s?cmd=xmllist%%20%s", FHEM_URL, 
+	   Coms_Map[index].Device);
+}
 
-bool SendCom(int index)
+
+bool SendCom(int index, bool requestStatus)
 {
   char URL[1024];
-  BuildFhemURL(index, URL, 1024);
   
   AppMessageResult Res = APP_MSG_OK;
     
@@ -216,9 +222,20 @@ bool SendCom(int index)
   }
 
   DictionaryResult ResDict;
-  if ((ResDict=dict_write_cstring(iter, FHEM_URL_KEY, URL)) != DICT_OK) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Dict write url error: %d!", ResDict);
-    return false;
+  if (!requestStatus) {
+    BuildFhemURL(index, URL, 1024);
+    
+    if ((ResDict=dict_write_cstring(iter, FHEM_URL_KEY, URL)) != DICT_OK) {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Dict write url error: %d!", ResDict);
+      return false;
+    }
+  } else {
+    BuildFhemStatusURL(index, URL, 1024);
+    
+    if ((ResDict=dict_write_cstring(iter, FHEM_URL_GET_STATE, URL)) != DICT_OK) {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Dict write status url error: %d!", ResDict);
+      return false;
+    }
   }
   
   
@@ -305,6 +322,8 @@ bool set_menu_icon(MenuType Menu, int index, StatusIconType Status)
   return true;
 }
 
+// todo: for tests
+static bool s_special_flag = false;
 
 static void menu_select_callback(int index, void *ctx)
 {
@@ -339,7 +358,7 @@ static void menu_select_callback(int index, void *ctx)
 #endif
   
 
-  if (SendCom(index))
+  if (SendCom(index, s_special_flag))
     set_menu_icon(MENU_DIRECT_COMS, index, SEND);
   else
     set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
@@ -460,7 +479,6 @@ int ExamineText(const char Text2Examine[])
 }
 
 
-static bool s_special_flag = false;
 static int s_hit_count = 0;
 
 #ifdef ENABLE_DICTATION
@@ -483,7 +501,7 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     
     int CmdIdx = -1;
     if ((CmdIdx=ExamineText(s_dictation_text)) != -1) {
-      if (SendCom(CmdIdx)) {
+      if (SendCom(CmdIdx, false)) {
         set_menu_icon(MENU_FAVOURITES, 0, OK);
 	      vibes_short_pulse(); // OK
       } else {
@@ -513,32 +531,11 @@ static void special_select_callback(int index, void *ctx)
 #ifdef ENABLE_DICTATION
   dictation_session_start(s_dictation_session);
 #endif
-  
-  // Of course, you can do more complicated things in a menu item select callback
-  // Here, we have a simple toggle
-  s_special_flag = !s_special_flag;
-
-  SimpleMenuItem *menu_item = &s_favourites_menu_items[index];
-
-  if (s_special_flag) {
-    menu_item->subtitle = "Okay, it's not so special.";
-  } else {
-    menu_item->subtitle = "Well, maybe a little.";
-  }
-
-  if (++s_hit_count > 5) {
-    menu_item->title = "Very Special Item";
-  }
-
-  layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+  // layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
 
 static void volume_select_callback(int index, void* ctx)
 {
-  SimpleMenuItem *menu_item = &s_favourites_menu_items[index];
-  menu_item->subtitle = "Not yet implemented";
-  layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
-
 #if 0
   char* Words[64];
   int NumWords=ParseText("Hallo Michi. Wie gehts?", Words, 64);
@@ -549,12 +546,14 @@ static void volume_select_callback(int index, void* ctx)
     APP_LOG(APP_LOG_LEVEL_INFO, "\tWord '%s'", Words[i]);
   }
 #endif
+#ifdef test
   //  ExamineText("Finde das Wort Flur in diesem Satz");
   ExamineText("In der Küche das Licht umschalten");
   ExamineText("Im Flur das Licht aus");
   ExamineText("Im Flur das Licht orange");
   ExamineText("Im Flur das Licht rot anschalten");
   ExamineText("Im Flur das Licht anschalten");
+#endif
 #if 0
   APP_LOG(APP_LOG_LEVEL_INFO, ".. finished. Now Description test");
   char* DescrWords[8];
@@ -564,7 +563,61 @@ static void volume_select_callback(int index, void* ctx)
   int NumDescrWords=ParseText(Description, DescrWords, 8);
   APP_LOG(APP_LOG_LEVEL_INFO, "\t\t NumWords %d", NumDescrWords);
 #endif
+
+  s_special_flag = !s_special_flag;
+
+  SimpleMenuItem *menu_item = &s_favourites_menu_items[index];
+  // menu_item->subtitle = "Not yet implemented";
+  // layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+  if (s_special_flag) {
+    menu_item->subtitle = "Receive Status Mode";
+  } else {
+    menu_item->subtitle = "Send Command Mode";
+  }
+  layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
+
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+// Menu click callbacks    /////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+void down_click_handler(ClickRecognizerRef recognizer, void *context)
+{
+  menu_layer_set_selected_next((MenuLayer *)s_simple_menu_layer, false, 
+			       MenuRowAlignCenter, true);
+}
+
+void up_click_handler(ClickRecognizerRef recognizer, void *context)
+{
+  menu_layer_set_selected_next((MenuLayer *)s_simple_menu_layer, true, 
+			       MenuRowAlignCenter, true);
+}
+
+#if 0
+void select_click_handler(ClickRecognizerRef recognizer, void *context)
+{
+  int index=simple_menu_layer_get_selected_index(s_simple_menu_layer);
+  
+}
+#endif
+
+void select_long_click_handler(ClickRecognizerRef recognizer, void *context)
+{
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "long Select pressed!");
+}
+
+#if 0
+static void click_config_provider(void *context) {
+  // Register the ClickHandlers
+  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
+  // window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
+  window_long_click_subscribe(BUTTON_ID_SELECT, 0, NULL, select_long_click_handler);
+}
+#endif
+
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 // main window load/unload /////////////////////////////////////////
@@ -598,7 +651,7 @@ static void main_window_load(Window *window)
   };
 #endif
   s_favourites_menu_items[itemCnt++] = (SimpleMenuItem) {
-    .title = "Volume",
+    .title = "Send/Receive Mode",
     .callback = volume_select_callback,
   };
   s_menu_sections[0] = (SimpleMenuSection) {
@@ -628,6 +681,18 @@ static void main_window_load(Window *window)
   dictation_session_enable_confirmation(s_dictation_session, false);
   // Disable error dialogs
   dictation_session_enable_error_dialogs(s_dictation_session, false);
+#endif
+
+#if 0
+  // ClickConfigProvider menu_click_conf_prov=window_get_click_config_provider(window);
+  //  window_set_click_config_provider(window, click_config_provider);
+
+  menu_layer_set_callbacks((MenuLayer*)s_simple_menu_layer, NULL,
+			   (MenuLayerCallbacks) {
+			     .select_long_click = select_long_click_cb,
+			    });
+  
+  menu_layer_set_click_config_onto_window((MenuLayer*)s_simple_menu_layer, window);
 #endif
 }
 ////////////////////////////////////////////////////////////////////
@@ -659,6 +724,8 @@ static void init(void) {
     .load   = main_window_load,
     .unload = main_window_unload,
   });
+
+
   const bool animated = true;
   window_stack_push(s_window, animated);
 
