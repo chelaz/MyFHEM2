@@ -118,11 +118,17 @@ typedef enum _StatusIconType {
   ON      = 4,  
 } StatusIconType;
 
+typedef enum _MenuType {
+  MENU_UNKNOWN     = -1,
+  MENU_FAVOURITES  = 0,
+  MENU_DIRECT_COMS = 1,
+} MenuType;
+
 
 
 
 // forward declaration
-bool set_menu_icon(int index, StatusIconType Type);
+bool set_menu_icon(MenuType Menu, int index, StatusIconType Status);
 
 
 ////////////////////////////////////////////////////////////////////
@@ -147,9 +153,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     char* result = (char*)data->value->cstring;
     APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, index);
     if (!strcmp("success", result)) {
-      set_menu_icon(index, OK);
+      set_menu_icon(MENU_DIRECT_COMS, index, OK);
     } else {
-      set_menu_icon(index, FAILED);
+      set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
       vibes_long_pulse();
     }
   } else {
@@ -255,26 +261,43 @@ static SimpleMenuLayer *s_simple_menu_layer;
 
 
 // forward declaration
-bool set_menu_icon(int index, StatusIconType Type)
+bool set_menu_icon(MenuType Menu, int index, StatusIconType Status)
 {
-  switch(Type) {
+  SimpleMenuItem* pMenu = NULL;
+  
+  switch(Menu) {
+    default:
+    case MENU_UNKNOWN:
+      return false;
+    case MENU_FAVOURITES:
+      pMenu = &s_favourites_menu_items[index];
+      break;
+    case MENU_DIRECT_COMS:
+      pMenu = &s_first_menu_items[index];
+      break;   
+  };
+
+  if (!pMenu)
+    return false;
+  
+  switch(Status) {
     default:
     case UNKNOWN:
       return false;
     case FAILED:
-      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_failed, NULL);
+      pMenu->icon = PBL_IF_RECT_ELSE(s_menu_icon_image_failed, NULL);
       break;
     case OK:
-      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL);
+      pMenu->icon = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL);
       break;
     case SEND:
-      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_send, NULL);
+      pMenu->icon = PBL_IF_RECT_ELSE(s_menu_icon_image_send, NULL);
       break;
     case OFF:
-      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_off, NULL);
+      pMenu->icon = PBL_IF_RECT_ELSE(s_menu_icon_image_off, NULL);
       break;
     case ON:
-      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_on, NULL);
+      pMenu->icon = PBL_IF_RECT_ELSE(s_menu_icon_image_on, NULL);
       break;
   }
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
@@ -317,15 +340,15 @@ static void menu_select_callback(int index, void *ctx)
   
 
   if (SendCom(index))
-    set_menu_icon(index, SEND);
+    set_menu_icon(MENU_DIRECT_COMS, index, SEND);
   else
-    set_menu_icon(index, FAILED);
+    set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
 }
 
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-// TODO: dictate API       /////////////////////////////////////////
+// dictate API             /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
@@ -460,11 +483,15 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     
     int CmdIdx = -1;
     if ((CmdIdx=ExamineText(s_dictation_text)) != -1) {
-      if (SendCom(CmdIdx))
-	vibes_short_pulse(); // OK
-      else
-	vibes_long_pulse();
+      if (SendCom(CmdIdx)) {
+        set_menu_icon(MENU_FAVOURITES, 0, OK);
+	      vibes_short_pulse(); // OK
+      } else {
+        set_menu_icon(MENU_FAVOURITES, 0, FAILED);
+	      vibes_long_pulse();
+      }
     } else {
+      set_menu_icon(MENU_FAVOURITES, 0, FAILED);
       vibes_double_pulse();
     }
 
@@ -476,6 +503,7 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
            (int)status);
     menu_item->subtitle = s_failed_buff;
     layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+    set_menu_icon(MENU_FAVOURITES, 0, FAILED);  
   }
 }
 #endif // ENABLE_DICTATION
