@@ -16,6 +16,14 @@
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
+
+// Compile time features
+#ifdef PBL_SDK_3
+#  define ENABLE_DICTATION
+#endif
+
+
+
 const char FHEM_URL[] = "http://mypi:8083/fhem";
 
 
@@ -112,20 +120,6 @@ typedef enum _StatusIconType {
 
 
 
-// here ok?
-#define NUM_MENU_SECTIONS 2
-#define NUM_MENU_ITEMS_FAVOURITES 2
-#define NUM_COM 32
-
-static GBitmap *s_menu_icon_image_ok;
-static GBitmap *s_menu_icon_image_failed;
-static GBitmap *s_menu_icon_image_send;
-static GBitmap *s_menu_icon_image_off;
-static GBitmap *s_menu_icon_image_on;
-static SimpleMenuItem s_first_menu_items[NUM_COM];
-static SimpleMenuItem s_second_menu_items[NUM_MENU_ITEMS_FAVOURITES];
-static SimpleMenuLayer *s_simple_menu_layer;
-
 
 // forward declaration
 bool set_menu_icon(int index, StatusIconType Type);
@@ -153,12 +147,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     char* result = (char*)data->value->cstring;
     APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, index);
     if (!strcmp("success", result)) {
-      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL);
+      set_menu_icon(index, OK);
     } else {
-      s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_failed, NULL);      
+      set_menu_icon(index, FAILED);
       vibes_long_pulse();
     }
-    layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
   }
@@ -244,9 +237,21 @@ bool SendCom(int index)
 ////////////////////////////////////////////////////////////////////
 
 
-static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
-
 // icons moved from here
+// here ok?
+#define NUM_MENU_SECTIONS 2
+#define NUM_MENU_ITEMS_FAVOURITES 2
+#define NUM_COM 32
+
+static GBitmap *s_menu_icon_image_ok;
+static GBitmap *s_menu_icon_image_failed;
+static GBitmap *s_menu_icon_image_send;
+static GBitmap *s_menu_icon_image_off;
+static GBitmap *s_menu_icon_image_on;
+static SimpleMenuItem s_first_menu_items[NUM_COM];
+static SimpleMenuItem s_favourites_menu_items[NUM_MENU_ITEMS_FAVOURITES];
+static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
+static SimpleMenuLayer *s_simple_menu_layer;
 
 
 // forward declaration
@@ -272,6 +277,8 @@ bool set_menu_icon(int index, StatusIconType Type)
       s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_on, NULL);
       break;
   }
+  layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+ 
   return true;
 }
 
@@ -311,12 +318,8 @@ static void menu_select_callback(int index, void *ctx)
 
   if (SendCom(index))
     set_menu_icon(index, SEND);
-    // s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL);
   else
     set_menu_icon(index, FAILED);
-    // s_first_menu_items[index].icon = PBL_IF_RECT_ELSE(s_menu_icon_image_failed, NULL);
-      
-  layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
 
 
@@ -437,6 +440,7 @@ int ExamineText(const char Text2Examine[])
 static bool s_special_flag = false;
 static int s_hit_count = 0;
 
+#ifdef ENABLE_DICTATION
 static DictationSession *s_dictation_session;
 static char s_dictation_text[512];
 
@@ -446,7 +450,7 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
   // Print the results of a transcription attempt                                     
   APP_LOG(APP_LOG_LEVEL_INFO, "Dictation status: %d", (int)status);
   
-  SimpleMenuItem *menu_item = &s_second_menu_items[0];
+  SimpleMenuItem *menu_item = &s_favourites_menu_items[0];
 
   if(status == DictationSessionStatusSuccess) {
     // Display the dictated text
@@ -474,17 +478,19 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
   }
 }
-
+#endif // ENABLE_DICTATION
 
 static void special_select_callback(int index, void *ctx)
 {
+#ifdef ENABLE_DICTATION
   dictation_session_start(s_dictation_session);
+#endif
   
   // Of course, you can do more complicated things in a menu item select callback
   // Here, we have a simple toggle
   s_special_flag = !s_special_flag;
 
-  SimpleMenuItem *menu_item = &s_second_menu_items[index];
+  SimpleMenuItem *menu_item = &s_favourites_menu_items[index];
 
   if (s_special_flag) {
     menu_item->subtitle = "Okay, it's not so special.";
@@ -501,7 +507,7 @@ static void special_select_callback(int index, void *ctx)
 
 static void volume_select_callback(int index, void* ctx)
 {
-  SimpleMenuItem *menu_item = &s_second_menu_items[index];
+  SimpleMenuItem *menu_item = &s_favourites_menu_items[index];
   menu_item->subtitle = "Not yet implemented";
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 
@@ -556,21 +562,23 @@ static void main_window_load(Window *window)
     };
   }
 
-
-  s_second_menu_items[0] = (SimpleMenuItem) {
+  int itemCnt=0;
+#ifdef ENABLE_DICTATION
+  s_favourites_menu_items[itemCnt++] = (SimpleMenuItem) {
     .title = "Dictate",
     .callback = special_select_callback,
   };
-  s_second_menu_items[1] = (SimpleMenuItem) {
+#endif
+  s_favourites_menu_items[itemCnt++] = (SimpleMenuItem) {
     .title = "Volume",
     .callback = volume_select_callback,
   };
-
   s_menu_sections[0] = (SimpleMenuSection) {
     .title = "Favourites",
-    .num_items = NUM_MENU_ITEMS_FAVOURITES,
-    .items = s_second_menu_items,
+    .num_items = itemCnt,
+    .items = s_favourites_menu_items,
   };
+
   s_menu_sections[1] = (SimpleMenuSection) {
     .title = "Direct Commands",
     .num_items = GetNumComs(),
@@ -584,6 +592,7 @@ static void main_window_load(Window *window)
 
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
   
+#ifdef ENABLE_DICTATION  
   // correct positon here?
   s_dictation_session = dictation_session_create(sizeof(s_dictation_text), 
 						 dictation_session_callback, NULL);
@@ -591,6 +600,7 @@ static void main_window_load(Window *window)
   dictation_session_enable_confirmation(s_dictation_session, false);
   // Disable error dialogs
   dictation_session_enable_error_dialogs(s_dictation_session, false);
+#endif
 }
 ////////////////////////////////////////////////////////////////////
 

@@ -67,7 +67,9 @@
     "sdkVersion": "3",
     "shortName": "MyFHEM2",
     "targetPlatforms": [
-        "basalt"
+        "aplite",
+        "basalt",
+        "chalk"
     ],
     "uuid": "4e59c19e-724d-46b9-a4c6-20bbdb200cc1",
     "versionLabel": "0.1",
