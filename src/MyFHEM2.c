@@ -155,10 +155,16 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, index);
     if (!strcmp("success", result)) {
       set_menu_icon(MENU_DIRECT_COMS, index, OK);
+    } else if (!strcmp("off", result)) {
+      set_menu_icon(MENU_DIRECT_COMS, index, OFF);
+      vibes_long_pulse();
+    } else if (!strcmp("on", result)) {
+      set_menu_icon(MENU_DIRECT_COMS, index, ON);
+      vibes_long_pulse();
     } else {
       set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
       vibes_long_pulse();
-    }
+    } 
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
   }
@@ -199,7 +205,7 @@ void BuildFhemURL(const int index, char URL[], int size)
 
 void BuildFhemStatusURL(const int index, char URL[], int size)
 {
-  snprintf(URL, size, "%s?cmd=xmllist%%20%s", FHEM_URL, 
+  snprintf(URL, size, "%s?cmd=jsonlist%%20%s", FHEM_URL, 
 	   Coms_Map[index].Device);
 }
 

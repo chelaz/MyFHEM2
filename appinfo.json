@@ -1,8 +1,8 @@
 {
     "appKeys": {
-	"FHEM_URL_GET_STATE": 3,
         "FHEM_COM_ID_KEY": 1,
         "FHEM_RESP_KEY": 2,
+        "FHEM_URL_GET_STATE": 3,
         "FHEM_URL_KEY": 0
     },
     "capabilities": [
@@ -14,8 +14,8 @@
     "resources": {
         "media": [
             {
-                "file": "images/status_off",
-                "name": "STATUS_OFF",
+                "file": "images/status_on",
+                "name": "STATUS_ON",
                 "targetPlatforms": [
                     "aplite",
                     "basalt",
@@ -24,8 +24,8 @@
                 "type": "png"
             },
             {
-                "file": "images/status_on",
-                "name": "STATUS_ON",
+                "file": "images/status_off",
+                "name": "STATUS_OFF",
                 "targetPlatforms": [
                     "aplite",
                     "basalt",

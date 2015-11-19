@@ -52,11 +52,32 @@ Pebble.addEventListener('appmessage',
       var StateURL = e.payload['FHEM_URL_GET_STATE'];
       console.log('Received URL to get state: ' + StateURL);
       var response = HTTPGET(StateURL);
-      console.log('Received response: ' + response);
       
+      // tests:
+      /*
+      response = JSON.stringify({
+        "ResultSet"  : {
+          "Results" : {
+            "State": "off",
+            "Type": "FS20",
+            "XMIT": "3bcd"
+          }
+        }
+      });
+      */
+      console.log('Received response: ' + response);
+            
       var dict;
       if (response != null) {
-        dict = { 'FHEM_RESP_KEY'   :  'success',
+        var DevJSON = JSON.parse(response);
+        
+        console.log('ResultSet:' + DevJSON.ResultSet);
+        console.log('ResultSet, Results:' + DevJSON.ResultSet.Results);
+        console.log('ResultSet, Results:' + DevJSON.ResultSet.Results.State);
+        
+        var State = DevJSON.ResultSet.Results.State;
+          
+        dict = { 'FHEM_RESP_KEY'   :  State,
                  'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'] };
       } else {
         dict = { 'FHEM_RESP_KEY'   :  'not connected',
