@@ -58,7 +58,7 @@ Pebble.addEventListener('appmessage',
       response = JSON.stringify({
         "ResultSet"  : {
           "Results" : {
-            "State": "off",
+            "STATE": "off",
             "Type": "FS20",
             "XMIT": "3bcd"
           }
@@ -70,12 +70,12 @@ Pebble.addEventListener('appmessage',
       var dict;
       if (response != null) {
         var DevJSON = JSON.parse(response);
+        var State = DevJSON.ResultSet.Results.STATE;
         
         console.log('ResultSet:' + DevJSON.ResultSet);
         console.log('ResultSet, Results:' + DevJSON.ResultSet.Results);
-        console.log('ResultSet, Results:' + DevJSON.ResultSet.Results.State);
+        console.log('Received STATE: ' + State);
         
-        var State = DevJSON.ResultSet.Results.State;
           
         dict = { 'FHEM_RESP_KEY'   :  State,
                  'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'] };

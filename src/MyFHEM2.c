@@ -129,6 +129,7 @@ typedef enum _MenuType {
 
 // forward declaration
 bool set_menu_icon(MenuType Menu, int index, StatusIconType Status);
+bool SendCom(int index, bool requestStatus);
 
 
 ////////////////////////////////////////////////////////////////////
@@ -155,12 +156,16 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, index);
     if (!strcmp("success", result)) {
       set_menu_icon(MENU_DIRECT_COMS, index, OK);
+      
+      // now fetch state:
+      SendCom(index, true);
+
     } else if (!strcmp("off", result)) {
       set_menu_icon(MENU_DIRECT_COMS, index, OFF);
-      vibes_long_pulse();
     } else if (!strcmp("on", result)) {
       set_menu_icon(MENU_DIRECT_COMS, index, ON);
-      vibes_long_pulse();
+    } else if (!strcmp("toggle", result)) {
+      set_menu_icon(MENU_DIRECT_COMS, index, OK);
     } else {
       set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
       vibes_long_pulse();
@@ -205,7 +210,7 @@ void BuildFhemURL(const int index, char URL[], int size)
 
 void BuildFhemStatusURL(const int index, char URL[], int size)
 {
-  snprintf(URL, size, "%s?cmd=jsonlist%%20%s", FHEM_URL, 
+  snprintf(URL, size, "%s?cmd=jsonlist%%20%s&XHR=1", FHEM_URL, 
 	   Coms_Map[index].Device);
 }
 
