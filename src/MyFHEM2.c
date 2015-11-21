@@ -26,81 +26,135 @@
 
 const char FHEM_URL[] = "http://mypi:8083/fhem";
 
+// use this to specify in which menu the command shall appear.
+typedef enum MenuIdx_ {
+  MenuOmit  = -1,
+  MenuDef   = -2,
+  MenuFav   = -3,
+  MenuState = -4,
+} MenuIdx_t;
 
+// the menu indices are overwritten during creation of menu if not MenuOmit
 typedef struct Coms_Map_
 {
   const char* Room;
-  const char* Description;
+  char* Description; // workaround for state placeholder
   const char* URL; // if used
   const char* Device;
   const char* Command;
+  MenuIdx_t   MenuDefIdx;    // default: either MenuDef or MenuOmit
+  MenuIdx_t   MenuFavIdx;    // default: either MenuDef or MenuFav
+  MenuIdx_t   MenuStateIdx;  // default: either MenuDef or MenuState
 } Coms_Map_t;
+
 
 static Coms_Map_t Coms_Map[] = {
   {
     "Küche",
     "Licht umschalten", NULL,
-    "FS20_fr_bel", "toggle"},
+    "FS20_fr_bel", "toggle",
+    MenuDef, MenuFav, MenuOmit,
+  },
   {
     "Wohnzimmer",
     "Licht an/aus", NULL,
-    "FS20_fz_bel", "toggle" },
+    "FS20_fz_bel", "toggle",
+    MenuOmit, MenuFav, MenuOmit,
+  },
   {
     "Flur",
     "rot", NULL,
-   /* "http://mypi:8083/fhem?cmd=set%20HueFlur1%20rgb%20FF0000&XHR=1" },*/
-    "HueFlur1", "rgb%20FF0000" },
+    /* "http://mypi:8083/fhem?cmd=set%20HueFlur1%20rgb%20FF0000&XHR=1" },*/
+    "HueFlur1", "rgb%20FF0000",
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Flur",
     "orange",
     "cmd=set%20HueFlur1%20rgb%20FF830A&XHR=1",
-    NULL, NULL },
+    NULL, NULL,
+    MenuDef, MenuFav, MenuOmit,
+  },
   {
     "Flur",
     "aus", NULL,
-    "HueFlur1", "off" },
+    "HueFlur1", "off",
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Schlafzimmer",
     "rot", NULL,
-    "HueSchlafzimmer1", "rgb%20FF0000" },
+    "HueSchlafzimmer1", "rgb%20FF0000",
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Schlafzimmer",
     "aus", NULL,
-    "HueSchlafzimmer1", "off" },
+    "HueSchlafzimmer1", "off",
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Lautstärke",
     "lauter", NULL,
-    "FS20_0000_VolUp", "on"},
+    "FS20_0000_VolUp", "on",
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Lautstärke",
     "leiser", NULL,
-    "FS20_0001_VolDown", "on"},
+    "FS20_0001_VolDown", "on",
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Radio",
     "leiser",
     "cmd=%22mpc.sh+-q+-h+lora+volume+-10%22",
-    NULL, NULL },
+    NULL, NULL,
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Radio",
     "lauter",
     "cmd=%22mpc.sh+-q+-h+lora+volume+%2B10%22",
-    NULL, NULL },
+    NULL, NULL,
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Radio",
     "an", NULL,
-    "FS20_Remote_Radio", "on"},
+    "FS20_Remote_Radio", "on",
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Küche",
     "Licht an", NULL,
-    "FS20_fr_bel", "on"},
+    "FS20_fr_bel", "on",
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Küche",
     "Licht aus", NULL,
-    "FS20_fr_bel", "off"},
+    "FS20_fr_bel", "off",
+    MenuDef, MenuFav, MenuState,
+  },
+  {
+    "Balkon",
+    "--------------------", NULL,
+    "Thermo1", "",
+    MenuDef, MenuFav, MenuState,
+  },
+  {
+    "Schlafzimmer",
+    "--------------------", NULL,
+    "Thermo3", "",
+    MenuDef, MenuFav, MenuState,
+  },
   {
     "Alles",
     "aus", NULL,
-    "dummy_all", "off"},
+    "dummy_all", "off",
+    MenuDef, MenuFav, MenuState,
+  },
 };
 
 int GetNumComs()
@@ -117,6 +171,64 @@ Coms_Map_t* GetCom(MapIdx_t Idx)
   else
     return NULL;
 }
+
+
+//////////////////////////////////////////////////////
+// Menu mapping functions Menu index <-> command index
+MenuIdx_t GetDefMenuIdx(MapIdx_t MapIdx)
+{
+  Coms_Map_t* PCom=GetCom(MapIdx);
+  if (!PCom) return MenuOmit;
+  return PCom->MenuDefIdx;
+}
+
+MenuIdx_t GetFavMenuIdx(MapIdx_t MapIdx)
+{
+  Coms_Map_t* PCom=GetCom(MapIdx);
+  if (!PCom) return MenuOmit;
+  return PCom->MenuFavIdx;
+}
+
+MenuIdx_t GetStateMenuIdx(MapIdx_t MapIdx)
+{
+  Coms_Map_t* PCom=GetCom(MapIdx);
+  if (!PCom) return MenuOmit;
+  return PCom->MenuStateIdx;
+}
+
+
+MapIdx_t GetCmdIdxFromDefMenu(MenuIdx_t MenuIdx)
+{
+  for (int i=0; i < GetNumComs(); i++) {
+    Coms_Map_t* PCom=GetCom(i);
+    if (!PCom) continue;
+    if (MenuIdx == PCom->MenuDefIdx)
+      return i;
+  }
+  return -1;
+}
+MapIdx_t GetCmdIdxFromFavMenu(MenuIdx_t MenuIdx)
+{
+  for (int i=0; i < GetNumComs(); i++) {
+    Coms_Map_t* PCom=GetCom(i);
+    if (!PCom) continue;
+    if (MenuIdx == PCom->MenuFavIdx)
+      return i;
+  }
+  return -1;
+}
+MapIdx_t GetCmdIdxFromStateMenu(MenuIdx_t MenuIdx)
+{
+  for (int i=0; i < GetNumComs(); i++) {
+    Coms_Map_t* PCom=GetCom(i);
+    if (!PCom) continue;
+    if (MenuIdx == PCom->MenuStateIdx)
+      return i;
+  }
+  return -1;
+}
+
+
 
 typedef enum _StatusIconType {
   UNKNOWN = -1,
@@ -140,9 +252,12 @@ typedef enum _MsgID {
 } MsgID_t;
 
 
-
-// forward declaration
+///////////////////////
+// Forward declarations
 bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status);
+// todo:
+bool set_menu_text(Menu_t Menu, MapIdx_t CmdIdx, int index, const char text[]);
+  
 bool SendCommand(MapIdx_t CmdIdx, bool requestStatus, MsgID_t ID);
 
 bool SendCom(MapIdx_t CmdIdx)  { return SendCommand(CmdIdx, false, MSG_ID_DEFAULT); }
@@ -168,6 +283,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     index = (MapIdx_t)data->value->int32;
   }
 
+  MenuIdx_t MenuDefIdx   = GetDefMenuIdx(index);
+  MenuIdx_t MenuFavIdx   = GetFavMenuIdx(index);
+  MenuIdx_t MenuStateIdx = GetStateMenuIdx(index);
+
+
   MsgID_t MsgID = MSG_ID_UNKNOWN;
   if ((data=dict_find(iterator, FHEM_MSG_ID)) != NULL) {
     MsgID = (MsgID_t)data->value->int32;
@@ -180,21 +300,31 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     char* result = (char*)data->value->cstring;
     APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, (int)index);
     if (!strcmp("success", result)) {
-      set_menu_icon(MENU_DIRECT_COMS, index, OK);
-      
+      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx, OK);
       // now fetch state:
       SendComR(index);
 
     } else if (!strcmp("off", result)) {
-      set_menu_icon(MENU_DIRECT_COMS, index, OFF);
+      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx,   OFF);
+      set_menu_icon(MENU_DIRECT_COMS, MenuFavIdx,   OFF);
+      set_menu_icon(MENU_DIRECT_COMS, MenuStateIdx, OFF);
     } else if (!strcmp("on", result)) {
-      set_menu_icon(MENU_DIRECT_COMS, index, ON);
+      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx,   ON);
+      set_menu_icon(MENU_DIRECT_COMS, MenuFavIdx,   ON);
+      set_menu_icon(MENU_DIRECT_COMS, MenuStateIdx, ON);
     } else if (!strcmp("toggle", result)) {
-      set_menu_icon(MENU_DIRECT_COMS, index, OK);
-    } else {
-      set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
+      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx,   OK);
+      set_menu_icon(MENU_DIRECT_COMS, MenuFavIdx,   OK);
+      set_menu_icon(MENU_DIRECT_COMS, MenuStateIdx, OK);
+    } else if (!strcmp("not connected", result)) {
+      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx, FAILED);
       if (MsgID != MSG_ID_SEND_COM_REQ_STATE_NEXT)
 	vibes_long_pulse();
+    } else {
+      set_menu_text(MENU_DIRECT_COMS, index, MenuDefIdx,   result); // todo
+      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx,   OK);
+      set_menu_icon(MENU_DIRECT_COMS, MenuFavIdx,   OK);
+      set_menu_icon(MENU_DIRECT_COMS, MenuStateIdx, OK);
     } 
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
@@ -360,11 +490,12 @@ static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
 static SimpleMenuLayer *s_simple_menu_layer;
 
 
-// forward declaration
 bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
 {
   SimpleMenuItem* pMenu = NULL;
-  
+
+  if (index < 0) return false; // either omit or not set yet
+
   switch(Menu) {
     default:
     case MENU_UNKNOWN:
@@ -385,25 +516,62 @@ bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
     case UNKNOWN:
       return false;
     case FAILED:
-      pMenu->icon = PBL_IF_RECT_ELSE(s_menu_icon_image_failed, NULL);
+      pMenu->icon = s_menu_icon_image_failed;
       break;
     case OK:
-      pMenu->icon = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL);
+      pMenu->icon = s_menu_icon_image_ok;
       break;
     case SEND:
-      pMenu->icon = PBL_IF_RECT_ELSE(s_menu_icon_image_send, NULL);
+      pMenu->icon = s_menu_icon_image_send;
       break;
     case OFF:
-      pMenu->icon = PBL_IF_RECT_ELSE(s_menu_icon_image_off, NULL);
+      pMenu->icon = s_menu_icon_image_off;
       break;
     case ON:
-      pMenu->icon = PBL_IF_RECT_ELSE(s_menu_icon_image_on, NULL);
+      pMenu->icon = s_menu_icon_image_on;
       break;
   }
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
  
   return true;
 }
+
+
+bool set_menu_text(Menu_t Menu, MapIdx_t CmdIdx, int index, const char text[])
+{
+  SimpleMenuItem* pMenu = NULL;
+  
+  if (index < 0) return false; // either omit or not set yet
+
+  Coms_Map_t* PCom=GetCom(CmdIdx);
+  if (!PCom) return false;
+  
+  switch(Menu) {
+  default:
+    case MENU_UNKNOWN:
+      return false;
+    case MENU_FAVOURITES:
+      pMenu = &s_favourites_menu_items[index];
+      break;
+    case MENU_DIRECT_COMS:
+      pMenu = &s_first_menu_items[index];
+      break;   
+  };
+
+  if (!pMenu)
+    return false;
+
+  int maxlen = 16; //strlen(PCom->Description);
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Changing menu text of command %d from %s to %s", 
+	  CmdIdx, PCom->Description, text);
+  
+  strncpy(PCom->Description, text, maxlen);
+  layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+
+  return true;
+}
+
 
 // todo: for tests
 static bool s_special_flag = false;
@@ -412,7 +580,8 @@ static void menu_select_callback(int index, void *ctx)
 {
   // s_first_menu_items[index].subtitle = "You've hit select here!";
 
-  MapIdx_t CmdIdx = (MapIdx_t)index; // TODO: mapping function here
+  MapIdx_t CmdIdx = GetCmdIdxFromDefMenu(index);
+  if (CmdIdx < 0) return;
 
 #if 0
   GRect invisible_rect = GRect(0, 0, 5, 5);
@@ -734,13 +903,21 @@ static void main_window_load(Window *window)
 
   //window_set_background_color(window, GColorYellow);
 
+  int MenuCnt=0;
   for (int i=0; i < GetNumComs(); i++) {
-    s_first_menu_items[i] = (SimpleMenuItem) {
-      .title    = GetCom(i)->Room,
-      .subtitle = GetCom(i)->Description,
-      .callback = menu_select_callback,
-      // .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
-    };
+    Coms_Map_t* PCom = GetCom(i);
+    if (!PCom) continue;
+    
+    if (PCom->MenuDefIdx != MenuOmit) {
+      s_first_menu_items[MenuCnt] = (SimpleMenuItem) {
+	.title    = PCom->Room,
+	.subtitle = PCom->Description,
+	.callback = menu_select_callback,
+	// .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
+      };
+      PCom->MenuDefIdx = MenuCnt;
+      MenuCnt++;
+    }
   }
 
   int itemCnt=0;
@@ -766,7 +943,7 @@ static void main_window_load(Window *window)
 
   s_menu_sections[1] = (SimpleMenuSection) {
     .title = "Direct Commands",
-    .num_items = GetNumComs(),
+    .num_items = MenuCnt,
     .items = s_first_menu_items,
   };
 
