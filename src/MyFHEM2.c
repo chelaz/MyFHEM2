@@ -38,7 +38,7 @@ typedef enum MenuIdx_ {
 typedef struct Coms_Map_
 {
   const char* Room;
-  char* Description; // workaround for state placeholder
+  const char* Description;
   const char* URL; // if used
   const char* Device;
   const char* Command;
@@ -257,6 +257,7 @@ typedef enum _MsgID {
   MSG_ID_UNKNOWN = -1,
   MSG_ID_DEFAULT =  0,
   MSG_ID_SEND_COM_REQ_STATE_NEXT = 1,
+  MSG_ID_REQ_TYPE = 2
 } MsgID_t;
 
 
@@ -280,7 +281,8 @@ static const uint32_t FHEM_URL_KEY       = 0;
 static const uint32_t FHEM_COM_ID_KEY    = 1;
 static const uint32_t FHEM_RESP_KEY      = 2;
 static const uint32_t FHEM_URL_GET_STATE = 3;
-static const uint32_t FHEM_MSG_ID        = 4;
+static const uint32_t FHEM_URL_REQ_TYPE  = 4;
+static const uint32_t FHEM_MSG_ID        = 5;
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 {  
@@ -320,11 +322,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   ON);
       set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   ON);
       set_menu_icon(MENU_STATE_COMS, MenuStateIdx, ON);
-    } else if (!strcmp("toggle", result)) {
+    } /* else if (!strcmp("toggle", result)) {
       set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   OK);
       set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   OK);
       set_menu_icon(MENU_STATE_COMS, MenuStateIdx, OK);
-    } else if (!strcmp("not connected", result)) {
+      } */ else if (!strcmp("not connected", result)) {
       set_menu_icon(MENU_DEF_COMS, MenuDefIdx, FAILED);
       if (MsgID != MSG_ID_SEND_COM_REQ_STATE_NEXT)
 	vibes_long_pulse();
@@ -409,8 +411,24 @@ bool BuildFhemStatusURL(const MapIdx_t index, char URL[], int size)
     *URL = 0;
     return false;
   }
-  snprintf(URL, size, "%s?cmd=jsonlist%%20%s&XHR=1", FHEM_URL, 
+  snprintf(URL, size, "%s?cmd=jsonlist2%%20%s&XHR=1", FHEM_URL, 
 	   PCom->Device);
+  return true;
+}
+
+bool BuildFhemTypeURL(const MapIdx_t index, const char Type[], char URL[], int size)
+{
+  Coms_Map_t* PCom = GetCom(index);
+  if (!PCom) {
+    *URL = 0;
+    return false;
+  }
+
+  if (!PCom->Device) {
+    *URL = 0;
+    return false;
+  }
+  snprintf(URL, size, "%s?cmd=jsonlist2%%20TYPE=%s&XHR=1", FHEM_URL, Type);
   return true;
 }
 
@@ -896,6 +914,54 @@ static void volume_select_callback(int index, void* ctx)
 }
 
 
+static void request_fs20_devices_callback(int index, void* ctx)
+{
+  char URL[1024];
+
+  if (!BuildFhemTypeURL(index, "FS20", URL, 1024))
+    return;
+
+  if (strlen(URL) == 0)
+    return;
+
+  MsgID_t MsgID=MSG_ID_REQ_TYPE;
+
+  AppMessageResult Res = APP_MSG_OK;
+    
+  DictionaryIterator *iter;
+  if ((Res=app_message_outbox_begin(&iter)) != APP_MSG_OK) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: app_message_outbox_begin: %d", Res);   
+    return;
+  }
+
+  if (!iter) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Error creating outbound message!");
+    return;
+  }
+  
+  DictionaryResult ResDict;
+  if ((ResDict=dict_write_cstring(iter, FHEM_URL_REQ_TYPE, URL)) != DICT_OK) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Dict write url error: %d!", ResDict);
+    return;
+  }
+  
+  if ((ResDict=dict_write_int(iter, FHEM_COM_ID_KEY, (int*)&index, sizeof(int), true)) != DICT_OK) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Dict write com id error: %d", ResDict);
+    return;
+  }
+
+  if ((ResDict=dict_write_int(iter, FHEM_MSG_ID, &MsgID, sizeof(int), true)) != DICT_OK) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Dict write MsgID error: %d", ResDict);
+    return;
+  }
+  
+  if (app_message_outbox_send() != APP_MSG_OK) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "app_message_outbox_send: %d", Res);   
+    return;
+  }
+}
+
+
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 // Menu click callbacks    /////////////////////////////////////////
@@ -961,6 +1027,12 @@ int create_special_menu()
     .callback = request_states_select_callback,
   };
   */
+
+  s_special_menu_items[MenuCnt++] = (SimpleMenuItem) {
+    .title = "Req. FS20",
+    .callback = request_fs20_devices_callback,
+  };
+
   return MenuCnt;
 }
 
