@@ -3,6 +3,7 @@
         "FHEM_COM_ID_KEY": 1,
         "FHEM_RESP_KEY": 2,
         "FHEM_URL_GET_STATE": 3,
+        "FHEM_MSG_ID": 4,
         "FHEM_URL_KEY": 0
     },
     "capabilities": [

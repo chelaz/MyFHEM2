@@ -27,14 +27,16 @@
 const char FHEM_URL[] = "http://mypi:8083/fhem";
 
 
-static struct _Coms_Map
+typedef struct Coms_Map_
 {
   const char* Room;
   const char* Description;
   const char* URL; // if used
   const char* Device;
   const char* Command;
-} Coms_Map[] = {
+} Coms_Map_t;
+
+static Coms_Map_t Coms_Map[] = {
   {
     "Küche",
     "Licht umschalten", NULL,
@@ -55,19 +57,16 @@ static struct _Coms_Map
     NULL, NULL },
   {
     "Flur",
-    "aus",
-    "cmd=set%20HueFlur1%20off&XHR=1",
-    NULL, NULL },
+    "aus", NULL,
+    "HueFlur1", "off" },
   {
     "Schlafzimmer",
-    "rot",
-    "cmd=set%20HueSchlafzimmer1%20rgb%20FF0000&XHR=1",
-    NULL, NULL },
+    "rot", NULL,
+    "HueSchlafzimmer1", "rgb%20FF0000" },
   {
     "Schlafzimmer",
-    "aus",
-    "cmd=set%20HueSchlafzimmer1%20off&XHR=1",
-    NULL, NULL },
+    "aus", NULL,
+    "HueSchlafzimmer1", "off" },
   {
     "Lautstärke",
     "lauter", NULL,
@@ -106,7 +105,17 @@ static struct _Coms_Map
 
 int GetNumComs()
 {
-  return sizeof(Coms_Map) / sizeof(struct _Coms_Map);
+  return sizeof(Coms_Map) / sizeof(Coms_Map_t);
+}
+
+typedef int MapIdx_t;
+
+Coms_Map_t* GetCom(MapIdx_t Idx)
+{ 
+  if (Idx >= 0 && Idx < GetNumComs())
+    return &Coms_Map[Idx];
+  else
+    return NULL;
 }
 
 typedef enum _StatusIconType {
@@ -116,21 +125,28 @@ typedef enum _StatusIconType {
   SEND    = 2,
   OFF     = 3,
   ON      = 4,  
-} StatusIconType;
+} StatusIcon_t;
 
 typedef enum _MenuType {
   MENU_UNKNOWN     = -1,
   MENU_FAVOURITES  = 0,
   MENU_DIRECT_COMS = 1,
-} MenuType;
+} Menu_t;
 
+typedef enum _MsgID {
+  MSG_ID_UNKNOWN = -1,
+  MSG_ID_DEFAULT =  0,
+  MSG_ID_SEND_COM_REQ_STATE_NEXT = 1,
+} MsgID_t;
 
 
 
 // forward declaration
-bool set_menu_icon(MenuType Menu, int index, StatusIconType Status);
-bool SendCom(int index, bool requestStatus);
+bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status);
+bool SendCommand(MapIdx_t CmdIdx, bool requestStatus, MsgID_t ID);
 
+bool SendCom(MapIdx_t CmdIdx)  { return SendCommand(CmdIdx, false, MSG_ID_DEFAULT); }
+bool SendComR(MapIdx_t CmdIdx) { return SendCommand(CmdIdx, true,  MSG_ID_DEFAULT); }
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -141,24 +157,33 @@ static const uint32_t FHEM_URL_KEY       = 0;
 static const uint32_t FHEM_COM_ID_KEY    = 1;
 static const uint32_t FHEM_RESP_KEY      = 2;
 static const uint32_t FHEM_URL_GET_STATE = 3;
+static const uint32_t FHEM_MSG_ID        = 4;
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 {  
   Tuple *data;
 
-  int index = -1;
+  MapIdx_t index = -1;
   if ((data=dict_find(iterator, FHEM_COM_ID_KEY)) != NULL) {
-    index = (int)data->value->int32;
+    index = (MapIdx_t)data->value->int32;
   }
+
+  MsgID_t MsgID = MSG_ID_UNKNOWN;
+  if ((data=dict_find(iterator, FHEM_MSG_ID)) != NULL) {
+    MsgID = (MsgID_t)data->value->int32;
+  }
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "MsgID: %d of CmdIdx %d", MsgID, (int)index);
+  
+  bool successfull = true;
 
   if ((data = dict_find(iterator, FHEM_RESP_KEY)) != NULL) {
     char* result = (char*)data->value->cstring;
-    APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, index);
+    APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, (int)index);
     if (!strcmp("success", result)) {
       set_menu_icon(MENU_DIRECT_COMS, index, OK);
       
       // now fetch state:
-      SendCom(index, true);
+      SendComR(index);
 
     } else if (!strcmp("off", result)) {
       set_menu_icon(MENU_DIRECT_COMS, index, OFF);
@@ -168,10 +193,33 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       set_menu_icon(MENU_DIRECT_COMS, index, OK);
     } else {
       set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
-      vibes_long_pulse();
+      if (MsgID != MSG_ID_SEND_COM_REQ_STATE_NEXT)
+	vibes_long_pulse();
     } 
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
+    successfull = false;
+  }
+
+  if (successfull) {
+    if (MsgID == MSG_ID_SEND_COM_REQ_STATE_NEXT) {
+      bool fetch_next = true;
+      while (fetch_next) {
+	index++;
+	Coms_Map_t* PCom = GetCom(index);
+	if (!PCom)
+	  fetch_next = false; // index not valid anymore
+	else {
+	  if (PCom->Device) {
+	    APP_LOG(APP_LOG_LEVEL_DEBUG, "Request next state from %s",
+		    GetCom(index)->Device);
+	    if (SendCommand(index, true, MSG_ID_SEND_COM_REQ_STATE_NEXT)) {
+	      fetch_next = false; // command fired successfully, waiting for next msg
+	    }
+	  }
+	}
+      }
+    }
   }
 }
 
@@ -198,32 +246,55 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context)
 // FHEM ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-void BuildFhemURL(const int index, char URL[], int size)
+void BuildFhemURL(const MapIdx_t index, char URL[], int size)
 {
-  if (Coms_Map[index].URL)
-    snprintf(URL, size, "%s?%s", FHEM_URL, Coms_Map[index].URL);
+  Coms_Map_t* PCom = GetCom(index);
+  if (!PCom) return;
+
+  if (GetCom(index)->URL)
+    snprintf(URL, size, "%s?%s", FHEM_URL, PCom->URL);
   else {
-    snprintf(URL, size, "%s?cmd=set%%20%s%%20%s", FHEM_URL, 
-             Coms_Map[index].Device, Coms_Map[index].Command);
+    snprintf(URL, size, "%s?cmd=set%%20%s%%20%s&XHR=1", FHEM_URL, 
+             PCom->Device, PCom->Command);
   }
 }
 
-void BuildFhemStatusURL(const int index, char URL[], int size)
+bool BuildFhemStatusURL(const MapIdx_t index, char URL[], int size)
 {
+  Coms_Map_t* PCom = GetCom(index);
+  if (!PCom) {
+    *URL = 0;
+    return false;
+  }
+
+  if (!PCom->Device) {
+    *URL = 0;
+    return false;
+  }
   snprintf(URL, size, "%s?cmd=jsonlist%%20%s&XHR=1", FHEM_URL, 
-	   Coms_Map[index].Device);
+	   PCom->Device);
+  return true;
 }
 
 
-bool SendCom(int index, bool requestStatus)
+bool SendCommand(MapIdx_t index, bool requestStatus, MsgID_t MsgID)
 {
   char URL[1024];
-  
+
+  if (!requestStatus) {
+    BuildFhemURL(index, URL, 1024);
+  } else {
+    if (!BuildFhemStatusURL(index, URL, 1024))
+      return false; // device is not specified (just URL)
+  }
+  if (strlen(URL) == 0)
+    return false;
+
   AppMessageResult Res = APP_MSG_OK;
     
   DictionaryIterator *iter;
   if ((Res=app_message_outbox_begin(&iter)) != APP_MSG_OK) {
-    APP_LOG(APP_LOG_LEVEL_ERROR, "app_message_outbox_begin: %d", Res);   
+    APP_LOG(APP_LOG_LEVEL_ERROR, "ERROR: app_message_outbox_begin: %d", Res);   
     return false;
   }
 
@@ -231,27 +302,28 @@ bool SendCom(int index, bool requestStatus)
     APP_LOG(APP_LOG_LEVEL_ERROR, "Error creating outbound message!");
     return false;
   }
-
+  
   DictionaryResult ResDict;
   if (!requestStatus) {
-    BuildFhemURL(index, URL, 1024);
-    
     if ((ResDict=dict_write_cstring(iter, FHEM_URL_KEY, URL)) != DICT_OK) {
       APP_LOG(APP_LOG_LEVEL_INFO, "Dict write url error: %d!", ResDict);
       return false;
     }
   } else {
-    BuildFhemStatusURL(index, URL, 1024);
-    
     if ((ResDict=dict_write_cstring(iter, FHEM_URL_GET_STATE, URL)) != DICT_OK) {
-      APP_LOG(APP_LOG_LEVEL_INFO, "Dict write status url error: %d!", ResDict);
+      APP_LOG(APP_LOG_LEVEL_ERROR, "Dict write status url error: %d!", ResDict);
       return false;
     }
   }
   
   
-  if ((ResDict=dict_write_int(iter, FHEM_COM_ID_KEY, &index, sizeof(int), true)) != DICT_OK) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Dict write com id error: %d", ResDict);
+  if ((ResDict=dict_write_int(iter, FHEM_COM_ID_KEY, (int*)&index, sizeof(int), true)) != DICT_OK) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Dict write com id error: %d", ResDict);
+    return false;
+  }
+
+  if ((ResDict=dict_write_int(iter, FHEM_MSG_ID, &MsgID, sizeof(int), true)) != DICT_OK) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Dict write MsgID error: %d", ResDict);
     return false;
   }
   
@@ -274,7 +346,7 @@ bool SendCom(int index, bool requestStatus)
 // icons moved from here
 // here ok?
 #define NUM_MENU_SECTIONS 2
-#define NUM_MENU_ITEMS_FAVOURITES 2
+#define MAX_NUM_MENU_ITEMS_FAVOURITES 10
 #define NUM_COM 32
 
 static GBitmap *s_menu_icon_image_ok;
@@ -283,13 +355,13 @@ static GBitmap *s_menu_icon_image_send;
 static GBitmap *s_menu_icon_image_off;
 static GBitmap *s_menu_icon_image_on;
 static SimpleMenuItem s_first_menu_items[NUM_COM];
-static SimpleMenuItem s_favourites_menu_items[NUM_MENU_ITEMS_FAVOURITES];
+static SimpleMenuItem s_favourites_menu_items[MAX_NUM_MENU_ITEMS_FAVOURITES];
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
 static SimpleMenuLayer *s_simple_menu_layer;
 
 
 // forward declaration
-bool set_menu_icon(MenuType Menu, int index, StatusIconType Status)
+bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
 {
   SimpleMenuItem* pMenu = NULL;
   
@@ -340,6 +412,8 @@ static void menu_select_callback(int index, void *ctx)
 {
   // s_first_menu_items[index].subtitle = "You've hit select here!";
 
+  MapIdx_t CmdIdx = (MapIdx_t)index; // TODO: mapping function here
+
 #if 0
   GRect invisible_rect = GRect(0, 0, 5, 5);
   GRect visible_rect = GRect(10, 0, 5, 5);
@@ -369,7 +443,7 @@ static void menu_select_callback(int index, void *ctx)
 #endif
   
 
-  if (SendCom(index, s_special_flag))
+  if (SendCommand(CmdIdx, s_special_flag, MSG_ID_DEFAULT))
     set_menu_icon(MENU_DIRECT_COMS, index, SEND);
   else
     set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
@@ -415,7 +489,9 @@ int ParseText(char DictationText[], char* Words[], int MaxNumWords)
 int FindRoom(const char Word[], int StartIdx)
 {
   for (int i=StartIdx; i < GetNumComs(); i++) {
-    if (strcmp(Word, Coms_Map[i].Room) ==0)
+    Coms_Map_t* PCom = GetCom(i);
+    if (!PCom) return -1;
+    if (strcmp(Word, PCom->Room) == 0)
       return i;
   }
   return -1;
@@ -434,7 +510,10 @@ int MatchRoomWords(int CmdIdx, char* Words[], int CurWordIdx, int NumWords)
   char* DescrWords[8];
   char Description[256];
 
-  strncpy(Description, Coms_Map[CmdIdx].Description, 255);
+  Coms_Map_t* PCom = GetCom(CmdIdx);
+  if (!PCom) return NumWords;
+
+  strncpy(Description, PCom->Description, 255);
   APP_LOG(APP_LOG_LEVEL_INFO, "\t\tDescription %s", Description);
 
   int NumDescrWords=ParseText(Description, DescrWords, 8);
@@ -458,7 +537,7 @@ int MatchRoomWords(int CmdIdx, char* Words[], int CurWordIdx, int NumWords)
 
 
 // returns found command index
-int ExamineText(const char Text2Examine[])
+MapIdx_t ExamineText(const char Text2Examine[])
 {
   char Text[128];
 
@@ -473,15 +552,15 @@ int ExamineText(const char Text2Examine[])
   // example: "Im Flur Licht aus"
   for (int i=0; i < NumWords; i++) {
     for (int j=0; j < GetNumComs(); j++) {
-      int CmdIdx = FindRoom(Words[i], j);
+      MapIdx_t CmdIdx = FindRoom(Words[i], j);
       if (CmdIdx >= 0) {
 	// Flur: i = 1, CmdIdx = 2 (we have to find 4)
-	APP_LOG(APP_LOG_LEVEL_INFO, "\t%s at %d", Words[i], CmdIdx);
+	APP_LOG(APP_LOG_LEVEL_INFO, "\t%s at %d", Words[i], (int)CmdIdx);
 	int CurWordIdx = MatchRoomWords(CmdIdx, Words, i+1, NumWords);
 	if (CurWordIdx == NumWords) { // not found, continue	
 	  continue;
 	}
-	APP_LOG(APP_LOG_LEVEL_INFO, "\tFound room idx %d. Last word: %s", CmdIdx, Words[CurWordIdx]);
+	APP_LOG(APP_LOG_LEVEL_INFO, "\tFound room idx %d. Last word: %s", (int)CmdIdx, Words[CurWordIdx]);
 	return CmdIdx;
       }
     }
@@ -489,8 +568,6 @@ int ExamineText(const char Text2Examine[])
   return -1;
 }
 
-
-static int s_hit_count = 0;
 
 #ifdef ENABLE_DICTATION
 static DictationSession *s_dictation_session;
@@ -510,9 +587,9 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     menu_item->subtitle = s_dictation_text;
     layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
     
-    int CmdIdx = -1;
+    MapIdx_t CmdIdx = -1;
     if ((CmdIdx=ExamineText(s_dictation_text)) != -1) {
-      if (SendCom(CmdIdx, false)) {
+      if (SendCom(CmdIdx)) {
         set_menu_icon(MENU_FAVOURITES, 0, OK);
 	      vibes_short_pulse(); // OK
       } else {
@@ -537,12 +614,24 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
 }
 #endif // ENABLE_DICTATION
 
+#ifdef ENABLE_DICTATION
 static void special_select_callback(int index, void *ctx)
 {
-#ifdef ENABLE_DICTATION
   dictation_session_start(s_dictation_session);
-#endif
   // layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+}
+#endif
+
+
+static void request_states_select_callback(int index, void* ctx)
+{
+  SendCommand(0, true, MSG_ID_SEND_COM_REQ_STATE_NEXT);
+
+/*
+    set_menu_icon(MENU_DIRECT_COMS, index, SEND);
+  else
+    set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
+*/
 }
 
 static void volume_select_callback(int index, void* ctx)
@@ -569,7 +658,7 @@ static void volume_select_callback(int index, void* ctx)
   APP_LOG(APP_LOG_LEVEL_INFO, ".. finished. Now Description test");
   char* DescrWords[8];
   char  Description[256];
-  strncpy(Description, Coms_Map[0].Description, 255);
+  strncpy(Description, GetCom(0)->Description, 255);
   APP_LOG(APP_LOG_LEVEL_INFO, "\t\tDescription %s", Description);
   int NumDescrWords=ParseText(Description, DescrWords, 8);
   APP_LOG(APP_LOG_LEVEL_INFO, "\t\t NumWords %d", NumDescrWords);
@@ -647,8 +736,8 @@ static void main_window_load(Window *window)
 
   for (int i=0; i < GetNumComs(); i++) {
     s_first_menu_items[i] = (SimpleMenuItem) {
-      .title    = Coms_Map[i].Room,
-      .subtitle = Coms_Map[i].Description,
+      .title    = GetCom(i)->Room,
+      .subtitle = GetCom(i)->Description,
       .callback = menu_select_callback,
       // .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
     };
@@ -664,6 +753,10 @@ static void main_window_load(Window *window)
   s_favourites_menu_items[itemCnt++] = (SimpleMenuItem) {
     .title = "Send/Receive Mode",
     .callback = volume_select_callback,
+  };
+  s_favourites_menu_items[itemCnt++] = (SimpleMenuItem) {
+    .title = "Request States",
+    .callback = request_states_select_callback,
   };
   s_menu_sections[0] = (SimpleMenuSection) {
     .title = "Favourites",
@@ -683,7 +776,8 @@ static void main_window_load(Window *window)
   s_simple_menu_layer = simple_menu_layer_create(bounds, window, s_menu_sections, NUM_MENU_SECTIONS, NULL);
 
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
-  
+
+
 #ifdef ENABLE_DICTATION  
   // correct positon here?
   s_dictation_session = dictation_session_create(sizeof(s_dictation_text), 
@@ -747,7 +841,7 @@ static void init(void) {
 
   /*  app_message_open(app_message_inbox_size_maximum(),
       app_message_outbox_size_maximum()); */
-  app_message_open(128, 128);
+  app_message_open(256, 256);
 
 }
 

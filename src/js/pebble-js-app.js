@@ -21,19 +21,24 @@ Pebble.addEventListener('appmessage',
   function(e) {
     var ComID = e.payload['FHEM_COM_ID_KEY'];
     console.log('Received ID: ' + ComID);   
+
+    var MsgID = e.payload['FHEM_MSG_ID'];
+    console.log('Received MsgID: ' + MsgID);   
     
     if (e.payload['FHEM_URL_KEY']) {
       console.log('Received URL: ' + e.payload['FHEM_URL_KEY']);
       var response = HTTPGET(e.payload['FHEM_URL_KEY']);
-      console.log('Received response: ' + response);
+      // console.log('Received response: ' + response);
       
       var dict;
       if (response != null) {
         dict = { 'FHEM_RESP_KEY'   :  'success',
-                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'] };
+                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'],
+	         'FHEM_MSG_ID'     :  MsgID };
       } else {
         dict = { 'FHEM_RESP_KEY'   :  'not connected',
-                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'] };        
+                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'],
+	         'FHEM_MSG_ID'     :  MsgID };
       }
      
       Pebble.sendAppMessage(dict,
@@ -65,7 +70,7 @@ Pebble.addEventListener('appmessage',
         }
       });
       */
-      console.log('Received response: ' + response);
+      // console.log('Received response: ' + response);
             
       var dict;
       if (response != null) {
@@ -78,10 +83,12 @@ Pebble.addEventListener('appmessage',
         
           
         dict = { 'FHEM_RESP_KEY'   :  State,
-                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'] };
+                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'],
+	         'FHEM_MSG_ID'     :  MsgID };
       } else {
         dict = { 'FHEM_RESP_KEY'   :  'not connected',
-                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'] };        
+                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'],
+	         'FHEM_MSG_ID'     :  MsgID };
       }
      
       Pebble.sendAppMessage(dict,
