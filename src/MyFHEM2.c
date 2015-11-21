@@ -50,6 +50,24 @@ typedef struct Coms_Map_
 
 static Coms_Map_t Coms_Map[] = {
   {
+    "Balkon",
+    "--------------------", NULL,
+    "Thermo1", "",
+    MenuOmit, MenuOmit, MenuState,
+  },
+  {
+    "Wohnzimmer",
+    "--------------------", NULL,
+    "Thermo2", "",
+    MenuOmit, MenuOmit, MenuState,
+  },
+  {
+    "Schlafzimmer",
+    "--------------------", NULL,
+    "Thermo3", "",
+    MenuOmit, MenuOmit, MenuState,
+  },
+  {
     "Küche",
     "Licht umschalten", NULL,
     "FS20_fr_bel", "toggle",
@@ -66,14 +84,14 @@ static Coms_Map_t Coms_Map[] = {
     "rot", NULL,
     /* "http://mypi:8083/fhem?cmd=set%20HueFlur1%20rgb%20FF0000&XHR=1" },*/
     "HueFlur1", "rgb%20FF0000",
-    MenuDef, MenuFav, MenuState,
+    MenuDef, MenuFav, MenuOmit,
   },
   {
     "Flur",
     "orange",
     "cmd=set%20HueFlur1%20rgb%20FF830A&XHR=1",
     NULL, NULL,
-    MenuDef, MenuFav, MenuOmit,
+    MenuDef, MenuOmit, MenuOmit,
   },
   {
     "Flur",
@@ -85,7 +103,7 @@ static Coms_Map_t Coms_Map[] = {
     "Schlafzimmer",
     "rot", NULL,
     "HueSchlafzimmer1", "rgb%20FF0000",
-    MenuDef, MenuFav, MenuState,
+    MenuDef, MenuFav, MenuOmit,
   },
   {
     "Schlafzimmer",
@@ -97,27 +115,27 @@ static Coms_Map_t Coms_Map[] = {
     "Lautstärke",
     "lauter", NULL,
     "FS20_0000_VolUp", "on",
-    MenuDef, MenuFav, MenuState,
+    MenuDef, MenuOmit, MenuOmit,
   },
   {
     "Lautstärke",
     "leiser", NULL,
     "FS20_0001_VolDown", "on",
-    MenuDef, MenuFav, MenuState,
+    MenuDef, MenuOmit, MenuOmit,
   },
   {
     "Radio",
     "leiser",
     "cmd=%22mpc.sh+-q+-h+lora+volume+-10%22",
     NULL, NULL,
-    MenuDef, MenuFav, MenuState,
+    MenuDef, MenuOmit, MenuOmit,
   },
   {
     "Radio",
     "lauter",
     "cmd=%22mpc.sh+-q+-h+lora+volume+%2B10%22",
     NULL, NULL,
-    MenuDef, MenuFav, MenuState,
+    MenuDef, MenuOmit, MenuOmit,
   },
   {
     "Radio",
@@ -129,31 +147,19 @@ static Coms_Map_t Coms_Map[] = {
     "Küche",
     "Licht an", NULL,
     "FS20_fr_bel", "on",
-    MenuDef, MenuFav, MenuState,
+    MenuOmit, MenuOmit, MenuState,
   },
   {
     "Küche",
     "Licht aus", NULL,
     "FS20_fr_bel", "off",
-    MenuDef, MenuFav, MenuState,
-  },
-  {
-    "Balkon",
-    "--------------------", NULL,
-    "Thermo1", "",
-    MenuDef, MenuFav, MenuState,
-  },
-  {
-    "Schlafzimmer",
-    "--------------------", NULL,
-    "Thermo3", "",
-    MenuDef, MenuFav, MenuState,
+    MenuOmit, MenuOmit, MenuOmit, // used for dictate but does not appear in menu
   },
   {
     "Alles",
     "aus", NULL,
     "dummy_all", "off",
-    MenuDef, MenuFav, MenuState,
+    MenuDef, MenuFav, MenuOmit,
   },
 };
 
@@ -240,9 +246,11 @@ typedef enum _StatusIconType {
 } StatusIcon_t;
 
 typedef enum _MenuType {
-  MENU_UNKNOWN     = -1,
-  MENU_FAVOURITES  = 0,
-  MENU_DIRECT_COMS = 1,
+  MENU_UNKNOWN    = -1,
+  MENU_SPECIAL    = 0,
+  MENU_DEF_COMS   = 1,
+  MENU_FAV_COMS   = 2,
+  MENU_STATE_COMS = 3,
 } Menu_t;
 
 typedef enum _MsgID {
@@ -300,31 +308,31 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     char* result = (char*)data->value->cstring;
     APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, (int)index);
     if (!strcmp("success", result)) {
-      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx, OK);
+      set_menu_icon(MENU_DEF_COMS, MenuDefIdx, OK);
       // now fetch state:
       SendComR(index);
 
     } else if (!strcmp("off", result)) {
-      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx,   OFF);
-      set_menu_icon(MENU_DIRECT_COMS, MenuFavIdx,   OFF);
-      set_menu_icon(MENU_DIRECT_COMS, MenuStateIdx, OFF);
+      set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   OFF);
+      set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   OFF);
+      set_menu_icon(MENU_STATE_COMS, MenuStateIdx, OFF);
     } else if (!strcmp("on", result)) {
-      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx,   ON);
-      set_menu_icon(MENU_DIRECT_COMS, MenuFavIdx,   ON);
-      set_menu_icon(MENU_DIRECT_COMS, MenuStateIdx, ON);
+      set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   ON);
+      set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   ON);
+      set_menu_icon(MENU_STATE_COMS, MenuStateIdx, ON);
     } else if (!strcmp("toggle", result)) {
-      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx,   OK);
-      set_menu_icon(MENU_DIRECT_COMS, MenuFavIdx,   OK);
-      set_menu_icon(MENU_DIRECT_COMS, MenuStateIdx, OK);
+      set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   OK);
+      set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   OK);
+      set_menu_icon(MENU_STATE_COMS, MenuStateIdx, OK);
     } else if (!strcmp("not connected", result)) {
-      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx, FAILED);
+      set_menu_icon(MENU_DEF_COMS, MenuDefIdx, FAILED);
       if (MsgID != MSG_ID_SEND_COM_REQ_STATE_NEXT)
 	vibes_long_pulse();
     } else {
-      set_menu_text(MENU_DIRECT_COMS, index, MenuDefIdx,   result); // todo
-      set_menu_icon(MENU_DIRECT_COMS, MenuDefIdx,   OK);
-      set_menu_icon(MENU_DIRECT_COMS, MenuFavIdx,   OK);
-      set_menu_icon(MENU_DIRECT_COMS, MenuStateIdx, OK);
+      set_menu_text(MENU_STATE_COMS, index, MenuStateIdx,   result); // todo
+      set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   OK);
+      set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   OK);
+      set_menu_icon(MENU_STATE_COMS, MenuStateIdx, OK);
     } 
   } else {
     APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
@@ -475,7 +483,7 @@ bool SendCommand(MapIdx_t index, bool requestStatus, MsgID_t MsgID)
 
 // icons moved from here
 // here ok?
-#define NUM_MENU_SECTIONS 2
+#define NUM_MENU_SECTIONS 5
 #define MAX_NUM_MENU_ITEMS_FAVOURITES 10
 #define NUM_COM 32
 
@@ -484,10 +492,37 @@ static GBitmap *s_menu_icon_image_failed;
 static GBitmap *s_menu_icon_image_send;
 static GBitmap *s_menu_icon_image_off;
 static GBitmap *s_menu_icon_image_on;
-static SimpleMenuItem s_first_menu_items[NUM_COM];
-static SimpleMenuItem s_favourites_menu_items[MAX_NUM_MENU_ITEMS_FAVOURITES];
+static SimpleMenuItem s_def_menu_items[NUM_COM];
+static SimpleMenuItem s_fav_menu_items[NUM_COM];
+static SimpleMenuItem s_states_menu_items[NUM_COM];
+static SimpleMenuItem s_special_menu_items[MAX_NUM_MENU_ITEMS_FAVOURITES];
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
 static SimpleMenuLayer *s_simple_menu_layer;
+
+
+// string memory management
+static int   NumStringsAlloc=0;
+static char* StringArr[128];
+
+char* AllocStr(int size)
+{
+  char* RetStr = NULL;
+  if (NumStringsAlloc >= 128) return NULL;
+  RetStr = calloc(size, sizeof(char));
+  
+  if (RetStr)
+    StringArr[NumStringsAlloc++] = RetStr;
+
+  return RetStr;
+}
+
+void FreeStr()
+{
+  for (int i=0; i < NumStringsAlloc; i++)
+    free(StringArr[i]);
+  NumStringsAlloc = 0;
+}
+
 
 
 bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
@@ -500,11 +535,17 @@ bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
     default:
     case MENU_UNKNOWN:
       return false;
-    case MENU_FAVOURITES:
-      pMenu = &s_favourites_menu_items[index];
+    case MENU_SPECIAL:
+      pMenu = &s_special_menu_items[index];
       break;
-    case MENU_DIRECT_COMS:
-      pMenu = &s_first_menu_items[index];
+    case MENU_DEF_COMS:
+      pMenu = &s_def_menu_items[index];
+      break;   
+    case MENU_FAV_COMS:
+      pMenu = &s_fav_menu_items[index];
+      break;   
+    case MENU_STATE_COMS:
+      pMenu = &s_states_menu_items[index];
       break;   
   };
 
@@ -543,30 +584,45 @@ bool set_menu_text(Menu_t Menu, MapIdx_t CmdIdx, int index, const char text[])
   
   if (index < 0) return false; // either omit or not set yet
 
-  Coms_Map_t* PCom=GetCom(CmdIdx);
-  if (!PCom) return false;
+  //  Coms_Map_t* PCom=GetCom(CmdIdx);
+  //  if (!PCom) return false;
   
   switch(Menu) {
-  default:
+    default:
     case MENU_UNKNOWN:
       return false;
-    case MENU_FAVOURITES:
-      pMenu = &s_favourites_menu_items[index];
+    case MENU_SPECIAL:
+      pMenu = &s_special_menu_items[index];
       break;
-    case MENU_DIRECT_COMS:
-      pMenu = &s_first_menu_items[index];
+    case MENU_DEF_COMS:
+      pMenu = &s_def_menu_items[index];
+      break;   
+    case MENU_FAV_COMS:
+      pMenu = &s_fav_menu_items[index];
+      break;   
+    case MENU_STATE_COMS:
+      pMenu = &s_states_menu_items[index];
       break;   
   };
 
   if (!pMenu)
     return false;
 
-  int maxlen = 16; //strlen(PCom->Description);
+  int len = strlen(text);
+  char* SubTitle = AllocStr(len);
+
+  if (!SubTitle) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Cannot request string memory of length %d", len);
+    return false;
+  }
+
+  strncpy(SubTitle, text, len);
 
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Changing menu text of command %d from %s to %s", 
-	  CmdIdx, PCom->Description, text);
+	  CmdIdx, pMenu->subtitle, SubTitle);
   
-  strncpy(PCom->Description, text, maxlen);
+  pMenu->subtitle = SubTitle;
+  
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 
   return true;
@@ -576,46 +632,39 @@ bool set_menu_text(Menu_t Menu, MapIdx_t CmdIdx, int index, const char text[])
 // todo: for tests
 static bool s_special_flag = false;
 
-static void menu_select_callback(int index, void *ctx)
+static void def_menu_select_callback(int index, void *ctx)
 {
-  // s_first_menu_items[index].subtitle = "You've hit select here!";
-
   MapIdx_t CmdIdx = GetCmdIdxFromDefMenu(index);
-  if (CmdIdx < 0) return;
-
-#if 0
-  GRect invisible_rect = GRect(0, 0, 5, 5);
-  GRect visible_rect = GRect(10, 0, 5, 5);
-
-  // test
-  // .a = 1
-  GColor invisible = (GColor){
-    .a = 0b01,
-    .r = 0b11,
-    .g = 0b10,
-    .b = 0b00
-  };
-
-  // .a = 2
-  GColor visible = (GColor){ .argb = 0b10111000 };
-
-  // Fill with these colors
-  graphics_context_set_fill_color(ctx, invisible);
-  graphics_fill_rect(ctx, invisible_rect, GCornerNone, 0);
-  graphics_context_set_fill_color(ctx, visible);
-  graphics_fill_rect(ctx, visible_rect, GCornerNone, 0);
-
-  // Draw outlines
-  graphics_context_set_stroke_color(ctx, GColorBlack);
-  graphics_draw_rect(ctx, invisible_rect);
-  graphics_draw_rect(ctx, visible_rect);
-#endif
-  
+  if (CmdIdx < 0) return;  
 
   if (SendCommand(CmdIdx, s_special_flag, MSG_ID_DEFAULT))
-    set_menu_icon(MENU_DIRECT_COMS, index, SEND);
+    set_menu_icon(MENU_DEF_COMS, index, SEND);
   else
-    set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
+    set_menu_icon(MENU_DEF_COMS, index, FAILED);
+}
+
+
+static void fav_menu_select_callback(int index, void *ctx)
+{
+  MapIdx_t CmdIdx = GetCmdIdxFromFavMenu(index);
+  if (CmdIdx < 0) return;  
+
+  if (SendCommand(CmdIdx, s_special_flag, MSG_ID_DEFAULT))
+    set_menu_icon(MENU_FAV_COMS, index, SEND);
+  else
+    set_menu_icon(MENU_FAV_COMS, index, FAILED);
+}
+
+
+static void states_menu_select_callback(int index, void *ctx)
+{
+  MapIdx_t CmdIdx = GetCmdIdxFromStateMenu(index);
+  if (CmdIdx < 0) return;  
+
+  if (SendCommand(CmdIdx, true, MSG_ID_DEFAULT))
+    set_menu_icon(MENU_STATE_COMS, index, SEND);
+  else
+    set_menu_icon(MENU_STATE_COMS, index, FAILED);
 }
 
 
@@ -748,7 +797,7 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
   // Print the results of a transcription attempt                                     
   APP_LOG(APP_LOG_LEVEL_INFO, "Dictation status: %d", (int)status);
   
-  SimpleMenuItem *menu_item = &s_favourites_menu_items[0];
+  SimpleMenuItem *menu_item = &s_special_menu_items[0];
 
   if(status == DictationSessionStatusSuccess) {
     // Display the dictated text
@@ -759,14 +808,14 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     MapIdx_t CmdIdx = -1;
     if ((CmdIdx=ExamineText(s_dictation_text)) != -1) {
       if (SendCom(CmdIdx)) {
-        set_menu_icon(MENU_FAVOURITES, 0, OK);
+        set_menu_icon(MENU_SPECIAL, 0, OK);
 	      vibes_short_pulse(); // OK
       } else {
-        set_menu_icon(MENU_FAVOURITES, 0, FAILED);
+        set_menu_icon(MENU_SPECIAL, 0, FAILED);
 	      vibes_long_pulse();
       }
     } else {
-      set_menu_icon(MENU_FAVOURITES, 0, FAILED);
+      set_menu_icon(MENU_SPECIAL, 0, FAILED);
       vibes_double_pulse();
     }
 
@@ -778,7 +827,7 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
            (int)status);
     menu_item->subtitle = s_failed_buff;
     layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
-    set_menu_icon(MENU_FAVOURITES, 0, FAILED);  
+    set_menu_icon(MENU_SPECIAL, 0, FAILED);  
   }
 }
 #endif // ENABLE_DICTATION
@@ -797,9 +846,9 @@ static void request_states_select_callback(int index, void* ctx)
   SendCommand(0, true, MSG_ID_SEND_COM_REQ_STATE_NEXT);
 
 /*
-    set_menu_icon(MENU_DIRECT_COMS, index, SEND);
+    set_menu_icon(MENU_DEF_COMS, index, SEND);
   else
-    set_menu_icon(MENU_DIRECT_COMS, index, FAILED);
+    set_menu_icon(MENU_DEF_COMS, index, FAILED);
 */
 }
 
@@ -835,7 +884,7 @@ static void volume_select_callback(int index, void* ctx)
 
   s_special_flag = !s_special_flag;
 
-  SimpleMenuItem *menu_item = &s_favourites_menu_items[index];
+  SimpleMenuItem *menu_item = &s_def_menu_items[index];
   // menu_item->subtitle = "Not yet implemented";
   // layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
   if (s_special_flag) {
@@ -889,6 +938,116 @@ static void click_config_provider(void *context) {
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
+// Menus                   /////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+int create_special_menu()
+{
+  int MenuCnt=0;
+#ifdef ENABLE_DICTATION
+  s_special_menu_items[MenuCnt++] = (SimpleMenuItem) {
+    .title = "Dictate",
+    .callback = special_select_callback,
+  };
+#endif
+  /*
+  s_special_menu_items[MenuCnt++] = (SimpleMenuItem) {
+    .title = "Send/Receive Mode",
+    .callback = volume_select_callback,
+  };
+  */
+  /*  s_special_menu_items[MenuCnt++] = (SimpleMenuItem) {
+    .title = "Request States",
+    .callback = request_states_select_callback,
+  };
+  */
+  return MenuCnt;
+}
+
+
+int create_default_menu()
+{
+  int MenuCnt=0;
+
+  s_def_menu_items[MenuCnt++] = (SimpleMenuItem) {
+    .title    = "Send/Receive Mode",
+    .callback = volume_select_callback,
+    .icon     = s_menu_icon_image_send,
+  };
+
+  for (int i=0; i < GetNumComs(); i++) {
+    Coms_Map_t* PCom = GetCom(i);
+    if (!PCom) continue;
+    
+    if (PCom->MenuDefIdx != MenuOmit) {
+      s_def_menu_items[MenuCnt] = (SimpleMenuItem) {
+	.title    = PCom->Room,
+	.subtitle = PCom->Description,
+	.callback = def_menu_select_callback,
+	// .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
+      };
+      PCom->MenuDefIdx = MenuCnt;
+      MenuCnt++;
+    }
+  }
+  return MenuCnt;
+}
+
+
+int create_favourites_menu()
+{
+  int MenuCnt=0;
+  for (int i=0; i < GetNumComs(); i++) {
+    Coms_Map_t* PCom = GetCom(i);
+    if (!PCom) continue;
+    
+    if (PCom->MenuFavIdx != MenuOmit) {
+      s_fav_menu_items[MenuCnt] = (SimpleMenuItem) {
+	.title    = PCom->Room,
+	.subtitle = PCom->Description,
+	.callback = fav_menu_select_callback,
+	// .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
+      };
+      PCom->MenuFavIdx = MenuCnt;
+      MenuCnt++;
+    }
+  }
+  return MenuCnt;
+}
+
+
+int create_states_menu()
+{
+  int MenuCnt=0;
+
+  s_states_menu_items[MenuCnt++] = (SimpleMenuItem) {
+    .title = "Request",
+    .subtitle = "States",
+    .callback = request_states_select_callback,
+    .icon = s_menu_icon_image_send,
+  };
+
+  for (int i=0; i < GetNumComs(); i++) {
+    Coms_Map_t* PCom = GetCom(i);
+    if (!PCom) continue;
+    
+    if (PCom->MenuStateIdx != MenuOmit) {
+      s_states_menu_items[MenuCnt] = (SimpleMenuItem) {
+	.title    = PCom->Room,
+	.subtitle = PCom->Description,
+	.callback = states_menu_select_callback,
+	// .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
+      };
+      PCom->MenuStateIdx = MenuCnt;
+      MenuCnt++;
+    }
+  }
+  return MenuCnt;
+}
+
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 // main window load/unload /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -903,54 +1062,52 @@ static void main_window_load(Window *window)
 
   //window_set_background_color(window, GColorYellow);
 
-  int MenuCnt=0;
-  for (int i=0; i < GetNumComs(); i++) {
-    Coms_Map_t* PCom = GetCom(i);
-    if (!PCom) continue;
-    
-    if (PCom->MenuDefIdx != MenuOmit) {
-      s_first_menu_items[MenuCnt] = (SimpleMenuItem) {
-	.title    = PCom->Room,
-	.subtitle = PCom->Description,
-	.callback = menu_select_callback,
-	// .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
-      };
-      PCom->MenuDefIdx = MenuCnt;
-      MenuCnt++;
-    }
+  ///////////////////////
+  // create menu sections
+
+  int NumItems=0;
+  int NumSections=0;
+
+  // special menu
+  NumItems=create_special_menu();
+  if (NumItems > 0) {
+    s_menu_sections[NumSections++] = (SimpleMenuSection) {
+      .title = "Special",
+      .num_items = NumItems,
+      .items = s_special_menu_items,
+    };
   }
 
-  int itemCnt=0;
-#ifdef ENABLE_DICTATION
-  s_favourites_menu_items[itemCnt++] = (SimpleMenuItem) {
-    .title = "Dictate",
-    .callback = special_select_callback,
-  };
-#endif
-  s_favourites_menu_items[itemCnt++] = (SimpleMenuItem) {
-    .title = "Send/Receive Mode",
-    .callback = volume_select_callback,
-  };
-  s_favourites_menu_items[itemCnt++] = (SimpleMenuItem) {
-    .title = "Request States",
-    .callback = request_states_select_callback,
-  };
-  s_menu_sections[0] = (SimpleMenuSection) {
+  // favourite menu
+  NumItems=create_favourites_menu();
+  s_menu_sections[NumSections++] = (SimpleMenuSection) {
     .title = "Favourites",
-    .num_items = itemCnt,
-    .items = s_favourites_menu_items,
+    .num_items = NumItems,
+    .items = s_fav_menu_items,
   };
 
-  s_menu_sections[1] = (SimpleMenuSection) {
-    .title = "Direct Commands",
-    .num_items = MenuCnt,
-    .items = s_first_menu_items,
+  // states menu
+  NumItems=create_states_menu();
+  s_menu_sections[NumSections++] = (SimpleMenuSection) {
+    .title = "States",
+    .num_items = NumItems,
+    .items = s_states_menu_items,
+  };
+
+  // default menu
+  NumItems=create_default_menu();
+  s_menu_sections[NumSections++] = (SimpleMenuSection) {
+    .title = "Default Commands",
+    .num_items = NumItems,
+    .items = s_def_menu_items,
   };
 
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_frame(window_layer);
 
-  s_simple_menu_layer = simple_menu_layer_create(bounds, window, s_menu_sections, NUM_MENU_SECTIONS, NULL);
+  s_simple_menu_layer = simple_menu_layer_create(bounds, window, 
+						 s_menu_sections, NumSections,
+						 NULL);
 
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
 
@@ -965,6 +1122,7 @@ static void main_window_load(Window *window)
   dictation_session_enable_error_dialogs(s_dictation_session, false);
 #endif
 
+  // tests:
 #if 0
   // ClickConfigProvider menu_click_conf_prov=window_get_click_config_provider(window);
   //  window_set_click_config_provider(window, click_config_provider);
@@ -1023,6 +1181,7 @@ static void init(void) {
 }
 
 static void deinit(void) {
+  FreeStr();
   window_destroy(s_window);
 }
 
