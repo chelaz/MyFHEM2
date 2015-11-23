@@ -1,5 +1,7 @@
 // https://developer.getpebble.com/guides/pebble-apps/pebblekit-js/js-app-comm/
 // https://developer.getpebble.com/guides/pebble-apps/communications/appmessage/
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON
+
 
 function HTTPGET(url) {
     var req = new XMLHttpRequest();
@@ -9,57 +11,41 @@ function HTTPGET(url) {
 }
 
 
-// Listen for when the watchface is opened
-Pebble.addEventListener('ready', 
-  function(e) {
-    console.log('MyFHEM2 JavaScript ready!');
+function SendCom(ComID, MsgID, URL)
+{
+  console.log('SendCom: ' + URL);
+  var response = HTTPGET(URL);
+
+  var dict;
+  if (response !== null) {
+    dict = { 'FHEM_RESP_KEY'  :  'success',
+            'FHEM_COM_ID_KEY' :  ComID,
+            'FHEM_MSG_ID'     :  MsgID };
+  } else {
+    dict = { 'FHEM_RESP_KEY'  :  'not connected',
+            'FHEM_COM_ID_KEY' :  ComID,
+            'FHEM_MSG_ID'     :  MsgID };
   }
-);
 
-// Listen for when an AppMessage is received
-Pebble.addEventListener('appmessage',
-  function(e) {
-    var ComID = e.payload['FHEM_COM_ID_KEY'];
-    console.log('Received ID: ' + ComID);   
+  Pebble.sendAppMessage(dict,
+                        function(e) {
+                          console.log('AppMsg: SendCom successful.');
+                        },
+                        function(e) {
+                          console.log('AppMsg: SendCom failed!');
+                        }
+                       );
+  return;
+}
 
-    var MsgID = e.payload['FHEM_MSG_ID'];
-    console.log('Received MsgID: ' + MsgID);   
-    
-    if (e.payload['FHEM_URL_KEY']) {
-      console.log('Received URL: ' + e.payload['FHEM_URL_KEY']);
-      var response = HTTPGET(e.payload['FHEM_URL_KEY']);
-      // console.log('Received response: ' + response);
-      
-      var dict;
-      if (response != null) {
-        dict = { 'FHEM_RESP_KEY'   :  'success',
-                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'],
-	         'FHEM_MSG_ID'     :  MsgID };
-      } else {
-        dict = { 'FHEM_RESP_KEY'   :  'not connected',
-                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'],
-	         'FHEM_MSG_ID'     :  MsgID };
-      }
-     
-      Pebble.sendAppMessage(dict,
-        function(e) {
-          console.log('Send successful.');
-        },
-        function(e) {
-          console.log('Send failed!');
-        }
-      );
-      return;
-    }
+function GetState(ComID, MsgID, URL)
+{
+  // var StateURL = e.payload['FHEM_URL_GET_STATE'];
+  console.log('GetState: ' + URL);
+  var response = HTTPGET(URL);
 
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON
-    if (e.payload['FHEM_URL_GET_STATE']) {
-      var StateURL = e.payload['FHEM_URL_GET_STATE'];
-      console.log('Received URL to get state: ' + StateURL);
-      var response = HTTPGET(StateURL);
-      
-      // tests:
-      /* JSONLIST:
+  // tests:
+  /* JSONLIST:
       response = JSON.stringify({
         "ResultSet"  : {
           "Results" : {
@@ -97,55 +83,56 @@ Pebble.addEventListener('appmessage',
 	});
       */
 
-      // console.log('Received response: ' + response);
-            
-      var dict;
-      if (response != null) {
-        var DevJSON = JSON.parse(response);
+  // console.log('Received response: ' + response);
 
-	/*jsonlist
+  var dict;
+  if (response !== null) {
+    var DevJSON = JSON.parse(response);
+
+    /*jsonlist
         var State = DevJSON.ResultSet.Results.STATE;
-        
+
          console.log('ResultSet:' + DevJSON.ResultSet);
          console.log('ResultSet, Results:' + DevJSON.ResultSet.Results);
          console.log('Received STATE: ' + State);
-	*/
-	// jsonlist2
-	var State = "unknown";
-	if (DevJSON.totalResultsReturned == 1) {
-	  var State = DevJSON.Results[0].Internals.STATE;
-	  // console.log('Results:' + JSON.stringify(DevJSON.Results[0]));
-	  // console.log('Received Internals: ' + JSON.stringify(DevJSON.Results[0].Internals));
-	}
-          
-        dict = { 'FHEM_RESP_KEY'   :  State,
-                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'],
-	         'FHEM_MSG_ID'     :  MsgID };
-      } else {
-        dict = { 'FHEM_RESP_KEY'   :  'not connected',
-                 'FHEM_COM_ID_KEY' :   e.payload['FHEM_COM_ID_KEY'],
-	         'FHEM_MSG_ID'     :  MsgID };
-      }
-     
-      Pebble.sendAppMessage(dict,
-        function(e) {
-          console.log('Send successful.');
-        },
-        function(e) {
-          console.log('Send failed!');
-        }
-      );
-     
-      return;
+	  */
+    // jsonlist2
+    var State = "unknown";
+    if (DevJSON.totalResultsReturned == 1) {
+      State = DevJSON.Results[0].Internals.STATE;
+      // console.log('Results:' + JSON.stringify(DevJSON.Results[0]));
+      // console.log('Received Internals: ' + JSON.stringify(DevJSON.Results[0].Internals));
     }
-    if (e.payload['FHEM_URL_REQ_TYPE']) {
-      var URL = e.payload['FHEM_URL_REQ_TYPE'];
-      console.log('Received URL to request type: ' + URL);
-      var response = HTTPGET(URL);
-      console.log('Received requested type: ' + response);
 
-      // jsonlist2 TYPE=FS20
-      /*
+    dict = { 'FHEM_RESP_KEY'   :  State,
+             'FHEM_COM_ID_KEY' :  ComID,
+             'FHEM_MSG_ID'     :  MsgID };
+  } else {
+    dict = { 'FHEM_RESP_KEY'   :  'not connected',
+             'FHEM_COM_ID_KEY' :  ComID,
+             'FHEM_MSG_ID'     :  MsgID };
+  }
+
+  Pebble.sendAppMessage(dict,
+                        function(e) {
+                          console.log('AppMsg: GetState successful.');
+                        },
+                        function(e) {
+                          console.log('AppMsg: GetState failed!');
+                        }
+                       );
+
+}
+
+function RequestTypes(URL)
+{
+  console.log('RequestTypes: ' + URL);
+  var response = HTTPGET(URL);
+
+  // console.log('Received requested type: ' + response);
+
+  // jsonlist2 TYPE=FS20
+  /*
       response = JSON.stringify({
 	  "Arg":"TYPE=FS20",
 	    "Results": [
@@ -174,23 +161,59 @@ Pebble.addEventListener('appmessage',
 	    });
       */
 
-      if (response != null) {
-        var DevJSON = JSON.parse(response);
+  if (response !== null) {
+    var DevJSON = JSON.parse(response);
 
-	console.log('Received Devices: ' + DevJSON.totalResultsReturned);
+    console.log('Received Devices: ' + DevJSON.totalResultsReturned);
 
-	for (var i=0; i < DevJSON.totalResultsReturned; i++) {
-	  var State = DevJSON.Results[i].Internals.STATE;
-	  var Device = DevJSON.Results[i].Internals.NAME;
-	  var Descr = DevJSON.Results[i].Attributes.alias;
-	  var Room  = DevJSON.Results[i].Attributes.room;
-	  console.log('\t#: ' + i);
-	  console.log('\t  Room:   ' + JSON.stringify(Room));
-	  console.log('\t  Descr:  ' + JSON.stringify(Descr));
-	  console.log('\t  Device: ' + JSON.stringify(Device));
-	  console.log('\t  State:  ' + JSON.stringify(State));
-	}
-      }
+    for (var i=0; i < DevJSON.totalResultsReturned; i++) {
+      var State = DevJSON.Results[i].Internals.STATE;
+      var Device = DevJSON.Results[i].Internals.NAME;
+      var Descr = DevJSON.Results[i].Attributes.alias;
+      var Room  = DevJSON.Results[i].Attributes.room;
+      console.log('\t#: ' + i);
+      console.log('\t  Room:   ' + JSON.stringify(Room));
+      console.log('\t  Descr:  ' + JSON.stringify(Descr));
+      console.log('\t  Device: ' + JSON.stringify(Device));
+      console.log('\t  State:  ' + JSON.stringify(State));
+    }
+  }
+  
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+// Pebble functions //////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+// Listen for when the watchface is opened
+Pebble.addEventListener('ready', 
+  function(e) {
+    console.log('MyFHEM2 JavaScript ready!');
+  }
+);
+
+// Listen for when an AppMessage is received
+Pebble.addEventListener('appmessage',
+  function(e) {
+    var ComID = e.payload['FHEM_COM_ID_KEY'];
+    console.log('Received ID: ' + ComID);   
+
+    var MsgID = e.payload['FHEM_MSG_ID'];
+    console.log('Received MsgID: ' + MsgID);   
+    
+    if (e.payload['FHEM_URL_KEY']) {
+      SendCom(ComID, MsgID, e.payload['FHEM_URL_KEY']);
+      return;
+    }
+    if (e.payload['FHEM_URL_GET_STATE']) {
+      GetState(ComID, MsgID, e.payload['FHEM_URL_GET_STATE']);
+      return;
+    }
+    if (e.payload['FHEM_URL_REQ_TYPE']) {
+      RequestTypes(e.payload['FHEM_URL_REQ_TYPE']);
+      return;
     }
   }                     
 );
