@@ -65,11 +65,15 @@
   function getConfigData() {
     var FHEM_SERVER_URL_textinput = document.getElementById('FHEM_SERVER_URL');
     // var highContrastCheckbox = document.getElementById('high_contrast_checkbox');
- 
+
+    //alert("ServerUrl: "+FHEM_SERVER_URL_textinput.value);
+
     var options = {
-      'FHEM_SERVER_URL': FHEM_SERVER_URL_textinput.value,
-      // 'high_contrast': highContrastCheckbox.checked
+      'FHEM_SERVER_URL': FHEM_SERVER_URL_textinput.value
     };
+    //      // 'high_contrast': highContrastCheckbox.checked
+
+    alert("JSON: "+JSON.stringify(options));
 
     // Save for next launch
     localStorage['FHEM_SERVER_URL'] = options['FHEM_SERVER_URL'];
