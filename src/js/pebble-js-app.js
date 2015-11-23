@@ -3,6 +3,17 @@
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON
 
 
+function GetServerURL(URL_Args)
+{
+  var URL="";
+  //  if(localStorage['FHEM_SERVER_URL'])
+  var storageURL = localStorage.getItem('FHEM_SERVER_URL');
+  if(storageURL !== null)
+    URL = storageURL;
+  
+  return URL + URL_Args;
+}
+
 function HTTPGET(url) {
     var req = new XMLHttpRequest();
     req.open("GET", url, false);
@@ -19,12 +30,12 @@ function SendCom(ComID, MsgID, URL)
   var dict;
   if (response !== null) {
     dict = { 'FHEM_RESP_KEY'  :  'success',
-            'FHEM_COM_ID_KEY' :  ComID,
-            'FHEM_MSG_ID'     :  MsgID };
+             'FHEM_COM_ID_KEY' :  ComID,
+             'FHEM_MSG_ID'     :  MsgID };
   } else {
     dict = { 'FHEM_RESP_KEY'  :  'not connected',
-            'FHEM_COM_ID_KEY' :  ComID,
-            'FHEM_MSG_ID'     :  MsgID };
+             'FHEM_COM_ID_KEY' :  ComID,
+             'FHEM_MSG_ID'     :  MsgID };
   }
 
   Pebble.sendAppMessage(dict,
@@ -167,10 +178,10 @@ function RequestTypes(URL)
     console.log('Received Devices: ' + DevJSON.totalResultsReturned);
 
     for (var i=0; i < DevJSON.totalResultsReturned; i++) {
-      var State = DevJSON.Results[i].Internals.STATE;
+      var State  = DevJSON.Results[i].Internals.STATE;
       var Device = DevJSON.Results[i].Internals.NAME;
-      var Descr = DevJSON.Results[i].Attributes.alias;
-      var Room  = DevJSON.Results[i].Attributes.room;
+      var Descr  = DevJSON.Results[i].Attributes.alias;
+      var Room   = DevJSON.Results[i].Attributes.room;
       console.log('\t#: ' + i);
       console.log('\t  Room:   ' + JSON.stringify(Room));
       console.log('\t  Descr:  ' + JSON.stringify(Descr));
@@ -194,6 +205,51 @@ Pebble.addEventListener('ready',
   }
 );
 
+// https://developer.getpebble.com/guides/pebble-apps/pebblekit-js/app-configuration/#testing-on-pebble
+Pebble.addEventListener('showConfiguration', 
+  function(e) {
+    var url = 'https://rawgit.com/chelaz/MyFHEM2/master/config/index.html';
+    console.log('Showing configuration page: ' + url);
+
+    Pebble.openURL(url);
+  }
+);
+
+Pebble.addEventListener('webviewclosed', 
+  function(e) {
+    var configData = JSON.parse(decodeURIComponent(e.response));
+    console.log('Configuration page returned: ' + JSON.stringify(configData));
+
+    var FHEM_SERVER_URL = configData['FHEM_SERVER_URL'];
+    console.log('FHEM server URL: ' + FHEM_SERVER_URL);
+    
+    // localStorage['FHEM_SERVER_URL'] = FHEM_SERVER_URL;
+    localStorage.setItem('FHEM_SERVER_URL', FHEM_SERVER_URL);
+    /*
+      // Example with the following JSON data:
+      var config = {
+        'animSetting': true,
+        'tickSetting': 'seconds',
+        'bgColor': 'red'
+      };
+      
+    // Prepare AppMessage payload
+    var dict = {
+      'KEY_ANIMATIONS': config_data[animSetting],
+      'KEY_TICK': config_data[tickSetting],
+      'KEY_BACKGROUND_COLOR': config_data[bgColor]
+    };
+    
+    // Send settings to Pebble watchapp
+    Pebble.sendAppMessage(dict, function(){
+			    console.log('Sent config data to Pebble');  
+			  }, function() {
+			    console.log('Failed to send config data!');
+			  });
+    */
+  }
+);
+
 // Listen for when an AppMessage is received
 Pebble.addEventListener('appmessage',
   function(e) {
@@ -204,15 +260,15 @@ Pebble.addEventListener('appmessage',
     console.log('Received MsgID: ' + MsgID);   
     
     if (e.payload['FHEM_URL_KEY']) {
-      SendCom(ComID, MsgID, e.payload['FHEM_URL_KEY']);
+      SendCom(ComID, MsgID, GetServerURL(e.payload['FHEM_URL_KEY']));
       return;
     }
     if (e.payload['FHEM_URL_GET_STATE']) {
-      GetState(ComID, MsgID, e.payload['FHEM_URL_GET_STATE']);
+      GetState(ComID, MsgID, GetServerURL(e.payload['FHEM_URL_GET_STATE']));
       return;
     }
     if (e.payload['FHEM_URL_REQ_TYPE']) {
-      RequestTypes(e.payload['FHEM_URL_REQ_TYPE']);
+      RequestTypes(GetServerURL(e.payload['FHEM_URL_REQ_TYPE']));
       return;
     }
   }                     

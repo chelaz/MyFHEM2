@@ -7,11 +7,9 @@
         "FHEM_MSG_ID": 5,
         "FHEM_URL_KEY": 0
     },
-    "capabilities": [
-        ""
-    ],
+    "capabilities": [ "configurable" ],
     "companyName": "chelaz.de",
-    "longName": "MyFHEM2",
+    "longName": "Pebble client for FHEM home automation server",
     "projectType": "native",
     "resources": {
         "media": [

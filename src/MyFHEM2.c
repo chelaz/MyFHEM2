@@ -24,7 +24,8 @@
 
 
 
-const char FHEM_URL[] = "http://mypi:8083/fhem";
+// const char FHEM_URL[] = "http://mypi:8083/fhem";
+const char FHEM_URL[] = ""; // now in javascript
 
 // use this to specify in which menu the command shall appear.
 typedef enum MenuIdx_ {
