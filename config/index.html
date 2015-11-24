@@ -47,9 +47,8 @@
     </div>
 
     <div class='item-container'>
-      <div class='item-container-header'>FS20 Devices</div>
+      <div class='item-container-header'>FS20 Devices <button id="RequestFS20fromFHEM">Request FS20 Devices</button></div>
       <div class='item-container-content'>
-	<button id="RequestFS20fromFHEM">Request FS20 Devices</button>
         <label class='item' id="FS20Content">
 	  FS20 Device
 	</label>
@@ -131,6 +130,8 @@
 
   var RequestButton = document.getElementById('RequestFS20fromFHEM');
   RequestButton.addEventListener('click', function() {
+    console.log('RequestButton entered');
+
     var FS20Element=document.getElementById('FS20Content');
 
     URL = localStorage['FHEM_SERVER_URL']+ "?cmd=jsonlist2%20TYPE=FS20&XHR=1";
@@ -145,6 +146,8 @@
 
     // FS20Element.innerHTML = 'Received Devices: ' + NumberOfElements;
     FS20Element.innerHTML = JSON.stringify(DevJSON.Results[0].Internals);
+
+    console.log('RequestButton leave');
 
     // alert('Received Devices: ' + DevJSON.totalResultsReturned);
   });
