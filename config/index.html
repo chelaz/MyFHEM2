@@ -46,6 +46,19 @@
       </div>
     </div>
 
+    <div class='item-container'>
+      <div class='item-container-header'>FS20 Devices</div>
+      <div class='item-container-content'>
+	<button id="RequestFS20fromFHEM">Request FS20 Devices</button>
+        <label class='item' id="FS20Content">
+	  FS20 Device
+	</label>
+      </div>
+      <div class='item-container-footer'>
+	You can see all FS20 devices of your FHEM server.
+      </div>
+    </div>
+
     <!--div class='item-container'>
       <div class='item-container-header'>Accessibility</div>
       <div class='item-container-content'>
@@ -106,6 +119,31 @@
     // Set the return URL depending on the runtime environment
     var return_to = getQueryParam('return_to', 'pebblejs://close#');
     document.location = return_to + encodeURIComponent(JSON.stringify(getConfigData()));
+  });
+
+    function HTTPGET(url) {
+      var req = new XMLHttpRequest();
+      req.open("GET", url, false);
+      req.send(null);
+      return req.responseText;
+    }
+
+
+  var RequestButton = document.getElementById('RequestFS20fromFHEM');
+  RequestButton.addEventListener('click', function() {
+    URL = localStorage['FHEM_SERVER_URL']+ "?cmd=jsonlist2%20TYPE=FS20&XHR=1";
+
+    // alert('URL: ' + URL);
+
+    var response = HTTPGET(URL);
+    var DevJSON = JSON.parse(response);
+    // var NumberOfElements = 42; // DevJSON.totalResultsReturned;
+
+    var FS20Element=document.getElementById('FS20Content');
+    // FS20Element.innerHTML = 'Received Devices: ' + NumberOfElements;
+    FS20Element.innerHTML = JSON.stringify(DevJSON.Results);
+
+    // alert('Received Devices: ' + DevJSON.totalResultsReturned);
   });
 
   (function() {
