@@ -131,17 +131,20 @@
 
   var RequestButton = document.getElementById('RequestFS20fromFHEM');
   RequestButton.addEventListener('click', function() {
+    var FS20Element=document.getElementById('FS20Content');
+
     URL = localStorage['FHEM_SERVER_URL']+ "?cmd=jsonlist2%20TYPE=FS20&XHR=1";
 
-    // alert('URL: ' + URL);
-
+    FS20Element.innerHTML = "Requesting FS20 from " + URL;
+    
     var response = HTTPGET(URL);
     var DevJSON = JSON.parse(response);
     // var NumberOfElements = 42; // DevJSON.totalResultsReturned;
 
-    var FS20Element=document.getElementById('FS20Content');
+    FS20Element.innerHTML = 'Received Devices: ' + DevJSON.totalResultsReturned;
+
     // FS20Element.innerHTML = 'Received Devices: ' + NumberOfElements;
-    FS20Element.innerHTML = JSON.stringify(DevJSON.Results);
+    FS20Element.innerHTML = JSON.stringify(DevJSON.Results[0].Internals);
 
     // alert('Received Devices: ' + DevJSON.totalResultsReturned);
   });
