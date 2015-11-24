@@ -142,13 +142,19 @@ static Coms_Map_t Coms_Map[] = {
     "Radio",
     "an", NULL,
     "FS20_Remote_Radio", "on",
-    MenuDef, MenuFav, MenuState,
+    MenuDef, MenuFav, MenuOmit,
+  },
+  {
+    "Küche",
+    "Licht", NULL,
+    "FS20_fr_bel", "toggle",
+    MenuOmit, MenuOmit, MenuState,
   },
   {
     "Küche",
     "Licht an", NULL,
     "FS20_fr_bel", "on",
-    MenuOmit, MenuOmit, MenuState,
+    MenuOmit, MenuOmit, MenuOmit,
   },
   {
     "Küche",
@@ -243,7 +249,8 @@ typedef enum _StatusIconType {
   OK      = 1,
   SEND    = 2,
   OFF     = 3,
-  ON      = 4,  
+  ON      = 4,
+  TOGGLE  = 5,
 } StatusIcon_t;
 
 typedef enum _MenuType {
@@ -316,23 +323,23 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       SendComR(index);
 
     } else if (!strcmp("off", result)) {
-      set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   OFF);
-      set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   OFF);
+      set_menu_icon(MENU_DEF_COMS, MenuDefIdx,     OFF);
+      set_menu_icon(MENU_FAV_COMS, MenuFavIdx,     OFF);
       set_menu_icon(MENU_STATE_COMS, MenuStateIdx, OFF);
     } else if (!strcmp("on", result)) {
-      set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   ON);
-      set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   ON);
+      set_menu_icon(MENU_DEF_COMS, MenuDefIdx,     ON);
+      set_menu_icon(MENU_FAV_COMS, MenuFavIdx,     ON);
       set_menu_icon(MENU_STATE_COMS, MenuStateIdx, ON);
-    } /* else if (!strcmp("toggle", result)) {
-      set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   OK);
-      set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   OK);
-      set_menu_icon(MENU_STATE_COMS, MenuStateIdx, OK);
-      } */ else if (!strcmp("not connected", result)) {
+    } else if (!strcmp("toggle", result)) {
+      set_menu_icon(MENU_DEF_COMS, MenuDefIdx,     TOGGLE);
+      set_menu_icon(MENU_FAV_COMS, MenuFavIdx,     TOGGLE);
+      set_menu_icon(MENU_STATE_COMS, MenuStateIdx, TOGGLE);
+    } else if (!strcmp("not connected", result)) {
       set_menu_icon(MENU_DEF_COMS, MenuDefIdx, FAILED);
       if (MsgID != MSG_ID_SEND_COM_REQ_STATE_NEXT)
-	vibes_long_pulse();
+	    vibes_long_pulse();
     } else {
-      set_menu_text(MENU_STATE_COMS, index, MenuStateIdx,   result); // todo
+      set_menu_text(MENU_STATE_COMS, index, MenuStateIdx, result); // todo
       set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   OK);
       set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   OK);
       set_menu_icon(MENU_STATE_COMS, MenuStateIdx, OK);
@@ -511,6 +518,7 @@ static GBitmap *s_menu_icon_image_failed;
 static GBitmap *s_menu_icon_image_send;
 static GBitmap *s_menu_icon_image_off;
 static GBitmap *s_menu_icon_image_on;
+static GBitmap *s_menu_icon_image_toggle;
 static SimpleMenuItem s_def_menu_items[NUM_COM];
 static SimpleMenuItem s_fav_menu_items[NUM_COM];
 static SimpleMenuItem s_states_menu_items[NUM_COM];
@@ -589,6 +597,9 @@ bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
       break;
     case ON:
       pMenu->icon = s_menu_icon_image_on;
+      break;
+    case TOGGLE:
+      pMenu->icon = s_menu_icon_image_toggle;
       break;
   }
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
@@ -1132,6 +1143,7 @@ static void main_window_load(Window *window)
   s_menu_icon_image_send   = gbitmap_create_with_resource(RESOURCE_ID_MENU_ICON_SEND);
   s_menu_icon_image_off    = gbitmap_create_with_resource(RESOURCE_ID_STATUS_OFF);
   s_menu_icon_image_on     = gbitmap_create_with_resource(RESOURCE_ID_STATUS_ON);
+  s_menu_icon_image_toggle = gbitmap_create_with_resource(RESOURCE_ID_STATUS_TOGGLE);
 
   //window_set_background_color(window, GColorYellow);
 
@@ -1214,6 +1226,7 @@ static void main_window_load(Window *window)
 void main_window_unload(Window *window)
 {
   simple_menu_layer_destroy(s_simple_menu_layer);
+  gbitmap_destroy(s_menu_icon_image_toggle);
   gbitmap_destroy(s_menu_icon_image_on);
   gbitmap_destroy(s_menu_icon_image_off);
   gbitmap_destroy(s_menu_icon_image_send);

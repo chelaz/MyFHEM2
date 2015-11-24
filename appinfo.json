@@ -1,18 +1,30 @@
 {
     "appKeys": {
         "FHEM_COM_ID_KEY": 1,
+        "FHEM_MSG_ID": 5,
         "FHEM_RESP_KEY": 2,
         "FHEM_URL_GET_STATE": 3,
-        "FHEM_URL_REQ_TYPE": 4,
-        "FHEM_MSG_ID": 5,
-        "FHEM_URL_KEY": 0
+        "FHEM_URL_KEY": 0,
+        "FHEM_URL_REQ_TYPE": 4
     },
-    "capabilities": [ "configurable" ],
+    "capabilities": [
+        "configurable"
+    ],
     "companyName": "chelaz.de",
     "longName": "Pebble client for FHEM home automation server",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/status_toggle",
+                "name": "STATUS_TOGGLE",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "png"
+            },
             {
                 "file": "images/status_on",
                 "name": "STATUS_ON",
