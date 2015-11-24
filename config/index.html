@@ -139,6 +139,9 @@
     FS20Element.innerHTML = "Requesting FS20 from " + URL;
     
     var response = HTTPGET(URL);
+
+    FS20Element.innerHTML = "Response: " + response;
+
     var DevJSON = JSON.parse(response);
     // var NumberOfElements = 42; // DevJSON.totalResultsReturned;
 
