@@ -133,7 +133,7 @@
     
     FS20Element.innerHTML = "Response: " + JSON.stringify(DevJSON);
 
-    FS20Element.innerHTML += 'Received Devices: ' + DevJSON.totalResultsReturned;
+    FS20Element.innerHTML = 'FS20Element.innerHTML + 'Received Devices: ' + DevJSON.totalResultsReturned;
 
     // FS20Element.innerHTML = 'Received Devices: ' + NumberOfElements;
     // FS20Element.innerHTML = JSON.stringify(DevJSON.Results[0].Internals);
@@ -153,11 +153,12 @@
     
     var req = new XMLHttpRequest();
     req.onreadystatechange = function() {
-	if (req.readyState == 4 && req.status == 200) {
+	if (req.readyState == 4) { //  && req.status == 200) {
+    		FS20Element.innerHTML = "State: " + req.readyState + " HTTP status: " + req.statusText;
     		var myArr = JSON.parse(req.responseText);
     		ProcessRequestedType(myArr);
     	} else {
-    		FS20Element.innerHTML = "State: " + req.readyState + "Status: " + req.status;
+    		FS20Element.innerHTML = "State: " + req.readyState + " HTTP status: " + req.statusText;
     	}
     };
     req.open("GET", URL, true);
