@@ -9,7 +9,7 @@
     padding: 15px 10px;
     text-transform: uppercase;
     font-family: 'PT Sans', sans-serif;
-    font-size: 1.2em;
+    font-size: 1.2em;j
     font-weight: 500;
     color: #888888;
     text-align: center;
@@ -18,7 +18,7 @@
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 5
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 6
     </h1>
 
     <div class='item-container'>
@@ -148,7 +148,8 @@
 
     var FS20Element=document.getElementById('FS20Content');
 
-    URL = localStorage['FHEM_SERVER_URL']+ "?cmd=jsonlist2%20TYPE=FS20&XHR=1";
+//    URL = localStorage['FHEM_SERVER_URL']+ "?cmd=jsonlist2%20TYPE=FS20&XHR=1";
+    URL = localStorage['FHEM_SERVER_URL']+ "?cmd=jsonlist2&XHR=1";
 
     FS20Element.innerHTML = "Requesting FS20 from " + URL;
     
