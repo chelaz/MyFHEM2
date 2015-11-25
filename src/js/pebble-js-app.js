@@ -1,7 +1,8 @@
 // https://developer.getpebble.com/guides/pebble-apps/pebblekit-js/js-app-comm/
 // https://developer.getpebble.com/guides/pebble-apps/communications/appmessage/
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON
-
+// pass options to the settings page
+// https://stackoverflow.com/questions/30559207/is-it-possible-to-display-a-settings-page-and-communicate-with-a-phone-using-peb
 
 function GetServerURL(URL_Args)
 {
