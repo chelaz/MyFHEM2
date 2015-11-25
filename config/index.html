@@ -156,6 +156,8 @@
 	if (req.readyState == 4 && req.status == 200) {
     		var myArr = JSON.parse(req.responseText);
     		ProcessRequestedType(myArr);
+    	} else {
+    		FS20Element.innerHTML = "State: " + req.readyState + "Status: " + req.status;
     	}
     };
     req.open("GET", URL, true);
