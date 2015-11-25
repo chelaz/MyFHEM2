@@ -18,7 +18,7 @@
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 8
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 9
     </h1>
 
     <div class='item-container'>
@@ -149,7 +149,7 @@
     var FS20Element=document.getElementById('FS20Content');
 
 //    URL = localStorage['FHEM_SERVER_URL']+ "?cmd=jsonlist2%20TYPE=FS20&XHR=1";
-    URL = localStorage['FHEM_SERVER_URL']+ "?cmd=jsonlist2&XHR=1";
+    URL = localStorage['FHEM_SERVER_URL']; // + "?cmd=jsonlist2&XHR=1";
 
     FS20Element.innerHTML = "Requesting FS20 from " + URL;
     
@@ -160,13 +160,13 @@
 	if (req.readyState == 4) { //  && req.status == 200) {
     		FS20Element.innerHTML = "State DONE (" + req.readyState + ") HTTP status: " + req.statusText;
     		// var myArr = JSON.parse(req.responseText);
-    		ProcessRequestedType(req.responseXML);
+    		ProcessRequestedType(req.response);
     	} else {
     		FS20Element.innerHTML = "State: " + req.readyState + " HTTP status: " + req.statusText;
     	}
     };
     req.open("GET", URL, true);
-    req.send(null);
+    req.send('cmd=jsonlist2');
 
     //FS20Element.innerHTML = "Response: " + response;
 
