@@ -18,7 +18,7 @@
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 7
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 8
     </h1>
 
     <div class='item-container'>
@@ -160,7 +160,7 @@
 	if (req.readyState == 4) { //  && req.status == 200) {
     		FS20Element.innerHTML = "State DONE (" + req.readyState + ") HTTP status: " + req.statusText;
     		// var myArr = JSON.parse(req.responseText);
-    		ProcessRequestedType(req.responseText);
+    		ProcessRequestedType(req.responseXML);
     	} else {
     		FS20Element.innerHTML = "State: " + req.readyState + " HTTP status: " + req.statusText;
     	}
