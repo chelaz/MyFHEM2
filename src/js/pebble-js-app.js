@@ -191,7 +191,7 @@ function RequestTypes(URL)
       console.log('\t  Device: ' + JSON.stringify(Device));
       console.log('\t  State:  ' + JSON.stringify(State));
       
-      FHEM_Types["FS20"].Push( 
+      FHEM_Types["FS20"].push( 
         { 
           "State"  : State,
           "Device" : Device,
@@ -203,7 +203,7 @@ function RequestTypes(URL)
     FHEM_Types.num = cnt;
   }
     // test:
-  
+  /*
   FHEM_Types = {
       "FS20" : [
         { 
@@ -220,13 +220,13 @@ function RequestTypes(URL)
         }
       ],
       "num": 2
-  }; 
+      };  */
   
     /* FHEM_Types = {
       "FS20" : "test"
     }; */
 
-    console.log('Set in local storage (FHEM_URL_REQ_TYPE): ' + JSON.stringify(FHEM_Types));
+    // console.log('Set in local storage (FHEM_URL_REQ_TYPE): ' + JSON.stringify(FHEM_Types));
 
     localStorage.setItem('FHEM_URL_REQ_TYPE', JSON.stringify(FHEM_Types));
   // }
@@ -243,6 +243,10 @@ function RequestTypes(URL)
 Pebble.addEventListener('ready', 
   function(e) {
     console.log('MyFHEM2 JavaScript ready!');
+    
+    var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE=FS20&XHR=1"));
+
+    // console.log('MyFHEM2: Types: '+FHEM_Types);
   }
 );
 
@@ -250,9 +254,9 @@ Pebble.addEventListener('ready',
 Pebble.addEventListener('showConfiguration', 
   function(e) {
     var url = 'https://rawgit.com/chelaz/MyFHEM2/master/config/index.html';
-
-    
-    // var FHEM_Types = localStorage.getItem('FHEM_URL_REQ_TYPE');
+    // var url = 'http://madita/config/index.html';
+   
+    var FHEM_Types = localStorage.getItem('FHEM_URL_REQ_TYPE');
     
     var FHEM_Types_Obj = {
       "FS20" : [
@@ -272,13 +276,13 @@ Pebble.addEventListener('showConfiguration',
       "num": 2
   }; 
   
-  // var FHEM_Types = JSON.stringify(FHEM_Types_Obj); 
-  var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%%20TYPE=%s&XHR=1"));
+    // var FHEM_Types = JSON.stringify(FHEM_Types_Obj); 
+  // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%%20TYPE=%s&XHR=1"));
         
     if(FHEM_Types !== null)
       url = url + "?options=" + encodeURIComponent(FHEM_Types);
 
-    console.log('Showing configuration page: ' + url);
+    // console.log('Showing configuration page: ' + url);
 
     Pebble.openURL(url);
   }

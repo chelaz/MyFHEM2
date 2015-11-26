@@ -78,6 +78,9 @@ input[type=date] {
   border-top: 1px solid #DEDEDE;
   border-bottom: 1px solid #DEDEDE; }
 
+.item-container-content-small {
+  font-size: .7em; }
+
 .item-container-footer {
   padding: 3px 10px;
   font-size: .7em;
