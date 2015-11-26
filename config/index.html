@@ -18,7 +18,7 @@
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 10
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 11
     </h1>
 
     <div class='item-container'>
@@ -150,7 +150,7 @@
 	  if (qs == null)
 	    return default_;
 	  else
-	    return qs[1];
+	    return decodeURIComponent(qs[1]);
   }
 
   function GetArgs()
