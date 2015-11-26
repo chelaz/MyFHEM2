@@ -173,11 +173,13 @@ function RequestTypes(URL)
 	    });
       */
 
+  var FHEM_Types = { "FS20" : [], "num": 0 };
   if (response !== null) {
     var DevJSON = JSON.parse(response);
 
     console.log('Received Devices: ' + DevJSON.totalResultsReturned);
-
+    
+    var cnt=0;
     for (var i=0; i < DevJSON.totalResultsReturned; i++) {
       var State  = DevJSON.Results[i].Internals.STATE;
       var Device = DevJSON.Results[i].Internals.NAME;
@@ -188,9 +190,47 @@ function RequestTypes(URL)
       console.log('\t  Descr:  ' + JSON.stringify(Descr));
       console.log('\t  Device: ' + JSON.stringify(Device));
       console.log('\t  State:  ' + JSON.stringify(State));
+      
+      FHEM_Types["FS20"].Push( 
+        { 
+          "State"  : State,
+          "Device" : Device,
+          "Descr"  : Descr,
+          "Room"   : Room
+        });
+      cnt++;
     }
+    FHEM_Types.num = cnt;
   }
+    // test:
   
+  FHEM_Types = {
+      "FS20" : [
+        { 
+          "State"  : "toggle",
+          "Device" : "FS20_fr_bel",
+          "Descr"  : "Licht umschalten",
+          "Room"   : "Küche"
+        },
+        { 
+          "State"  : "toggle",
+          "Device" : "FS20_fz_bel",
+          "Descr"  : "Licht an/aus",
+          "Room"   : "Wohnzimmer"
+        }
+      ],
+      "num": 2
+  }; 
+  
+    /* FHEM_Types = {
+      "FS20" : "test"
+    }; */
+
+    console.log('Set in local storage (FHEM_URL_REQ_TYPE): ' + JSON.stringify(FHEM_Types));
+
+    localStorage.setItem('FHEM_URL_REQ_TYPE', JSON.stringify(FHEM_Types));
+  // }
+  return JSON.stringify(FHEM_Types);
 }
 
 
@@ -210,6 +250,34 @@ Pebble.addEventListener('ready',
 Pebble.addEventListener('showConfiguration', 
   function(e) {
     var url = 'https://rawgit.com/chelaz/MyFHEM2/master/config/index.html';
+
+    
+    // var FHEM_Types = localStorage.getItem('FHEM_URL_REQ_TYPE');
+    
+    var FHEM_Types_Obj = {
+      "FS20" : [
+        { 
+          "State"  : "toggle",
+          "Device" : "FS20_fr_bel",
+          "Descr"  : "Licht umschalten",
+          "Room"   : "Küche"
+        },
+        { 
+          "State"  : "toggle",
+          "Device" : "FS20_fz_bel",
+          "Descr"  : "Licht an/aus",
+          "Room"   : "Wohnzimmer"
+        }
+      ],
+      "num": 2
+  }; 
+  
+  // var FHEM_Types = JSON.stringify(FHEM_Types_Obj); 
+  var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%%20TYPE=%s&XHR=1"));
+        
+    if(FHEM_Types !== null)
+      url = url + "?options=" + encodeURIComponent(FHEM_Types);
+
     console.log('Showing configuration page: ' + url);
 
     Pebble.openURL(url);
