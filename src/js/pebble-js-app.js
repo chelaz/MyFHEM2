@@ -186,6 +186,10 @@ function RequestTypes(URL)
       var Descr  = DevJSON.Results[i].Attributes.alias;
       var Room   = DevJSON.Results[i].Attributes.room;
       console.log('\t#: ' + i);
+      if (Room == null) {
+	console.log('\t  -> not used device: ' + JSON.stringify(Device));
+	continue;
+      }
       console.log('\t  Room:   ' + JSON.stringify(Room));
       console.log('\t  Descr:  ' + JSON.stringify(Descr));
       console.log('\t  Device: ' + JSON.stringify(Device));
