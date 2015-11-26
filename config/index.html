@@ -18,7 +18,7 @@
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 11
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 12
     </h1>
 
     <div class='item-container'>
@@ -219,6 +219,10 @@
       FHEM_SERVER_URL_textinput.value = localStorage['FHEM_SERVER_URL'];
       //highContrastCheckbox.checked = JSON.parse(localStorage['high_contrast']);
     }
+    
+    var FS20Element=document.getElementById('FS20Content');
+    FS20Element.innerHTML = "URL of this document: <pre>" + window.location.href + "</pre>";
+    
   })();
   </script>
 </html>
