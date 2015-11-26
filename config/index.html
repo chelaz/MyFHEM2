@@ -18,7 +18,7 @@
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 9
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 10
     </h1>
 
     <div class='item-container'>
@@ -142,19 +142,46 @@
     // FS20Element.innerHTML = JSON.stringify(DevJSON.Results[0].Internals);
   }
 
+  function getQuerystring(key, default_) {
+	  if (default_ == null) default_ = "";
+	  key = key.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+	  var regex = new RegExp("[\\?&]" + key + "=([^&#]*)");
+	  var qs = regex.exec(window.location.href);
+	  if (qs == null)
+	    return default_;
+	  else
+	    return qs[1];
+  }
+
+  function GetArgs()
+  {
+	// set this value from the "options" query string value.
+	// This is the value of the options that you'll receive from your app
+	var optionsString = getQuerystring("options", "{FS20:''}");
+	var options = JSON.parse(optionsString);
+	
+    var FS20Element=document.getElementById('FS20Content');
+    FS20Element.innerHTML = "Received content: '" + JSON.stringify(options) + "'";
+    
+    return options;
+  }
+
+
   var RequestButton = document.getElementById('RequestFS20fromFHEM');
   RequestButton.addEventListener('click', function() {
     console.log('RequestButton entered');
-
+ 
+    GetArgs();
+    
     var FS20Element=document.getElementById('FS20Content');
 
 //    URL = localStorage['FHEM_SERVER_URL']+ "?cmd=jsonlist2%20TYPE=FS20&XHR=1";
-    URL = localStorage['FHEM_SERVER_URL']; // + "?cmd=jsonlist2&XHR=1";
+    // URL = localStorage['FHEM_SERVER_URL']; // + "?cmd=jsonlist2&XHR=1";
 
-    FS20Element.innerHTML = "Requesting FS20 from " + URL;
+    // FS20Element.innerHTML = "Requesting FS20 from " + URL;
     
     // var response = HTTPGET(URL);
-    
+    /*
     var req = new XMLHttpRequest();
     req.onreadystatechange = function() {
 	if (req.readyState == 4) { //  && req.status == 200) {
@@ -167,7 +194,7 @@
     };
     req.open("GET", URL, true);
     req.send('cmd=jsonlist2');
-
+   */
     //FS20Element.innerHTML = "Response: " + response;
 
     //var DevJSON = JSON.parse(response);
