@@ -52,23 +52,12 @@ function SendCom(ComID, MsgID, URL)
 
 function GetState(ComID, MsgID, URL)
 {
-  // var StateURL = e.payload['FHEM_URL_GET_STATE'];
   console.log('GetState: ' + URL);
   var response = HTTPGET(URL);
 
   // tests:
-  /* JSONLIST:
-      response = JSON.stringify({
-        "ResultSet"  : {
-          "Results" : {
-            "STATE": "off",
-            "Type": "FS20",
-            "XMIT": "3bcd"
-          }
-        }
-	});
-      // JSONLIST2:
-      response = JSON.stringify({
+  /* // JSONLIST2:
+    response = JSON.stringify({
 	  { 
 	    "Arg":"FS20_fr_bel", 
 	      "Results": [ 
@@ -93,26 +82,17 @@ function GetState(ComID, MsgID, URL)
 	      "totalResultsReturned":1 
 	      }
 	});
-      */
+  */
 
-  // console.log('Received response: ' + response);
 
   var dict;
   if (response !== null) {
     var DevJSON = JSON.parse(response);
 
-    /*jsonlist
-        var State = DevJSON.ResultSet.Results.STATE;
-
-         console.log('ResultSet:' + DevJSON.ResultSet);
-         console.log('ResultSet, Results:' + DevJSON.ResultSet.Results);
-         console.log('Received STATE: ' + State);
-	  */
     // jsonlist2
     var State = "unknown";
     if (DevJSON.totalResultsReturned == 1) {
       State = DevJSON.Results[0].Internals.STATE;
-      // console.log('Results:' + JSON.stringify(DevJSON.Results[0]));
       // console.log('Received Internals: ' + JSON.stringify(DevJSON.Results[0].Internals));
     }
 
@@ -140,8 +120,6 @@ function RequestTypes(URL)
 {
   console.log('RequestTypes: ' + URL);
   var response = HTTPGET(URL);
-
-  // console.log('Received requested type: ' + response);
 
   // jsonlist2 TYPE=FS20
   /*
@@ -187,8 +165,8 @@ function RequestTypes(URL)
       var Room   = DevJSON.Results[i].Attributes.room;
       console.log('\t#: ' + i);
       if (Room == null) {
-	console.log('\t  -> not used device: ' + JSON.stringify(Device));
-	continue;
+	      console.log('\t  -> not used device: ' + JSON.stringify(Device));
+	      continue;
       }
       console.log('\t  Room:   ' + JSON.stringify(Room));
       console.log('\t  Descr:  ' + JSON.stringify(Descr));
@@ -226,14 +204,12 @@ function RequestTypes(URL)
       "num": 2
       };  */
   
-    /* FHEM_Types = {
-      "FS20" : "test"
-    }; */
+    /* FHEM_Types = { "FS20" : "test" }; */
 
     // console.log('Set in local storage (FHEM_URL_REQ_TYPE): ' + JSON.stringify(FHEM_Types));
 
-    localStorage.setItem('FHEM_URL_REQ_TYPE', JSON.stringify(FHEM_Types));
-  // }
+  localStorage.setItem('FHEM_URL_REQ_TYPE', JSON.stringify(FHEM_Types));
+
   return JSON.stringify(FHEM_Types);
 }
 
@@ -261,8 +237,11 @@ Pebble.addEventListener('showConfiguration',
     // var url = 'http://madita/config/index.html';
    
     var FHEM_Types = localStorage.getItem('FHEM_URL_REQ_TYPE');
-    
-    var FHEM_Types_Obj = {
+    // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE=FS20&XHR=1"));
+
+    // for tests:
+    /*
+      var FHEM_Types_Obj = {
       "FS20" : [
         { 
           "State"  : "toggle",
@@ -278,11 +257,10 @@ Pebble.addEventListener('showConfiguration',
         }
       ],
       "num": 2
-  }; 
-  
+    };
     // var FHEM_Types = JSON.stringify(FHEM_Types_Obj); 
-  // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%%20TYPE=%s&XHR=1"));
-        
+    */
+          
     if(FHEM_Types !== null)
       url = url + "?options=" + encodeURIComponent(FHEM_Types);
 
@@ -300,7 +278,6 @@ Pebble.addEventListener('webviewclosed',
     var FHEM_SERVER_URL = configData['FHEM_SERVER_URL'];
     console.log('FHEM server URL: ' + FHEM_SERVER_URL);
     
-    // localStorage['FHEM_SERVER_URL'] = FHEM_SERVER_URL;
     localStorage.setItem('FHEM_SERVER_URL', FHEM_SERVER_URL);
     /*
       // Example with the following JSON data:
