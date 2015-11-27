@@ -24,7 +24,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 14
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 15
     </h1>
 
     <div class='item-container'>
@@ -148,29 +148,27 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   }
 
   /////////////////////////////////////
-  // 
-  function ShowDevicesFromArgs(Type)
+  // Fetches all devices from args (URI) and shows it on the page
+  function ShowDevicesFromArgs(Type, HTMLElement)
   {
     var optionsString = getQueryString("options", "{" + Type + ":''}");
     var options = JSON.parse(optionsString);
 
-    var FS20Element=document.getElementById('FS20Content');
-
     if (options.num == null) {
-      FS20Element.innerHTML = "Nothing received from Pebble.js";
+      HTMLElement.innerHTML = "Nothing received from Pebble.js";
       return;
     }
     if (options.num == 0) {
-      FS20Element.innerHTML = "No " + Type + " devices found";
+      HTMLElement.innerHTML = "No " + Type + " devices found";
       return;
     }
 
-    FS20Element.innerHTML = "";
+    HTMLElement.innerHTML = "";
 
     // Todo: replace FS20 with Type in JSON object
     for (var i = 0; i < options.num; i++) {
       var ih = i+1;
-      FS20Element.innerHTML +=
+      HTMLElement.innerHTML +=
          "<div class='item-container-content'>" + 
          " [" + ih + "/" + options.num + "] " + 
          "  <input id='" + options.FS20[i].Device + "' type='checkbox'></input>&nbsp;" +
@@ -183,54 +181,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     }
   }
 
-  var RequestButton = document.getElementById('RequestFS20fromFHEM');
-
-  if (RequestButton !== null) {
-
-  RequestButton.addEventListener('click', function() {
-    console.log('RequestButton entered');
- 
-    ShowDevicesFromArgs("FS20");
-    
-    var FS20Element=document.getElementById('FS20Content');
-
-    // URL = localStorage['FHEM_SERVER_URL']+ "?cmd=jsonlist2%20TYPE=FS20&XHR=1";
-    // URL = localStorage['FHEM_SERVER_URL']; // + "?cmd=jsonlist2&XHR=1";
-
-    // FS20Element.innerHTML = "Requesting FS20 from " + URL;
-    
-    // var response = HTTPGET(URL);
-    /*
-    var req = new XMLHttpRequest();
-    req.onreadystatechange = function() {
-	if (req.readyState == 4) { //  && req.status == 200) {
-    		FS20Element.innerHTML = "State DONE (" + req.readyState + ") HTTP status: " + req.statusText;
-    		// var myArr = JSON.parse(req.responseText);
-    		ProcessRequestedType(req.response);
-    	} else {
-    		FS20Element.innerHTML = "State: " + req.readyState + " HTTP status: " + req.statusText;
-    	}
-    };
-    req.open("GET", URL, true);
-    req.send('cmd=jsonlist2');
-   */
-    //FS20Element.innerHTML = "Response: " + response;
-
-    //var DevJSON = JSON.parse(response);
-    // var NumberOfElements = 42; // DevJSON.totalResultsReturned;
-
-    //FS20Element.innerHTML = 'Received Devices: ' + DevJSON.totalResultsReturned;
-
-    // FS20Element.innerHTML = 'Received Devices: ' + NumberOfElements;
-    //FS20Element.innerHTML = JSON.stringify(DevJSON.Results[0].Internals);
-
-    console.log('RequestButton leave');
-
-    // alert('Received Devices: ' + DevJSON.totalResultsReturned);
-  });
-}
-
-
+  /////////////////////////////////////
+  // Main Function
   (function() {
     var FHEM_SERVER_URL_textinput = document.getElementById('FHEM_SERVER_URL');
     // var highContrastCheckbox = document.getElementById('high_contrast_checkbox');
@@ -241,11 +193,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       //highContrastCheckbox.checked = JSON.parse(localStorage['high_contrast']);
     }
     
+    // for debugging: if args of URI are not present, the URI stays
     var FS20Element=document.getElementById('FS20Content');
     FS20Element.innerHTML = "URL of this document: <em>" + window.location.href + "</em>";
 
-    ShowDevicesFromArgs("FS20");
-   
+    ShowDevicesFromArgs("FS20", FS20Element);
 
   })();
   </script>
