@@ -24,7 +24,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 15
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 16
     </h1>
 
     <div class='item-container'>
@@ -56,9 +56,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     <div class='item-container'>
       <div class='item-container-header'>FS20 Devices <!-- button id="RequestFS20fromFHEM">Request FS20 Devices</button--></div>
       <div class='item-container-content'>
-        <label class='item'>
-	  <div id="FS20Content">...</div>
-	</label>
+        <div id="FS20Content">...</div>
       </div>
       <div class='item-container-footer'>
 	You can see all FS20 devices of your FHEM server.
@@ -169,15 +167,15 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     for (var i = 0; i < options.num; i++) {
       var ih = i+1;
       HTMLElement.innerHTML +=
-         "<div class='item-container-content'>" + 
+         "<label class='item'><div class='item-container-content'>" + 
          " [" + ih + "/" + options.num + "] " + 
-         "  <input id='" + options.FS20[i].Device + "' type='checkbox'></input>&nbsp;" +
+         "  <input id='" + options.FS20[i].Device + "' type='checkbox'>&nbsp;" +
 	 options.FS20[i].Room +
          "   <div class='item-container-content-small'>" +
 	  options.FS20[i].Descr+
 	 "   </div>" + 
 	 "  "+
-	 "</div>";
+	 "</div></label>";
     }
   }
 
