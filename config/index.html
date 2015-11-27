@@ -85,20 +85,77 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   
   <script>
 
+  function GetInputServerURL(return_opts)
+  {
+    var FHEM_SERVER_URL_textinput = document.getElementById('FHEM_SERVER_URL');
+    return_opts['FHEM_SERVER_URL'] = FHEM_SERVER_URL_textinput.value;
+
+    // Save for next launch
+    localStorage['FHEM_SERVER_URL'] = return_opts['FHEM_SERVER_URL'];
+
+    return return_opts;
+  }
+
+  function GetInputDevices(return_opts, DeviceType)
+  {
+    var Key = "FHEM_DEVICES_" + DeviceType;
+    
+    var options = JSON.parse(localStorage[Key]);
+    
+    if (options.num == null || options.num == 0)
+      return return_opts;
+    
+    var FHEM_Types = {}
+    FHEM_Types[DeviceType] = [];
+    // FHEM_Types.num = 0;
+
+    console.log('FHEM_TYPES: ' + JSON.stringify(FHEM_Types));
+
+    var cnt=0;
+    for (var i=0; i < options.num; i++) {
+      var InputID = "Device_" + i;
+      var InputElem = document.getElementById(InputID);
+
+      if (InputElem.checked) {
+        FHEM_Types[DeviceType].push( 
+         { 
+          "State"  : options[DeviceType][i].State,
+          "Device" : options[DeviceType][i].Device,
+          "Descr"  : options[DeviceType][i].Descr,
+          "Room"   : options[DeviceType][i].Room
+         });
+        options[DeviceType][i].checked = true;
+        cnt++;
+      } else
+        options[DeviceType][i].checked = false;
+    }
+    // FHEM_Types[DeviceType].push({ 'num' : cnt });
+    
+    // return_opts[DeviceType] = FHEM_Types[DeviceType];
+    // return return_opts;
+
+    return_opts['TypeDevices'] = FHEM_Types;
+    return return_opts;
+  }
+
   /////////////////////////////////////
   // Get data from html form input tags
   function getUserInput() {
-    var FHEM_SERVER_URL_textinput = document.getElementById('FHEM_SERVER_URL');
     // var highContrastCheckbox = document.getElementById('high_contrast_checkbox');
 
-    var options = {
+    /* var options = {
       'FHEM_SERVER_URL': FHEM_SERVER_URL_textinput.value
-    };
+    }; */
     //      // 'high_contrast': highContrastCheckbox.checked
 
-    // Save for next launch
-    localStorage['FHEM_SERVER_URL'] = options['FHEM_SERVER_URL'];
     // localStorage['high_contrast'] = options['high_contrast'];
+
+    DeviceType = "FS20";
+
+    var options = {}
+
+    options = GetInputServerURL(options);    
+    options = GetInputDevices(options, DeviceType);
 
     console.log('Got options: ' + JSON.stringify(options));
     return options;
@@ -147,35 +204,40 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
   /////////////////////////////////////
   // Fetches all devices from args (URI) and shows it on the page
-  function ShowDevicesFromArgs(Type, HTMLElement)
+  function ShowDevicesFromArgs(DeviceType, HTMLElement)
   {
-    var optionsString = getQueryString("options", "{" + Type + ":''}");
+    var optionsString = getQueryString("options", "{" + DeviceType + ":''}");
     var options = JSON.parse(optionsString);
+
+    var Key = "FHEM_DEVICES_" + DeviceType;
+    localStorage[Key] = optionsString;
 
     if (options.num == null) {
       HTMLElement.innerHTML = "Nothing received from Pebble.js";
       return;
     }
     if (options.num == 0) {
-      HTMLElement.innerHTML = "No " + Type + " devices found";
+      HTMLElement.innerHTML = "No " + DeviceType + " devices found";
       return;
     }
 
     HTMLElement.innerHTML = "";
 
-    // Todo: replace FS20 with Type in JSON object
+    // checked not yet working since the data from localStorage is overwritten above
     for (var i = 0; i < options.num; i++) {
       var ih = i+1;
       HTMLElement.innerHTML +=
-         "<label class='item'><div class='item-container-content'>" + 
+         "<label class='item'>" + 
          " [" + ih + "/" + options.num + "] " + 
-         "  <input id='" + options.FS20[i].Device + "' type='checkbox'>&nbsp;" +
-	 options.FS20[i].Room +
+         "  <input id='Device_" + i + "' type='checkbox' "+
+	 "   value=" + options[DeviceType][i].checked +
+	 "  >&nbsp;" +
+	 options[DeviceType][i].Room +
          "   <div class='item-container-content-small'>" +
-	  options.FS20[i].Descr+
+	  options[DeviceType][i].Descr +
 	 "   </div>" + 
 	 "  "+
-	 "</div></label>";
+	 "</label>";
     }
   }
 

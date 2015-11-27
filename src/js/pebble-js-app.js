@@ -151,7 +151,11 @@ function RequestTypes(URL, DeviceType)
 	    });
       */
 
-  var FHEM_Types = { DeviceType : [], "num": 0 };
+  // var FHEM_Types = { DeviceType : [], "num": 0 };
+  var FHEM_Types = {}
+  FHEM_Types[DeviceType] = [];
+  FHEM_Types.num = cnt;
+  
   if (response !== null) {
     var DevJSON = JSON.parse(response);
 
@@ -164,7 +168,7 @@ function RequestTypes(URL, DeviceType)
       var Descr  = DevJSON.Results[i].Attributes.alias;
       var Room   = DevJSON.Results[i].Attributes.room;
       console.log('\t#: ' + i);
-      if (Room === null) {
+      if (Room == null) {
 	      console.log('\t  -> not used device: ' + JSON.stringify(Device));
 	      continue;
       }
@@ -233,8 +237,8 @@ Pebble.addEventListener('ready',
 // https://developer.getpebble.com/guides/pebble-apps/pebblekit-js/app-configuration/#testing-on-pebble
 Pebble.addEventListener('showConfiguration', 
   function(e) {
-    var url = 'https://rawgit.com/chelaz/MyFHEM2/master/config/index.html';
-    // var url = 'http://madita/config/index.html';
+    // var url = 'https://rawgit.com/chelaz/MyFHEM2/master/config/index.html';
+    var url = 'http://madita/config/index.html';
    
     var FHEM_Types = localStorage.getItem('FHEM_URL_REQ_TYPE');
     // var DeviceType = "FS20"; // TODO
@@ -280,6 +284,24 @@ Pebble.addEventListener('webviewclosed',
     console.log('FHEM server URL: ' + FHEM_SERVER_URL);
     
     localStorage.setItem('FHEM_SERVER_URL', FHEM_SERVER_URL);
+
+    var DeviceType = "FS20"; // todo
+    for (var i in configData['TypeDevices'][DeviceType]) {
+      var dict = {
+	'FHEM_TYPE_DEV_KEY' : JSON.stringify(configData['TypeDevices'][DeviceType][i])
+      };
+
+      Pebble.sendAppMessage(dict,
+			    function(e) {
+			      console.log('AppMsg: TYPE_DEVICES successful.');
+			    },
+			    function(e) {
+			      console.log('AppMsg: TYPE_DEVICES failed!');
+			    }
+			    );
+    }
+    
+
     /*
       // Example with the following JSON data:
       var config = {

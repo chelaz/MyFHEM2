@@ -291,6 +291,7 @@ static const uint32_t FHEM_RESP_KEY      = 2;
 static const uint32_t FHEM_URL_GET_STATE = 3;
 static const uint32_t FHEM_URL_REQ_TYPE  = 4;
 static const uint32_t FHEM_MSG_ID        = 5;
+static const uint32_t FHEM_TYPE_DEV_KEY  = 6;
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 {  
@@ -344,11 +345,16 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       set_menu_icon(MENU_FAV_COMS, MenuFavIdx,   OK);
       set_menu_icon(MENU_STATE_COMS, MenuStateIdx, OK);
     } 
-  } else {
-    APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
-    successfull = false;
-  }
-
+  } else
+    if ((data = dict_find(iterator, FHEM_TYPE_DEV_KEY)) != NULL) {
+      char* result = (char*)data->value->cstring;
+      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_TYPE_DEV_KEY received: %s", result);
+      
+    } else {
+      APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
+      successfull = false;
+    }
+  
   if (successfull) {
     if (MsgID == MSG_ID_SEND_COM_REQ_STATE_NEXT) {
       bool fetch_next = true;

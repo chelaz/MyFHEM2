@@ -5,7 +5,8 @@
         "FHEM_RESP_KEY": 2,
         "FHEM_URL_GET_STATE": 3,
         "FHEM_URL_KEY": 0,
-        "FHEM_URL_REQ_TYPE": 4
+        "FHEM_URL_REQ_TYPE": 4,
+	"FHEM_TYPE_DEV_KEY" : 6
     },
     "capabilities": [
         "configurable"
