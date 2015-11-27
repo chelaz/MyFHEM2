@@ -116,9 +116,9 @@ function GetState(ComID, MsgID, URL)
 
 }
 
-function RequestTypes(URL)
+function RequestTypes(URL, DeviceType)
 {
-  console.log('RequestTypes: ' + URL);
+  console.log('RequestTypes: ' + URL + "of types: " + DeviceType);
   var response = HTTPGET(URL);
 
   // jsonlist2 TYPE=FS20
@@ -151,7 +151,7 @@ function RequestTypes(URL)
 	    });
       */
 
-  var FHEM_Types = { "FS20" : [], "num": 0 };
+  var FHEM_Types = { DeviceType : [], "num": 0 };
   if (response !== null) {
     var DevJSON = JSON.parse(response);
 
@@ -164,7 +164,7 @@ function RequestTypes(URL)
       var Descr  = DevJSON.Results[i].Attributes.alias;
       var Room   = DevJSON.Results[i].Attributes.room;
       console.log('\t#: ' + i);
-      if (Room == null) {
+      if (Room === null) {
 	      console.log('\t  -> not used device: ' + JSON.stringify(Device));
 	      continue;
       }
@@ -173,7 +173,7 @@ function RequestTypes(URL)
       console.log('\t  Device: ' + JSON.stringify(Device));
       console.log('\t  State:  ' + JSON.stringify(State));
       
-      FHEM_Types["FS20"].push( 
+      FHEM_Types[DeviceType].push( 
         { 
           "State"  : State,
           "Device" : Device,
@@ -223,8 +223,8 @@ function RequestTypes(URL)
 Pebble.addEventListener('ready', 
   function(e) {
     console.log('MyFHEM2 JavaScript ready!');
-    
-    var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE=FS20&XHR=1"));
+    var DeviceType = "FS20"; // TODO
+    var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
 
     // console.log('MyFHEM2: Types: '+FHEM_Types);
   }
@@ -237,7 +237,8 @@ Pebble.addEventListener('showConfiguration',
     // var url = 'http://madita/config/index.html';
    
     var FHEM_Types = localStorage.getItem('FHEM_URL_REQ_TYPE');
-    // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE=FS20&XHR=1"));
+    // var DeviceType = "FS20"; // TODO
+    // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
 
     // for tests:
     /*
@@ -322,7 +323,7 @@ Pebble.addEventListener('appmessage',
       return;
     }
     if (e.payload['FHEM_URL_REQ_TYPE']) {
-      RequestTypes(GetServerURL(e.payload['FHEM_URL_REQ_TYPE']));
+      RequestTypes(GetServerURL(e.payload['FHEM_URL_REQ_TYPE']), "FS20");
       return;
     }
   }                     
