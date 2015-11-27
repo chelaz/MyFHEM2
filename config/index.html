@@ -1,5 +1,6 @@
 <!-- Example URL:
 http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Descr%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22%7D%2C%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Descr%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22%7D%5D%2C%22num%22%3A2%7D&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
+https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Descr%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22%7D%2C%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Descr%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22%7D%5D%2C%22num%22%3A2%7D&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
 -->
 
 
@@ -23,7 +24,7 @@ http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22t
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 12
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 13
     </h1>
 
     <div class='item-container'>
@@ -83,19 +84,19 @@ http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22t
       </div>
     </div>
   </body>
+  
   <script>
-  function getConfigData() {
+
+  /////////////////////////////////////
+  // Get data from html form input tags
+  function getUserInput() {
     var FHEM_SERVER_URL_textinput = document.getElementById('FHEM_SERVER_URL');
     // var highContrastCheckbox = document.getElementById('high_contrast_checkbox');
-
-    //alert("ServerUrl: "+FHEM_SERVER_URL_textinput.value);
 
     var options = {
       'FHEM_SERVER_URL': FHEM_SERVER_URL_textinput.value
     };
     //      // 'high_contrast': highContrastCheckbox.checked
-
-    // alert("JSON: "+JSON.stringify(options));
 
     // Save for next launch
     localStorage['FHEM_SERVER_URL'] = options['FHEM_SERVER_URL'];
@@ -105,6 +106,9 @@ http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22t
     return options;
   }
 
+  /////////////////////////////////////
+  // Helper Function:
+  // Set the return URL depending on the runtime environment
   function getQueryParam(variable, defaultValue) {
     var query = location.search.substring(1);
     var vars = query.split('&');
@@ -116,38 +120,23 @@ http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22t
     }
     return defaultValue || false;
   }
- 
+
+  /////////////////////////////////////
+  // Submit button clicked 
   var submitButton = document.getElementById('submit_button');
   submitButton.addEventListener('click', function() {
     console.log('Submit');
 
-    // Set the return URL depending on the runtime environment
     var return_to = getQueryParam('return_to', 'pebblejs://close#');
-    document.location = return_to + encodeURIComponent(JSON.stringify(getConfigData()));
+    document.location = return_to + encodeURIComponent(JSON.stringify(getUserInput()));
   });
 
-    function HTTPGET(url) {
-      var req = new XMLHttpRequest();
-      req.open("GET", url, false);
-      req.send(null);
-      return req.responseText;
-    }
 
-  function ProcessRequestedType(DevJSON)
-  {
-    var FS20Element=document.getElementById('FS20Content');
-    
-    FS20Element.innerHTML = "Received content: '" + DevJSON + "'";
-    
-    // FS20Element.innerHTML = "Response: " + JSON.stringify(DevJSON);
-
-    // FS20Element.innerHTML = FS20Element.innerHTML + 'Received Devices: ' + DevJSON.totalResultsReturned;
-
-    // FS20Element.innerHTML = 'Received Devices: ' + NumberOfElements;
-    // FS20Element.innerHTML = JSON.stringify(DevJSON.Results[0].Internals);
-  }
-
-  function getQuerystring(key, default_) {
+  /////////////////////////////////////
+  // Helper Function:
+  // Extract the args from the URI of this document
+  // Returns the string corresponding to the given key
+  function getQueryString(key, default_) {
 	  if (default_ == null) default_ = "";
 	  key = key.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
 	  var regex = new RegExp("[\\?&]" + key + "=([^&#]*)");
@@ -158,9 +147,11 @@ http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22t
 	    return decodeURIComponent(qs[1]);
   }
 
-  function GetArgs()
+  /////////////////////////////////////
+  // 
+  function ShowDevicesFromArgs(Type)
   {
-    var optionsString = getQuerystring("options", "{FS20:''}");
+    var optionsString = getQueryString("options", "{" + Type + ":''}");
     var options = JSON.parse(optionsString);
 
     var FS20Element=document.getElementById('FS20Content');
@@ -170,29 +161,27 @@ http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22t
       return;
     }
     if (options.num == 0) {
-      FS20Element.innerHTML = "No FS20 devices found";
+      FS20Element.innerHTML = "No " + Type + " devices found";
       return;
     }
 
     FS20Element.innerHTML = "";
 
+    // Todo: replace FS20 with Type in JSON object
     for (var i = 0; i < options.num; i++) {
       var ih = i+1;
       FS20Element.innerHTML +=
-         "<div class='item-container-content'> [" + ih + "/" + options.num +
-      "] " + 
-         "<input id='" + options.FS20[i].Device + "' type='checkbox'>&nbsp;" +
+         "<div class='item-container-content'>" + 
+         " [" + ih + "/" + options.num + "] " + 
+         "  <input id='" + options.FS20[i].Device + "' type='checkbox'>&nbsp;" +
 	 options.FS20[i].Room +
-         "<div class='item-container-content-small'>" +
-	  options.FS20[i].Descr+"</div></input></div>";
+         "   <div class='item-container-content-small'>" +
+	  options.FS20[i].Descr+
+	 "   </div>" + 
+	 "  </input>"+
+	 "</div>";
     }
-    
-
-    // FS20Element.innerHTML = "Received content: '" + JSON.stringify(options) + "'";
-    
-    return options;
   }
-
 
   var RequestButton = document.getElementById('RequestFS20fromFHEM');
 
@@ -201,7 +190,7 @@ http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22t
   RequestButton.addEventListener('click', function() {
     console.log('RequestButton entered');
  
-    GetArgs();
+    ShowDevicesFromArgs("FS20");
     
     var FS20Element=document.getElementById('FS20Content');
 
@@ -255,9 +244,8 @@ http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22t
     var FS20Element=document.getElementById('FS20Content');
     FS20Element.innerHTML = "URL of this document: <em>" + window.location.href + "</em>";
 
-
-    GetArgs();
-    
+    ShowDevicesFromArgs("FS20");
+   
 
   })();
   </script>
