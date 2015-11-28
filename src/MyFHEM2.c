@@ -291,7 +291,14 @@ static const uint32_t FHEM_RESP_KEY      = 2;
 static const uint32_t FHEM_URL_GET_STATE = 3;
 static const uint32_t FHEM_URL_REQ_TYPE  = 4;
 static const uint32_t FHEM_MSG_ID        = 5;
-static const uint32_t FHEM_TYPE_DEV_KEY  = 6;
+
+// add new device:
+static const uint32_t FHEM_NEW_DEV       =  6;
+static const uint32_t FHEM_DEV_DESCR     =  7;
+static const uint32_t FHEM_DEV_STATE     =  8;
+static const uint32_t FHEM_DEV_ROOM      =  9;
+static const uint32_t FHEM_DEV_CHECK     = 10;
+
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 {  
@@ -346,9 +353,27 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       set_menu_icon(MENU_STATE_COMS, MenuStateIdx, OK);
     } 
   } else
-    if ((data = dict_find(iterator, FHEM_TYPE_DEV_KEY)) != NULL) {
+    if ((data = dict_find(iterator, FHEM_NEW_DEV)) != NULL) {
       char* result = (char*)data->value->cstring;
-      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_TYPE_DEV_KEY received: %s", result);
+      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_NEW_DEV received: %s", result);
+      
+      if ((data = dict_find(iterator, FHEM_DEV_DESCR)) != NULL) {
+	char* result = (char*)data->value->cstring;
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_DESCR received: %s", result);
+      }
+      if ((data = dict_find(iterator, FHEM_DEV_STATE)) != NULL) {
+	char* result = (char*)data->value->cstring;
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_STATE received: %s", result);
+      }
+      if ((data = dict_find(iterator, FHEM_DEV_ROOM)) != NULL) {
+	char* result = (char*)data->value->cstring;
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_ROOM received: %s", result);
+      }
+      if ((data = dict_find(iterator, FHEM_DEV_CHECK)) != NULL) {
+	char* result = (char*)data->value->cstring;
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_CHECK received: %s", result);
+      }
+      
       
     } else {
       APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
@@ -1266,9 +1291,9 @@ static void init(void) {
   app_message_register_outbox_failed(outbox_failed_callback);
   app_message_register_outbox_sent(outbox_sent_callback);
 
-  /*  app_message_open(app_message_inbox_size_maximum(),
-      app_message_outbox_size_maximum()); */
-  app_message_open(256, 256);
+  app_message_open(app_message_inbox_size_maximum(),
+		   app_message_outbox_size_maximum());
+  //  app_message_open(256, 256);
 
 }
 

@@ -286,11 +286,35 @@ Pebble.addEventListener('webviewclosed',
     localStorage.setItem('FHEM_SERVER_URL', FHEM_SERVER_URL);
 
     var DeviceType = "FS20"; // todo
+
+    /*
+    var i=0; // tests
+    var dict = {
+      'FHEM_NEW_DEV'  : JSON.stringify(configData['TypeDevices'][DeviceType][i].Device),
+      'FHEM_DEV_DESCR': JSON.stringify(configData['TypeDevices'][DeviceType][i].Descr),
+      'FHEM_DEV_STATE': JSON.stringify(configData['TypeDevices'][DeviceType][i].State),
+      'FHEM_DEV_ROOM' : JSON.stringify(configData['TypeDevices'][DeviceType][i].Room),
+      'FHEM_DEV_CHECK': JSON.stringify(configData['TypeDevices'][DeviceType][i].checked),
+    };
+
+    Pebble.sendAppMessage(dict,
+			  function(e) {
+			    console.log('AppMsg: TYPE_DEVICES successful.');
+			  },
+			  function(e) {
+			    console.log('AppMsg: TYPE_DEVICES failed!');
+			  }
+			  );
+    */
     for (var i in configData['TypeDevices'][DeviceType]) {
       var dict = {
-	'FHEM_TYPE_DEV_KEY' : JSON.stringify(configData['TypeDevices'][DeviceType][i])
+	'FHEM_NEW_DEV'  : JSON.stringify(configData['TypeDevices'][DeviceType][i].Device),
+	'FHEM_DEV_DESCR': JSON.stringify(configData['TypeDevices'][DeviceType][i].Descr),
+	'FHEM_DEV_STATE': JSON.stringify(configData['TypeDevices'][DeviceType][i].State),
+	'FHEM_DEV_ROOM' : JSON.stringify(configData['TypeDevices'][DeviceType][i].Room),
+	'FHEM_DEV_CHECK': JSON.stringify(configData['TypeDevices'][DeviceType][i].checked),
       };
-
+      
       Pebble.sendAppMessage(dict,
 			    function(e) {
 			      console.log('AppMsg: TYPE_DEVICES successful.');
@@ -300,6 +324,7 @@ Pebble.addEventListener('webviewclosed',
 			    }
 			    );
     }
+    
     
 
     /*

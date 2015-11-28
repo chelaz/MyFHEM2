@@ -1,12 +1,16 @@
 {
     "appKeys": {
+        "FHEM_URL_KEY": 0,
         "FHEM_COM_ID_KEY": 1,
-        "FHEM_MSG_ID": 5,
         "FHEM_RESP_KEY": 2,
         "FHEM_URL_GET_STATE": 3,
-        "FHEM_URL_KEY": 0,
         "FHEM_URL_REQ_TYPE": 4,
-	"FHEM_TYPE_DEV_KEY" : 6
+        "FHEM_MSG_ID": 5,
+	"FHEM_NEW_DEV" : 6,
+	"FHEM_DEV_DESCR" : 7,
+	"FHEM_DEV_STATE":8,
+	"FHEM_DEV_ROOM":9,
+	"FHEM_DEV_CHECK":10
     },
     "capabilities": [
         "configurable"
