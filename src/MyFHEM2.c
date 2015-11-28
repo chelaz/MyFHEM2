@@ -24,6 +24,47 @@
 
 
 
+// string memory management
+static int   NumStringsAlloc=0;
+static char* StringArr[128];
+
+char* AllocStr(int size)
+{
+  char* RetStr = NULL;
+  if (NumStringsAlloc >= 128) return NULL;
+  RetStr = calloc(size, sizeof(char));
+  
+  if (RetStr)
+    StringArr[NumStringsAlloc++] = RetStr;
+
+  return RetStr;
+}
+
+char* AddNewStr(const char* text)
+{
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Try to add new string %s", text);
+
+  int len = strlen(text);
+  char* Str = AllocStr(len);
+
+  if (!Str) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Cannot request str memory for %s (%d)", text, len);
+    return NULL;
+  }
+  strncpy(Str, text, len);
+  
+  return Str;
+}
+
+void FreeStr()
+{
+  for (int i=0; i < NumStringsAlloc; i++)
+    free(StringArr[i]);
+  NumStringsAlloc = 0;
+}
+
+
+
 // const char FHEM_URL[] = "http://mypi:8083/fhem";
 const char FHEM_URL[] = ""; // now in javascript
 
@@ -34,6 +75,8 @@ typedef enum MenuIdx_ {
   MenuFav   = -3,
   MenuState = -4,
 } MenuIdx_t;
+
+typedef int MapIdx_t; // type to access Coms_Map array (index for array)
 
 // the menu indices are overwritten during creation of menu if not MenuOmit
 typedef struct Coms_Map_
@@ -170,18 +213,77 @@ static Coms_Map_t Coms_Map[] = {
   },
 };
 
-int GetNumComs()
+
+////////////////////////////////////////////////////////////
+// Dynamic coms map
+////////////////////////////////////////////////////////////
+#define MaxNumCom 64
+static Coms_Map_t Coms_Map_Dyn[MaxNumCom];
+static int Coms_Cnt = 0;
+static bool Coms_UseDyn = false;
+
+
+bool AddCom(Coms_Map_t* PCom)
 {
-  return sizeof(Coms_Map) / sizeof(Coms_Map_t);
+  Coms_UseDyn = true;
+  if (Coms_Cnt >= MaxNumCom)
+    return false;
+
+  // simple copy
+  Coms_Map_Dyn[Coms_Cnt++] = *PCom;
+
+  return true;
 }
 
-typedef int MapIdx_t;
+
+Coms_Map_t InitCom()
+{
+  Coms_Map_t NewCom = {
+    .Room         = NULL,
+    .Description  = NULL,
+    .URL          = NULL,
+    .Device       = NULL,
+    .Command      = NULL,
+    .MenuDefIdx   = MenuOmit,
+    .MenuFavIdx   = MenuOmit,
+    .MenuStateIdx = MenuOmit,
+  };
+  return NewCom;
+}
+
+// test function
+void TestAddCom()
+{
+  Coms_Map_t NewCom = {
+    .Room         = "Küche",
+    .Description  = "Licht umschalten",
+    .URL          = NULL,
+    .Device       = "FS20_fr_bel",
+    .Command      = "toggle",
+    .MenuDefIdx   = MenuDef,
+    .MenuFavIdx   = MenuFav,
+    .MenuStateIdx = MenuOmit,
+  };
+  
+  AddCom(&NewCom);
+}
+
+int GetNumComs()
+{
+  if (Coms_Cnt == 0 || !Coms_UseDyn)
+    return sizeof(Coms_Map) / sizeof(Coms_Map_t);
+  else
+    return Coms_Cnt;
+}
 
 Coms_Map_t* GetCom(MapIdx_t Idx)
 { 
-  if (Idx >= 0 && Idx < GetNumComs())
-    return &Coms_Map[Idx];
-  else
+  if (Idx >= 0 && Idx < GetNumComs()) {
+    if (Coms_Cnt == 0 || !Coms_UseDyn)
+      return &Coms_Map[Idx];
+    else
+      return &Coms_Map_Dyn[Idx];
+  } else
     return NULL;
 }
 
@@ -354,27 +456,45 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     } 
   } else
     if ((data = dict_find(iterator, FHEM_NEW_DEV)) != NULL) {
-      char* result = (char*)data->value->cstring;
-      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_NEW_DEV received: %s", result);
       
+      Coms_Map_t NewCom = InitCom();
+      
+      /* Coms data structure and its members:
+	Coms_Map_t NewCom = {
+	  .Room         = "Küche",
+	  .Description  = "Licht umschalten",
+	  .URL          = NULL,
+	  .Device       = "FS20_fr_bel",
+	  .Command      = "toggle",
+	  .MenuDefIdx   = MenuDef,
+	  .MenuFavIdx   = MenuFav,
+	  .MenuStateIdx = MenuOmit,
+      */
+      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_NEW_DEV received: %s", (char*)data->value->cstring);
+      
+      NewCom.Device = AddNewStr((char*)data->value->cstring);
       if ((data = dict_find(iterator, FHEM_DEV_DESCR)) != NULL) {
-	char* result = (char*)data->value->cstring;
-	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_DESCR received: %s", result);
+	NewCom.Description = AddNewStr((char*)data->value->cstring);
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_DESCR received: %s", NewCom.Description);
       }
-      if ((data = dict_find(iterator, FHEM_DEV_STATE)) != NULL) {
-	char* result = (char*)data->value->cstring;
-	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_STATE received: %s", result);
-      }
+      /* if ((data = dict_find(iterator, FHEM_DEV_STATE)) != NULL) {
+	NewCom.State = AddNewStr((char*)data->value->cstring);
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_STATE received: %s", NewCom.State);
+	}*/
       if ((data = dict_find(iterator, FHEM_DEV_ROOM)) != NULL) {
-	char* result = (char*)data->value->cstring;
-	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_ROOM received: %s", result);
+	NewCom.Room = AddNewStr((char*)data->value->cstring);
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_ROOM received: %s", NewCom.Room);
       }
       if ((data = dict_find(iterator, FHEM_DEV_CHECK)) != NULL) {
-	char* result = (char*)data->value->cstring;
-	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_CHECK received: %s", result);
+	NewCom.MenuDefIdx = MenuDef;
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_CHECK received");
       }
       
+      AddCom(&NewCom);
       
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "... added new com. Now we have %d coms",
+	GetNumComs());
+
     } else {
       APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
       successfull = false;
@@ -537,6 +657,9 @@ bool SendCommand(MapIdx_t index, bool requestStatus, MsgID_t MsgID)
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
+// Todo: do we need this?
+static Window *s_window;
+
 
 // icons moved from here
 // here ok?
@@ -555,32 +678,11 @@ static SimpleMenuItem s_fav_menu_items[NUM_COM];
 static SimpleMenuItem s_states_menu_items[NUM_COM];
 static SimpleMenuItem s_special_menu_items[MAX_NUM_MENU_ITEMS_FAVOURITES];
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
-static SimpleMenuLayer *s_simple_menu_layer;
+static SimpleMenuLayer* s_simple_menu_layer;
 
-
-// string memory management
-static int   NumStringsAlloc=0;
-static char* StringArr[128];
-
-char* AllocStr(int size)
-{
-  char* RetStr = NULL;
-  if (NumStringsAlloc >= 128) return NULL;
-  RetStr = calloc(size, sizeof(char));
-  
-  if (RetStr)
-    StringArr[NumStringsAlloc++] = RetStr;
-
-  return RetStr;
-}
-
-void FreeStr()
-{
-  for (int i=0; i < NumStringsAlloc; i++)
-    free(StringArr[i]);
-  NumStringsAlloc = 0;
-}
-
+// Create and destroy menu
+SimpleMenuLayer* CreateMenu(Window *window);
+void DestroyMenu(SimpleMenuLayer* Layer);
 
 
 bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
@@ -957,6 +1059,22 @@ static void volume_select_callback(int index, void* ctx)
 }
 
 
+static void switch_stat_dyn_callback(int index, void* ctx)
+{
+  Coms_UseDyn = !Coms_UseDyn;
+  
+  DestroyMenu(s_simple_menu_layer);
+
+  s_simple_menu_layer = CreateMenu(s_window);
+
+  Layer *window_layer = window_get_root_layer(s_window);
+
+  layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
+
+  simple_menu_layer_set_selected_index(s_simple_menu_layer, index, false);
+}
+
+
 static void request_fs20_devices_callback(int index, void* ctx)
 {
   char URL[1024];
@@ -1076,6 +1194,12 @@ int create_special_menu()
     .callback = request_fs20_devices_callback,
   };
 
+  s_special_menu_items[MenuCnt++] = (SimpleMenuItem) {
+    .title = "Switch coms list",
+    .callback = switch_stat_dyn_callback,
+    .subtitle = Coms_UseDyn ? "dynamic" : "static",
+  };
+
   return MenuCnt;
 }
 
@@ -1161,24 +1285,8 @@ int create_states_menu()
 }
 
 
-////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-// main window load/unload /////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-
-static void main_window_load(Window *window)
+SimpleMenuLayer* CreateMenu(Window *window)
 {
-  s_menu_icon_image_ok     = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MENU_ICON_OK);
-  s_menu_icon_image_failed = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MENU_ICON_FAILED);
-  s_menu_icon_image_send   = gbitmap_create_with_resource(RESOURCE_ID_MENU_ICON_SEND);
-  s_menu_icon_image_off    = gbitmap_create_with_resource(RESOURCE_ID_STATUS_OFF);
-  s_menu_icon_image_on     = gbitmap_create_with_resource(RESOURCE_ID_STATUS_ON);
-  s_menu_icon_image_toggle = gbitmap_create_with_resource(RESOURCE_ID_STATUS_TOGGLE);
-
-  //window_set_background_color(window, GColorYellow);
-
-  ///////////////////////
   // create menu sections
 
   int NumItems=0;
@@ -1221,9 +1329,40 @@ static void main_window_load(Window *window)
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_frame(window_layer);
 
-  s_simple_menu_layer = simple_menu_layer_create(bounds, window, 
-						 s_menu_sections, NumSections,
-						 NULL);
+  return simple_menu_layer_create(bounds, window, 
+				  s_menu_sections, NumSections,
+				  NULL);
+}
+
+
+void DestroyMenu(SimpleMenuLayer* Layer)
+{
+  simple_menu_layer_destroy(Layer);
+}
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+// main window load/unload /////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+static void main_window_load(Window *window)
+{
+  s_menu_icon_image_ok     = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MENU_ICON_OK);
+  s_menu_icon_image_failed = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MENU_ICON_FAILED);
+  s_menu_icon_image_send   = gbitmap_create_with_resource(RESOURCE_ID_MENU_ICON_SEND);
+  s_menu_icon_image_off    = gbitmap_create_with_resource(RESOURCE_ID_STATUS_OFF);
+  s_menu_icon_image_on     = gbitmap_create_with_resource(RESOURCE_ID_STATUS_ON);
+  s_menu_icon_image_toggle = gbitmap_create_with_resource(RESOURCE_ID_STATUS_TOGGLE);
+
+  //window_set_background_color(window, GColorYellow);
+
+  // test dynamic com_map
+  TestAddCom();
+
+  s_simple_menu_layer = CreateMenu(window);
+  
+  Layer *window_layer = window_get_root_layer(window);
 
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
 
@@ -1256,7 +1395,7 @@ static void main_window_load(Window *window)
 
 void main_window_unload(Window *window)
 {
-  simple_menu_layer_destroy(s_simple_menu_layer);
+  DestroyMenu(s_simple_menu_layer);
   gbitmap_destroy(s_menu_icon_image_toggle);
   gbitmap_destroy(s_menu_icon_image_on);
   gbitmap_destroy(s_menu_icon_image_off);
@@ -1271,8 +1410,6 @@ void main_window_unload(Window *window)
 // init / deinit / main ////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-
-static Window *s_window;
 
 static void init(void) {
   s_window = window_create();
