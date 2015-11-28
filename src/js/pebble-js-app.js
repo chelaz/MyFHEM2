@@ -275,6 +275,29 @@ Pebble.addEventListener('showConfiguration',
   }
 );
 
+
+// todo: maybe recursive function call after sendAppMessage is successful
+function SendNewDev(FHEMDevice, i)
+{
+  var dict = {
+    'FHEM_NEW_DEV'  : FHEMDevice.Device,
+    'FHEM_DEV_DESCR': FHEMDevice.Descr,
+    'FHEM_DEV_STATE': FHEMDevice.State,
+    'FHEM_DEV_ROOM' : FHEMDevice.Room,
+    'FHEM_DEV_CHECK': FHEMDevice.checked
+  };
+      
+  Pebble.sendAppMessage(dict,
+			function(e) {
+			  console.log('AppMsg: TYPE_DEVICES successful.');
+			},
+			function(e) {
+			  console.log('AppMsg: TYPE_DEVICES failed!');
+			}
+			);
+}
+
+
 Pebble.addEventListener('webviewclosed', 
   function(e) {
     var configData = JSON.parse(decodeURIComponent(e.response));
@@ -287,42 +310,8 @@ Pebble.addEventListener('webviewclosed',
 
     var DeviceType = "FS20"; // todo
 
-    /*
-    var i=0; // tests
-    var dict = {
-      'FHEM_NEW_DEV'  : JSON.stringify(configData['TypeDevices'][DeviceType][i].Device),
-      'FHEM_DEV_DESCR': JSON.stringify(configData['TypeDevices'][DeviceType][i].Descr),
-      'FHEM_DEV_STATE': JSON.stringify(configData['TypeDevices'][DeviceType][i].State),
-      'FHEM_DEV_ROOM' : JSON.stringify(configData['TypeDevices'][DeviceType][i].Room),
-      'FHEM_DEV_CHECK': JSON.stringify(configData['TypeDevices'][DeviceType][i].checked),
-    };
-
-    Pebble.sendAppMessage(dict,
-			  function(e) {
-			    console.log('AppMsg: TYPE_DEVICES successful.');
-			  },
-			  function(e) {
-			    console.log('AppMsg: TYPE_DEVICES failed!');
-			  }
-			  );
-    */
     for (var i in configData['TypeDevices'][DeviceType]) {
-      var dict = {
-	'FHEM_NEW_DEV'  : JSON.stringify(configData['TypeDevices'][DeviceType][i].Device),
-	'FHEM_DEV_DESCR': JSON.stringify(configData['TypeDevices'][DeviceType][i].Descr),
-	'FHEM_DEV_STATE': JSON.stringify(configData['TypeDevices'][DeviceType][i].State),
-	'FHEM_DEV_ROOM' : JSON.stringify(configData['TypeDevices'][DeviceType][i].Room),
-	'FHEM_DEV_CHECK': JSON.stringify(configData['TypeDevices'][DeviceType][i].checked),
-      };
-      
-      Pebble.sendAppMessage(dict,
-			    function(e) {
-			      console.log('AppMsg: TYPE_DEVICES successful.');
-			    },
-			    function(e) {
-			      console.log('AppMsg: TYPE_DEVICES failed!');
-			    }
-			    );
+      SendNewDev(configData['TypeDevices'][DeviceType][i]);
     }
     
     
@@ -355,6 +344,7 @@ Pebble.addEventListener('webviewclosed',
 // Listen for when an AppMessage is received
 Pebble.addEventListener('appmessage',
   function(e) {
+    // console.log('appmessage received: ' + JSON.stringify(e.payload));   
     var ComID = e.payload['FHEM_COM_ID_KEY'];
     console.log('Received ID: ' + ComID);   
 
@@ -373,5 +363,6 @@ Pebble.addEventListener('appmessage',
       RequestTypes(GetServerURL(e.payload['FHEM_URL_REQ_TYPE']), "FS20");
       return;
     }
+    console.log('Unknown appmessage received: ' + JSON.stringify(e.payload));   
   }                     
 );

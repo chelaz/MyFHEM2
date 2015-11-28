@@ -214,6 +214,26 @@ static Coms_Map_t Coms_Map[] = {
 };
 
 
+void PrintCom(Coms_Map_t* PCom)
+{
+  if (!PCom) return;
+  if (!PCom->Device) return;
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "\tCom: %s", PCom->Device);
+
+  if (PCom->Room)
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "\t     %s", PCom->Room);
+
+  if (PCom->Description)
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "\t     %s", PCom->Description);
+
+  if (PCom->Command)
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "\t     %s", PCom->Command);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "\t     Def:%d Fav:%d State:%d", 
+	  PCom->MenuDefIdx, PCom->MenuFavIdx, PCom->MenuStateIdx);
+}
+
+
 ////////////////////////////////////////////////////////////
 // Dynamic coms map
 ////////////////////////////////////////////////////////////
@@ -230,8 +250,12 @@ bool AddCom(Coms_Map_t* PCom)
     return false;
 
   // simple copy
-  Coms_Map_Dyn[Coms_Cnt++] = *PCom;
+  memcpy((void*)&Coms_Map_Dyn[Coms_Cnt], (void*)PCom, sizeof(Coms_Map_t));
+  
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "ComAdd[%d]", Coms_Cnt);
+  PrintCom(&Coms_Map_Dyn[Coms_Cnt]);
 
+  Coms_Cnt++;
   return true;
 }
 
@@ -382,6 +406,8 @@ bool SendCommand(MapIdx_t CmdIdx, bool requestStatus, MsgID_t ID);
 bool SendCom(MapIdx_t CmdIdx)  { return SendCommand(CmdIdx, false, MSG_ID_DEFAULT); }
 bool SendComR(MapIdx_t CmdIdx) { return SendCommand(CmdIdx, true,  MSG_ID_DEFAULT); }
 
+void RecreateMenu();
+
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 // AppMessage //////////////////////////////////////////////////////
@@ -400,6 +426,12 @@ static const uint32_t FHEM_DEV_DESCR     =  7;
 static const uint32_t FHEM_DEV_STATE     =  8;
 static const uint32_t FHEM_DEV_ROOM      =  9;
 static const uint32_t FHEM_DEV_CHECK     = 10;
+
+
+// persisent storage keys
+static const uint32_t FHEM_PERSIST_USEDYN = 0; // storage key to switch between static/dynamic ComMap
+
+
 
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context)
@@ -477,10 +509,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	NewCom.Description = AddNewStr((char*)data->value->cstring);
 	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_DESCR received: %s", NewCom.Description);
       }
-      /* if ((data = dict_find(iterator, FHEM_DEV_STATE)) != NULL) {
-	NewCom.State = AddNewStr((char*)data->value->cstring);
-	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_STATE received: %s", NewCom.State);
-	}*/
+      // todo: cleanup state and command
+      if ((data = dict_find(iterator, FHEM_DEV_STATE)) != NULL) {
+	NewCom.Command = AddNewStr((char*)data->value->cstring);
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_STATE received: %s", NewCom.Command);
+      }
       if ((data = dict_find(iterator, FHEM_DEV_ROOM)) != NULL) {
 	NewCom.Room = AddNewStr((char*)data->value->cstring);
 	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_ROOM received: %s", NewCom.Room);
@@ -489,11 +522,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	NewCom.MenuDefIdx = MenuDef;
 	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_CHECK received");
       }
+      NewCom.MenuDefIdx = MenuDef; // todo
       
       AddCom(&NewCom);
       
       APP_LOG(APP_LOG_LEVEL_DEBUG, "... added new com. Now we have %d coms",
 	GetNumComs());
+
+      // maybe later: better add key to start/stop transfer of new devices
+      RecreateMenu();
 
     } else {
       APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
@@ -605,6 +642,9 @@ bool SendCommand(MapIdx_t index, bool requestStatus, MsgID_t MsgID)
   if (strlen(URL) == 0)
     return false;
 
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "SendCommand (Index: %d. MsgID %d). URL: %s", 
+	  index, MsgID, URL);   
+
   AppMessageResult Res = APP_MSG_OK;
     
   DictionaryIterator *iter;
@@ -620,6 +660,8 @@ bool SendCommand(MapIdx_t index, bool requestStatus, MsgID_t MsgID)
   
   DictionaryResult ResDict;
   if (!requestStatus) {
+    // todo: something buggy here. sometimes the URL is not parseable from JSON
+    // maybe move creation of complete URL to Pebble.js
     if ((ResDict=dict_write_cstring(iter, FHEM_URL_KEY, URL)) != DICT_OK) {
       APP_LOG(APP_LOG_LEVEL_INFO, "Dict write url error: %d!", ResDict);
       return false;
@@ -683,7 +725,6 @@ static SimpleMenuLayer* s_simple_menu_layer;
 // Create and destroy menu
 SimpleMenuLayer* CreateMenu(Window *window);
 void DestroyMenu(SimpleMenuLayer* Layer);
-
 
 bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
 {
@@ -1062,14 +1103,13 @@ static void volume_select_callback(int index, void* ctx)
 static void switch_stat_dyn_callback(int index, void* ctx)
 {
   Coms_UseDyn = !Coms_UseDyn;
-  
-  DestroyMenu(s_simple_menu_layer);
 
-  s_simple_menu_layer = CreateMenu(s_window);
+  RecreateMenu();
 
-  Layer *window_layer = window_get_root_layer(s_window);
-
-  layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
+  // for debugging
+  for (int i=0; i < GetNumComs(); i++) {
+    PrintCom(GetCom(i));
+  }
 
   simple_menu_layer_set_selected_index(s_simple_menu_layer, index, false);
 }
@@ -1208,11 +1248,13 @@ int create_default_menu()
 {
   int MenuCnt=0;
 
+  /*
   s_def_menu_items[MenuCnt++] = (SimpleMenuItem) {
     .title    = "Send/Receive Mode",
     .callback = volume_select_callback,
     .icon     = s_menu_icon_image_send,
   };
+  */
 
   for (int i=0; i < GetNumComs(); i++) {
     Coms_Map_t* PCom = GetCom(i);
@@ -1284,6 +1326,16 @@ int create_states_menu()
   return MenuCnt;
 }
 
+void RecreateMenu()
+{
+  DestroyMenu(s_simple_menu_layer);
+
+  s_simple_menu_layer = CreateMenu(s_window);
+  
+  Layer *window_layer = window_get_root_layer(s_window);
+
+  layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
+}
 
 SimpleMenuLayer* CreateMenu(Window *window)
 {
@@ -1358,7 +1410,7 @@ static void main_window_load(Window *window)
   //window_set_background_color(window, GColorYellow);
 
   // test dynamic com_map
-  TestAddCom();
+  // TestAddCom();
 
   s_simple_menu_layer = CreateMenu(window);
   
@@ -1411,7 +1463,13 @@ void main_window_unload(Window *window)
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-static void init(void) {
+static void init(void)
+{
+
+  if (persist_exists(FHEM_PERSIST_USEDYN)) {
+    Coms_UseDyn = persist_read_bool(FHEM_PERSIST_USEDYN);
+  }
+
   s_window = window_create();
 
   window_set_window_handlers(s_window, (WindowHandlers) {
@@ -1434,10 +1492,13 @@ static void init(void) {
 
 }
 
-static void deinit(void) {
+static void deinit(void)
+{
+  persist_write_bool(FHEM_PERSIST_USEDYN, Coms_UseDyn);
   FreeStr();
   window_destroy(s_window);
 }
+
 
 int main(void) {
   init();
