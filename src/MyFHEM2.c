@@ -44,15 +44,16 @@ char* AddNewStr(const char* text)
 {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Try to add new string %s", text);
 
-  int len = strlen(text);
+  int len = strlen(text)+1;
   char* Str = AllocStr(len);
 
   if (!Str) {
     APP_LOG(APP_LOG_LEVEL_ERROR, "Cannot request str memory for %s (%d)", text, len);
     return NULL;
   }
-  strncpy(Str, text, len);
-  
+  strncpy(Str, text, len-1);
+  Str[len-1] = 0;
+
   return Str;
 }
 
@@ -591,7 +592,7 @@ void BuildFhemURL(const MapIdx_t index, char URL[], int size)
     snprintf(URL, size, "%s?%s", FHEM_URL, PCom->URL);
   else {
     snprintf(URL, size, "%s?cmd=set%%20%s%%20%s&XHR=1", FHEM_URL, 
-             PCom->Device, PCom->Command);
+	     PCom->Device, PCom->Command);
   }
 }
 
