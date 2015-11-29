@@ -7,10 +7,11 @@
         "FHEM_URL_REQ_TYPE": 4,
         "FHEM_MSG_ID": 5,
 	"FHEM_NEW_DEV" : 6,
-	"FHEM_DEV_DESCR" : 7,
-	"FHEM_DEV_STATE":8,
-	"FHEM_DEV_ROOM":9,
-	"FHEM_DEV_CHECK":10
+	"FHEM_DEV_DEVICE" : 7,
+	"FHEM_DEV_DESCR" : 8,
+	"FHEM_DEV_STATE":9,
+	"FHEM_DEV_ROOM":10,
+	"FHEM_DEV_CHECK":11
     },
     "capabilities": [
         "configurable"

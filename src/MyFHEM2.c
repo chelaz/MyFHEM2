@@ -423,10 +423,11 @@ static const uint32_t FHEM_MSG_ID        = 5;
 
 // add new device:
 static const uint32_t FHEM_NEW_DEV       =  6;
-static const uint32_t FHEM_DEV_DESCR     =  7;
-static const uint32_t FHEM_DEV_STATE     =  8;
-static const uint32_t FHEM_DEV_ROOM      =  9;
-static const uint32_t FHEM_DEV_CHECK     = 10;
+static const uint32_t FHEM_DEV_DEVICE    =  7;
+static const uint32_t FHEM_DEV_DESCR     =  8;
+static const uint32_t FHEM_DEV_STATE     =  9;
+static const uint32_t FHEM_DEV_ROOM      = 10;
+static const uint32_t FHEM_DEV_CHECK     = 11;
 
 
 // persisent storage keys
@@ -489,6 +490,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     } 
   } else
     if ((data = dict_find(iterator, FHEM_NEW_DEV)) != NULL) {
+//      char* NewDevState = (char*)data->value->cstring;
+//      if (!strcmp("off", result)) {
       
       Coms_Map_t NewCom = InitCom();
       

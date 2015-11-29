@@ -276,25 +276,48 @@ Pebble.addEventListener('showConfiguration',
 );
 
 
-// todo: maybe recursive function call after sendAppMessage is successful
-function SendNewDev(FHEMDevice, i)
+var FHEM_Devices;
+var SendBusy = false;
+
+function SendNextDevice()
 {
-  var dict = {
-    'FHEM_NEW_DEV'  : FHEMDevice.Device,
-    'FHEM_DEV_DESCR': FHEMDevice.Descr,
-    'FHEM_DEV_STATE': FHEMDevice.State,
-    'FHEM_DEV_ROOM' : FHEMDevice.Room,
-    'FHEM_DEV_CHECK': FHEMDevice.checked
-  };
+  if (FHEM_Devices.length === 0) {
+    return;
+  }
+  
+  var FHEMDevice = FHEM_Devices.shift();
+  
+  console.log('SendNextDev: shifted device: ' + JSON.stringify(FHEMDevice));
+
+  if (!SendBusy) {
+    SendBusy = true;
+    
+    var dict = {
+      'FHEM_NEW_DEV'  : FHEMDevice.Device,
+      'FHEM_DEV_DESCR': FHEMDevice.Descr,
+      'FHEM_DEV_STATE': FHEMDevice.State,
+      'FHEM_DEV_ROOM' : FHEMDevice.Room,
+      'FHEM_DEV_CHECK': FHEMDevice.checked
+    };
       
-  Pebble.sendAppMessage(dict,
-			function(e) {
-			  console.log('AppMsg: TYPE_DEVICES successful.');
-			},
-			function(e) {
-			  console.log('AppMsg: TYPE_DEVICES failed!');
-			}
-			);
+    Pebble.sendAppMessage(dict, ack, nack);
+
+    function ack() {
+      console.log('AppMsg: TYPE_DEVICES successful. Still ' + FHEM_Devices.length + ' to send');
+      SendBusy = false;
+      if (FHEM_Devices.length) {
+	SendNextDevice();
+      }
+    }
+
+    function nack() {
+      FHEM_Devices.unshift(FHEMDevice);
+      console.log('AppMsg: TYPE_DEVICES failed. Still ' + FHEM_Devices.length + ' to send');
+      SendNextDevice();
+    }
+  } else { // busy
+    FHEM_Devices.unshift(FHEMDevice);
+  }
 }
 
 
@@ -309,11 +332,18 @@ Pebble.addEventListener('webviewclosed',
     localStorage.setItem('FHEM_SERVER_URL', FHEM_SERVER_URL);
 
     var DeviceType = "FS20"; // todo
+    
+    // localStorage.setItem('FHEM_DEVICES', configData['TypeDevices'][DeviceType]);
 
+    FHEM_Devices = configData['TypeDevices'][DeviceType]; 
+    
+    SendNextDevice();
+
+    /*
     for (var i in configData['TypeDevices'][DeviceType]) {
       SendNewDev(configData['TypeDevices'][DeviceType][i]);
     }
-    
+    */
     
 
     /*
