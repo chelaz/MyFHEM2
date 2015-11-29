@@ -229,6 +229,7 @@ Pebble.addEventListener('ready',
     console.log('MyFHEM2 JavaScript ready!');
     var DeviceType = "FS20"; // TODO
     var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
+    // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2&XHR=1"), DeviceType);
 
     // console.log('MyFHEM2: Types: '+FHEM_Types);
   }
