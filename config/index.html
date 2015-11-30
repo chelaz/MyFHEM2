@@ -24,7 +24,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 22
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 23
     </h1>
 
     <div class='item-container'>
@@ -234,8 +234,10 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	 "  >&nbsp;" +
 	 options[DeviceType][i].Room +
 	 "   </label>" +
+	 "  <input id='Device_" + i + "_descr' type='text' "+ 
+	 "   value=" + options[DeviceType][i].Descr + ">" +
          "   <div class='item-container-content-small'>" +
-	  options[DeviceType][i].Descr +
+	  // options[DeviceType][i].Descr +
 	 "     <label>" +
          "       <input id='Device_" + i + "_toggle' type='checkbox' "+
 	 "       value=" + options[DeviceType][i].checked +
