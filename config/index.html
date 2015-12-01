@@ -24,7 +24,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 35
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 36
     </h1>
 
     <div class='item-container'>
@@ -208,15 +208,15 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	   "  <tr>\n" +
 	   "    <td><label>\n" +
            "       <input id='Device_" + i + "_" + StateStr + "_fav' type='checkbox' "+
-	   "           value=" + Device[i].checked + ">\n" +
+	   "           value='" + Device[i].checked + "'>\n" +
 	   "    </label></td>\n" +
 	   "    <td><label>\n" +
            "       <input id='Device_" + i + "_" + StateStr + "_dict' type='checkbox' "+
-	   "           value=" + Device[i].checked + ">" +
+	   "           value='" + Device[i].checked + "'>\n" +
 	   "    </label></td>\n" +
 	   "    <td><label>\n" +
-           "       <input id='Device_" + i + "_" + StateStr + "_state' type='checkbox' "+
-	   "           value=" + Device[i].checked + ">\n" +
+           "       <input id='Device_" + i + "_" + StateStr + "_state' type='text' "+
+	   "           value='" + StateStr + "'>\n" +
 	   "    </label></td>\n" +
 	   "  </tr>\n\n";
 	   
@@ -274,6 +274,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	   " </table>" +
 	   "</div>";
 
+	console.log("HTMLInner:--------------\n" + HTMLElement.innerHTML + "\n-------------------------\n");
 
 /*	 HTMLElement.innerHTML += 
 	   "  <tr id = 'toggle'>" +
