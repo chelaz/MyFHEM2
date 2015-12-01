@@ -24,7 +24,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 30
+    <h1 class='title'>Pebble FHEM - Home Automation on your Wrist - Commit 31
     </h1>
 
     <div class='item-container'>
@@ -202,6 +202,26 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	    return decodeURIComponent(qs[1]);
   }
 
+  function AddState2Device(i, Device, StateStr)
+  {
+    var RetStr = 	
+	   "  <tr id = '" + StateStr + "'>" +
+	   "    <td><label>" +
+           "       <input id='Device_" + i + "_" + StateStr + "_fav' type='checkbox' "+
+	   "           value=" + Device[i].checked + ">" +
+	   "    </label></td>" +
+	   "    <td><label>" +
+           "       <input id='Device_" + i + "_" + StateStr + "_dict' type='checkbox' "+
+	   "           value=" + Device[i].checked + ">" +
+	   "    </label></td>" +
+	   "    <td><label>" +
+           "       <input id='Device_" + i + "_" + StateStr + "_state' type='checkbox' "+
+	   "           value=" + Device[i].checked + ">" +
+	   "    </label></td>" +
+	   "  </tr>";
+     return RetStr;
+  };
+  
   /////////////////////////////////////
   // Fetches all devices from args (URI) and shows it on the page
   function ShowDevicesFromArgs(DeviceType, HTMLElement)
@@ -239,12 +259,15 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	 
 	 HTMLElement.innerHTML += 
 	   "<div class='item-container-content-small'>" +
-	   " <table border='0' cellpadding='1'>" +
+	   " <table border='0' cellpadding='1' cellspacing='0'>" +
 	   "  <tr id = 'header'>" +
 	   "    <td>Fav</td>" +
 	   "    <td>Dict</td>" +
 	   "    <td>State</td>" +
-	   "  </tr>" +
+	   "  </tr>";
+	 
+	 HTMLElement.innerHTML += AddState2Device(i, options[DeviceType], 'toggle');
+	 
 	   "  <tr id = 'toggle'>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_toggle_fav' type='checkbox' "+
