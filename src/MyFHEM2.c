@@ -77,6 +77,12 @@ typedef enum MenuIdx_ {
   MenuState = -4,
 } MenuIdx_t;
 
+typedef enum MenuBits_ {
+  MenuDefB   = 1,
+  MenuFavB   = 2,
+  MenuStateB = 4,
+} MenuBits_t;
+
 typedef int MapIdx_t; // type to access Coms_Map array (index for array)
 
 // the menu indices are overwritten during creation of menu if not MenuOmit
@@ -523,8 +529,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_ROOM received: %s", NewCom.Room);
       }
       if ((data = dict_find(iterator, FHEM_DEV_CHECK)) != NULL) {
-	NewCom.MenuDefIdx = MenuDef;
-	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_CHECK received");
+	MenuBits_t MenuBits = (MenuBits_t)data->value->int32;
+	NewCom.MenuDefIdx   = (MenuBits & MenuDefB)   ? MenuDef   : MenuOmit;
+	NewCom.MenuFavIdx   = (MenuBits & MenuFavB)   ? MenuFav   : MenuOmit;
+	NewCom.MenuStateIdx = (MenuBits & MenuStateB) ? MenuState : MenuOmit;
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_CHECK received: %d", MenuBits);
       }
       NewCom.MenuDefIdx = MenuDef; // todo
       

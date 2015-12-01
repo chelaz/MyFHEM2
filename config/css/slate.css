@@ -81,6 +81,16 @@ input[type=date] {
 .item-container-content-small {
   font-size: .7em; }
 
+div#FS20Content table {
+  border-left: 10px solid #f7f7f7;
+  border-top: 1px solid #DEDEDE;
+}
+div#FS20Content table tr td { 
+  font-size: .7em;
+  padding: 0px 1px 0 0;
+  margin: 0 0 0 0;
+}
+
 .item-container-footer {
   padding: 3px 10px;
   font-size: .7em;

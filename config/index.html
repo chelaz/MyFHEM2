@@ -85,6 +85,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   
   <script>
 
+  var MenuDef   = 1;
+  var MenuFav   = 2;
+  var MenuState = 4;
+
+
   function GetInputServerURL(return_opts)
   {
     var FHEM_SERVER_URL_textinput = document.getElementById('FHEM_SERVER_URL');
@@ -95,6 +100,27 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
     return return_opts;
   }
+
+  /*
+    IDs: 
+       Room (check) Device_0
+       Descr:       Device_0_descr
+                    Device_0_descr_button
+
+       Check_fav_t: Device_0_toggle_fav
+       Check_dict:  Device_0_toggle_dict
+                    Device_0_toggle_state        (text: toggle/umschalten)
+                    Device_0_toggle_state_button
+                    Device_0_on_fav
+                    Device_0_on_dict
+                    Device_0_on_state
+                    Device_0_on_state_button
+                    Device_0_off_fav
+                    Device_0_off_dict
+                    Device_0_off_state
+                    Device_0_off_state_button
+                    Device_0_state     
+  */
 
   function GetInputDevices(return_opts, DeviceType)
   {
@@ -107,32 +133,83 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     
     var FHEM_Types = {}
     FHEM_Types[DeviceType] = [];
-    // FHEM_Types.num = 0;
 
     console.log('FHEM_TYPES: ' + JSON.stringify(FHEM_Types));
 
     var cnt=0;
     for (var i=0; i < options.num; i++) {
-      var InputID = "Device_" + i;
-      var InputElem = document.getElementById(InputID);
+      // fetch all IDs
+      var IDBasename     = "Device_" + i;
+      var HtmlCk         = document.getElementById(IDBasename);
+      var HtmlToggleFav  = document.getElementById(IDBasename+"_toggle_fav");
+      var HtmlToggleDict = document.getElementById(IDBasename+"_toggle_dict");
+      var HtmlOnFav      = document.getElementById(IDBasename+"_on_fav");
+      var HtmlOnDict     = document.getElementById(IDBasename+"_on_dict");
+      var HtmlOffFav     = document.getElementById(IDBasename+"_off_fav");
+      var HtmlOffDict    = document.getElementById(IDBasename+"_off_dict");
+      var HtmlState      = document.getElementById(IDBasename+"_state");
 
-      if (InputElem.checked) {
-        FHEM_Types[DeviceType].push( 
-         { 
-          "State"  : options[DeviceType][i].State,
-          "Device" : options[DeviceType][i].Device,
-          "Descr"  : options[DeviceType][i].Descr,
-          "Room"   : options[DeviceType][i].Room
-         });
-        options[DeviceType][i].checked = true;
+      var CheckToggleBits = (HtmlToggleDict.checked) ? MenuDef : 0;
+      CheckToggleBits    |= (HtmlToggleFav.checked)  ? MenuFav : 0;
+      var CheckOnBits     = (HtmlOnDict.checked)     ? MenuDef : 0;
+      CheckOnBits        |= (HtmlOnFav.checked)      ? MenuFav : 0;
+      var CheckOffBits    = (HtmlOffDict.checked)    ? MenuDef : 0;
+      CheckOffBits       |= (HtmlOffFav.checked)     ? MenuFav : 0;
+
+      console.log("ToggleBits: " + CheckToggleBits + "\n" +
+                  "OnBits:     " + CheckOnBits + "\n" +
+                  "OffBits:    " + CheckOffBits + "\n");
+
+      if (HtmlCk.checked) {
+        if (CheckToggleBits != 0) {
+          FHEM_Types[DeviceType].push( 
+           { 
+            "State"  : "toggle",
+            "Device" : options[DeviceType][i].Device,
+            "Descr"  : options[DeviceType][i].Descr,
+            "Room"   : options[DeviceType][i].Room,
+            "Check"  : CheckToggleBits
+           });
+          cnt++;
+        }
+        if (CheckOnBits != 0) {
+          FHEM_Types[DeviceType].push( 
+           { 
+            "State"  : "on",
+            "Device" : options[DeviceType][i].Device,
+            "Descr"  : options[DeviceType][i].Descr,
+            "Room"   : options[DeviceType][i].Room,
+            "Check"  : CheckOnBits
+           });
+          cnt++;
+        }
+        if (CheckOffBits != 0) {
+          FHEM_Types[DeviceType].push( 
+           { 
+            "State"  : "off",
+            "Device" : options[DeviceType][i].Device,
+            "Descr"  : options[DeviceType][i].Descr,
+            "Room"   : options[DeviceType][i].Room,
+            "Check"  : CheckOffBits
+           });
+          cnt++;
+        }
+        if (HtmlState.checked != 0) {
+          FHEM_Types[DeviceType].push( 
+           { 
+            "State"  : "toggle",
+            "Device" : options[DeviceType][i].Device,
+            "Descr"  : options[DeviceType][i].Descr,
+            "Room"   : options[DeviceType][i].Room,
+            "Check"  : MenuState
+           });
+          cnt++;
+        }
+    // options[DeviceType][i].checked = true;
         cnt++;
       } else
         options[DeviceType][i].checked = false;
     }
-    // FHEM_Types[DeviceType].push({ 'num' : cnt });
-    
-    // return_opts[DeviceType] = FHEM_Types[DeviceType];
-    // return return_opts;
 
     return_opts['TypeDevices'] = FHEM_Types;
     return return_opts;
@@ -202,32 +279,44 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	    return decodeURIComponent(qs[1]);
   }
 
-  function AddState2Device(i, Device, StateStr)
+  function ShowEdit(inputID, buttonID)
   {
-    var RetStr = 	
+    var HTMLInput = document.getElementById(inputID);
+    HTMLInput.type = "text";
+    var HTMLButton = document.getElementById(buttonID);
+    HTMLButton.type = "hidden";
+   }
+
+  /////////////////////////////////////
+  // Fetches all devices from args (URI) and shows it on the page
+  function ShowDevicesFromArgs(DeviceType, HTMLElement)
+  {
+    function AddState2Device(i, Device, StateStr)
+    {
+      var EditID       = "\"Device_" + i + "_" + StateStr + "_state\"";
+      var EditIDButton = "\"Device_" + i + "_" + StateStr + "_state_button\"";
+      var RetStr = 	
 	   "  <tr>\n" +
 	   "    <td><label>\n" +
            "       <input id='Device_" + i + "_" + StateStr + "_fav' type='checkbox' "+
 	   "           value='" + Device[i].checked + "'>\n" +
 	   "    </label></td>\n" +
 	   "    <td><label>\n" +
-           "       <input id='Device_" + i + "_" + StateStr + "_dict' type='checkbox' "+
+           "       <input id='Device_" + i + "_" + StateStr + "_dict' type='checkbox'"+
 	   "           value='" + Device[i].checked + "'>\n" +
 	   "    </label></td>\n" +
 	   "    <td><label>\n" +
-           "       <input id='Device_" + i + "_" + StateStr + "_state' type='text' "+
-	   "           value='" + StateStr + "'>\n" +
+           "       <input id=" + EditID       + " type='hidden' "+
+	   "           value='" + StateStr + "'>\n" + 
+	   "       <input id=" + EditIDButton + " type='button' value='" + StateStr +
+	   "        ' onclick='ShowEdit(" + EditID +"," + EditIDButton + ");'>" +
 	   "    </label></td>\n" +
 	   "  </tr>\n\n";
 	   
-	console.log(RetStr);
-     return RetStr;
-  };
-  
-  /////////////////////////////////////
-  // Fetches all devices from args (URI) and shows it on the page
-  function ShowDevicesFromArgs(DeviceType, HTMLElement)
-  {
+      // console.log(RetStr);
+      return RetStr;
+    };
+
     var optionsString = getQueryString("options", "{" + DeviceType + ":''}");
     var options = JSON.parse(optionsString);
 
@@ -247,29 +336,50 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
     // checked not yet working since the data from localStorage is overwritten above
     for (var i = 0; i < options.num; i++) {
-      var ih = i+1;
-      
+      var Descr = options[DeviceType][i].Descr;
+      var EditID       = "\"Device_" + i + "_descr\"";
+      var EditIDButton = "\"Device_" + i + "_descr_button\"";
+
+      var ih = i+1;      
       var HTMLDevice =
-         "<label>" + 
-         " [" + ih + "/" + options.num + "] " + 
+         "<div class='item-container-content'><label>" + 
+         " <!-- [" + ih + "/" + options.num + "] -->" + 
+
          "  <input id='Device_" + i + "' type='checkbox' "+
-	 "   value=" + options[DeviceType][i].checked +
-	 "  >&nbsp;" +
+	 "   value=" + options[DeviceType][i].checked + ">" +
 	 options[DeviceType][i].Room +
 	 "   </label>" +
-	 "  <input id='Device_" + i + "_descr' type='text' "+ 
-	 "   value='" + options[DeviceType][i].Descr + "'>";
+
+         /* Description */
+         "   <label>\n" +
+         "       <input id=" + EditID       + " type='hidden' "+
+	 "           value='" + Descr + "'>\n" + 
+	 "       <input id=" + EditIDButton + " type='button' value='" + Descr +
+	 "        ' onclick='ShowEdit(" + EditID +"," + EditIDButton + ");'>" +
+	 "    </label>";
 	 
+         /* States choice */
 	 HTMLDevice += 
-	   "<div class='item-container-content-small'>" +
-	   " <table border='0' cellpadding='1' cellspacing='0'>" +
-	   "  <tr id = 'header'>" +
+	   " <table cellpadding='0' cellspacing='0'>" +
+	   "  <!--tr id = 'header'>" +
 	   "    <td>Fav</td>" +
 	   "    <td>Dict</td>" +
 	   "    <td>State</td>" +
-	   "  </tr>";
+	   "  </tr-->";
 	 
 	 HTMLDevice += AddState2Device(i, options[DeviceType], 'toggle');
+	 HTMLDevice += AddState2Device(i, options[DeviceType], 'on');
+	 HTMLDevice += AddState2Device(i, options[DeviceType], 'off');
+
+	 HTMLDevice +=
+	   "  <tr>" +
+	   "    <td><label>" +
+           "       <input id='Device_" + i + "_state' type='checkbox' "+
+	   "           value=" + options[DeviceType][i].checked + ">" +
+	   "    </label></td>" +
+	   "    <td></td>" +
+	   "    <td>State of Device</td>" +
+	   "  </tr>";
 
 	 HTMLDevice += 
 	   " </table>" +
@@ -277,7 +387,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
 	HTMLElement.innerHTML += HTMLDevice;
 	
-	console.log("HTMLInner:--------------\n" + HTMLElement.innerHTML + "\n-------------------------\n");
+	// console.log("HTMLInner:--------------\n" + HTMLElement.innerHTML + "\n-------------------------\n");
 
 /*	 HTMLElement.innerHTML += 
 	   "  <tr id = 'toggle'>" +

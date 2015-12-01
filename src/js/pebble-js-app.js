@@ -298,7 +298,7 @@ function SendNextDevice()
       'FHEM_DEV_DESCR': FHEMDevice.Descr,
       'FHEM_DEV_STATE': FHEMDevice.State,
       'FHEM_DEV_ROOM' : FHEMDevice.Room,
-      'FHEM_DEV_CHECK': FHEMDevice.checked
+      'FHEM_DEV_CHECK': FHEMDevice.Check
     };
       
     Pebble.sendAppMessage(dict, ack, nack);
