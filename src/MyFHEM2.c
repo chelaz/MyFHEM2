@@ -252,7 +252,7 @@ static bool Coms_UseDyn = false;
 
 bool AddCom(Coms_Map_t* PCom)
 {
-  Coms_UseDyn = true;
+  // Coms_UseDyn = true; // deactivated unless dynamic is working like the static array
   if (Coms_Cnt >= MaxNumCom)
     return false;
 

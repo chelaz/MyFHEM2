@@ -4,6 +4,39 @@
 // pass options to the settings page
 // https://stackoverflow.com/questions/30559207/is-it-possible-to-display-a-settings-page-and-communicate-with-a-phone-using-peb
 
+
+///////////////////////////////
+// IDs:
+///////////////////////////////
+// localStorage:
+//   FHEM_SERVER_URL:   server URL eg. "http://mypi:8083/fhem"
+//   FHEM_URL_REQ_TYPE: received devices from FHEM
+//   FHEM_DEVS_CONFIG:  received device configuration from settings page
+//
+///////////////////////////////
+// appKeys (see also appinfo.json)
+//   FHEM_URL_KEY       (R) special url from watch (SendCom)
+//   FHEM_URL_GET_STATE (R) special url from watch (GetState)
+//   FHEM_URL_REQ_TYPE  (R) special url from watch (RequestType from FHEM)
+//   FHEM_RESP_KEY      (S) send command/get state response -> watch
+//   FHEM_COM_ID_KEY    (S/R) given ID from watch
+//   FHEM_MSG_ID        (S/R) given message ID from watch
+//   FHEM_NEW_DEV       (S) FHEMDevice.Device
+//   FHEM_DEV_DESCR     (S) FHEMDevice.Descr
+//   FHEM_DEV_STATE     (S) FHEMDevice.State
+//   FHEM_DEV_ROOM      (S) FHEMDevice.Room
+//   FHEM_DEV_CHECK     (S) FHEMDevice.Check
+//
+///////////////////////////////
+// global variables
+//   FHEM_Devices_buf: buffer array of devices to be sent to watch (finally empty)
+//   SendBusy:         locking mechanism for FHEM_Devices_buf
+
+
+
+
+
+
 function GetServerURL(URL_Args)
 {
   var URL="";
@@ -218,6 +251,58 @@ function RequestTypes(URL, DeviceType)
 }
 
 
+
+var FHEM_Devices_buf;
+var SendBusy = false;
+
+function SendNextDevice()
+{
+  if (FHEM_Devices_buf === 0) {
+    console.log('SendNextDev: List not defined');
+    return;
+  }
+  if (FHEM_Devices_buf.length === 0) {
+    console.log('SendNextDev: List empty');
+    return;
+  }
+  
+  var FHEMDevice = FHEM_Devices_buf.shift();
+  
+  console.log('SendNextDev: shifted device: ' + JSON.stringify(FHEMDevice));
+
+  if (!SendBusy) {
+    SendBusy = true;
+    
+    var dict = {
+      'FHEM_NEW_DEV'  : FHEMDevice.Device,
+      'FHEM_DEV_DESCR': FHEMDevice.Descr,
+      'FHEM_DEV_STATE': FHEMDevice.State,
+      'FHEM_DEV_ROOM' : FHEMDevice.Room,
+      'FHEM_DEV_CHECK': FHEMDevice.Check
+    };
+      
+    Pebble.sendAppMessage(dict, ack, nack);
+
+    function ack() {
+      console.log('AppMsg: TYPE_DEVICES successful. Still ' + FHEM_Devices_buf.length + ' to send');
+      SendBusy = false;
+      if (FHEM_Devices_buf.length) {
+	SendNextDevice();
+      }
+    }
+
+    function nack() {
+      FHEM_Devices_buf.unshift(FHEMDevice);
+      console.log('AppMsg: TYPE_DEVICES failed. Still ' + FHEM_Devices_buf.length + ' to send');
+      SendNextDevice();
+    }
+  } else { // busy
+    FHEM_Devices_buf.unshift(FHEMDevice);
+  }
+}
+
+
+
 //////////////////////////////////////////////////////////////////////////////////////
 // Pebble functions //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
@@ -228,10 +313,16 @@ Pebble.addEventListener('ready',
   function(e) {
     console.log('MyFHEM2 JavaScript ready!');
     var DeviceType = "FS20"; // TODO
-    var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
-    // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2&XHR=1"), DeviceType);
+    // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
+    
+    var FHEM_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
+    if (FHEM_Devices !== null) {
+      // fill global buffer for SendNextDevice()
+      console.log('Using FHEM_Devices of localStorage:' + FHEM_Devices);
+      FHEM_Devices_buf = FHEM_Devices[DeviceType];
+      SendNextDevice();
+    }
 
-    // console.log('MyFHEM2: Types: '+FHEM_Types);
   }
 );
 
@@ -242,11 +333,8 @@ Pebble.addEventListener('showConfiguration',
     var url = 'http://madita/config/index.html';
    
     var FHEM_Types = localStorage.getItem('FHEM_URL_REQ_TYPE');
-    // var DeviceType = "FS20"; // TODO
-    // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
 
-    // for tests:
-    /*
+    /* // for tests:
       var FHEM_Types_Obj = {
       "FS20" : [
         { 
@@ -277,51 +365,6 @@ Pebble.addEventListener('showConfiguration',
 );
 
 
-var FHEM_Devices;
-var SendBusy = false;
-
-function SendNextDevice()
-{
-  if (FHEM_Devices.length === 0) {
-    return;
-  }
-  
-  var FHEMDevice = FHEM_Devices.shift();
-  
-  console.log('SendNextDev: shifted device: ' + JSON.stringify(FHEMDevice));
-
-  if (!SendBusy) {
-    SendBusy = true;
-    
-    var dict = {
-      'FHEM_NEW_DEV'  : FHEMDevice.Device,
-      'FHEM_DEV_DESCR': FHEMDevice.Descr,
-      'FHEM_DEV_STATE': FHEMDevice.State,
-      'FHEM_DEV_ROOM' : FHEMDevice.Room,
-      'FHEM_DEV_CHECK': FHEMDevice.Check
-    };
-      
-    Pebble.sendAppMessage(dict, ack, nack);
-
-    function ack() {
-      console.log('AppMsg: TYPE_DEVICES successful. Still ' + FHEM_Devices.length + ' to send');
-      SendBusy = false;
-      if (FHEM_Devices.length) {
-	SendNextDevice();
-      }
-    }
-
-    function nack() {
-      FHEM_Devices.unshift(FHEMDevice);
-      console.log('AppMsg: TYPE_DEVICES failed. Still ' + FHEM_Devices.length + ' to send');
-      SendNextDevice();
-    }
-  } else { // busy
-    FHEM_Devices.unshift(FHEMDevice);
-  }
-}
-
-
 Pebble.addEventListener('webviewclosed', 
   function(e) {
     var configData = JSON.parse(decodeURIComponent(e.response));
@@ -334,11 +377,19 @@ Pebble.addEventListener('webviewclosed',
 
     var DeviceType = "FS20"; // todo
     
-    // localStorage.setItem('FHEM_DEVICES', configData['TypeDevices'][DeviceType]);
+    localStorage.setItem('FHEM_DEVS_CONFIG', JSON.stringify(configData['TypeDevices']));
 
-    FHEM_Devices = configData['TypeDevices'][DeviceType]; 
     
-    SendNextDevice();
+    var FHEM_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
+    if (FHEM_Devices !== null) {
+      // fill global buffer for SendNextDevice()
+      FHEM_Devices_buf = FHEM_Devices[DeviceType];
+      SendNextDevice();
+    }
+
+    // fill global buffer for SendNextDevice()
+    // FHEM_Devices_buf = configData['TypeDevices'][DeviceType]; 
+    // SendNextDevice();
 
     /*
     for (var i in configData['TypeDevices'][DeviceType]) {
@@ -346,31 +397,9 @@ Pebble.addEventListener('webviewclosed',
     }
     */
     
-
-    /*
-      // Example with the following JSON data:
-      var config = {
-        'animSetting': true,
-        'tickSetting': 'seconds',
-        'bgColor': 'red'
-      };
-      
-    // Prepare AppMessage payload
-    var dict = {
-      'KEY_ANIMATIONS': config_data[animSetting],
-      'KEY_TICK': config_data[tickSetting],
-      'KEY_BACKGROUND_COLOR': config_data[bgColor]
-    };
-    
-    // Send settings to Pebble watchapp
-    Pebble.sendAppMessage(dict, function(){
-			    console.log('Sent config data to Pebble');  
-			  }, function() {
-			    console.log('Failed to send config data!');
-			  });
-    */
   }
 );
+
 
 // Listen for when an AppMessage is received
 Pebble.addEventListener('appmessage',
@@ -391,7 +420,10 @@ Pebble.addEventListener('appmessage',
       return;
     }
     if (e.payload['FHEM_URL_REQ_TYPE']) {
-      RequestTypes(GetServerURL(e.payload['FHEM_URL_REQ_TYPE']), "FS20");
+      var DeviceType = "FS20"; // TODO
+      var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
+    
+      // RequestTypes(GetServerURL(e.payload['FHEM_URL_REQ_TYPE']), "FS20");
       return;
     }
     console.log('Unknown appmessage received: ' + JSON.stringify(e.payload));   
