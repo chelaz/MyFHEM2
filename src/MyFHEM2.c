@@ -1173,6 +1173,9 @@ static void request_fs20_devices_callback(int index, void* ctx)
     APP_LOG(APP_LOG_LEVEL_ERROR, "app_message_outbox_send: %d", Res);   
     return;
   }
+
+  // reset current list
+  Coms_Cnt = 0; 
 }
 
 

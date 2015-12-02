@@ -109,16 +109,16 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
        Check_fav_t: Device_0_toggle_fav
        Check_dict:  Device_0_toggle_dict
-                    Device_0_toggle_state        (text: toggle/umschalten)
-                    Device_0_toggle_state_button
+                    Device_0_toggle_text        (text: toggle/umschalten)
+                    Device_0_toggle_text_button
                     Device_0_on_fav
                     Device_0_on_dict
-                    Device_0_on_state
-                    Device_0_on_state_button
+                    Device_0_on_text
+                    Device_0_on_text_button
                     Device_0_off_fav
                     Device_0_off_dict
-                    Device_0_off_state
-                    Device_0_off_state_button
+                    Device_0_off_text
+                    Device_0_off_text_button
                     Device_0_state     
   */
 
@@ -141,12 +141,16 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       // fetch all IDs
       var IDBasename     = "Device_" + i;
       var HtmlCk         = document.getElementById(IDBasename);
+      var HtmlDescrText  = document.getElementById(IDBasename+"_descr");
       var HtmlToggleFav  = document.getElementById(IDBasename+"_toggle_fav");
       var HtmlToggleDict = document.getElementById(IDBasename+"_toggle_dict");
+      var HtmlToggleText = document.getElementById(IDBasename+"_toggle_text");
       var HtmlOnFav      = document.getElementById(IDBasename+"_on_fav");
       var HtmlOnDict     = document.getElementById(IDBasename+"_on_dict");
+      var HtmlOnText     = document.getElementById(IDBasename+"_on_text");
       var HtmlOffFav     = document.getElementById(IDBasename+"_off_fav");
       var HtmlOffDict    = document.getElementById(IDBasename+"_off_dict");
+      var HtmlOffText    = document.getElementById(IDBasename+"_off_text");
       var HtmlState      = document.getElementById(IDBasename+"_state");
 
       var CheckToggleBits = (HtmlToggleDict.checked) ? MenuDef : 0;
@@ -160,13 +164,16 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
                   "OnBits:     " + CheckOnBits + "\n" +
                   "OffBits:    " + CheckOffBits + "\n");
 
+      console.log("ToggleText: "+ HtmlToggleText.value);
+      console.log("HtmlDescrText: " + HtmlDescrText.value);
+
       if (HtmlCk.checked) {
         if (CheckToggleBits != 0) {
           FHEM_Types[DeviceType].push( 
            { 
             "State"  : "toggle",
             "Device" : options[DeviceType][i].Device,
-            "Descr"  : options[DeviceType][i].Descr,
+            "Descr"  : HtmlDescrText.value + " " +HtmlToggleText.value,
             "Room"   : options[DeviceType][i].Room,
             "Check"  : CheckToggleBits
            });
@@ -177,7 +184,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
            { 
             "State"  : "on",
             "Device" : options[DeviceType][i].Device,
-            "Descr"  : options[DeviceType][i].Descr,
+            "Descr"  : HtmlDescrText.value + " " +HtmlOnText.value,
             "Room"   : options[DeviceType][i].Room,
             "Check"  : CheckOnBits
            });
@@ -188,7 +195,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
            { 
             "State"  : "off",
             "Device" : options[DeviceType][i].Device,
-            "Descr"  : options[DeviceType][i].Descr,
+            "Descr"  : HtmlDescrText.value + " " +HtmlOffText.value,
             "Room"   : options[DeviceType][i].Room,
             "Check"  : CheckOffBits
            });
@@ -199,7 +206,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
            { 
             "State"  : "toggle",
             "Device" : options[DeviceType][i].Device,
-            "Descr"  : options[DeviceType][i].Descr,
+            "Descr"  : HtmlDescrText.value,
             "Room"   : options[DeviceType][i].Room,
             "Check"  : MenuState
            });
@@ -293,8 +300,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   {
     function AddState2Device(i, Device, StateStr)
     {
-      var EditID       = "\"Device_" + i + "_" + StateStr + "_state\"";
-      var EditIDButton = "\"Device_" + i + "_" + StateStr + "_state_button\"";
+      var EditID       = "\"Device_" + i + "_" + StateStr + "_text\"";
+      var EditIDButton = "\"Device_" + i + "_" + StateStr + "_text_button\"";
       var RetStr = 	
 	   "  <tr>\n" +
 	   "    <td><label>\n" +
@@ -400,7 +407,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	   "            value=" + options[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td><label>" +
-           "       <input id='Device_" + i + "_toggle_state' type='text' "+
+           "       <input id='Device_" + i + "_toggle_text' type='text' "+
 	   "        value='toggle'>" +
 	   "    </label></td>" +
 	   "  </tr>" +
