@@ -133,9 +133,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     
     var FHEM_Types = {}
     FHEM_Types[DeviceType] = [];
-
     console.log('FHEM_TYPES: ' + JSON.stringify(FHEM_Types));
-
     var cnt=0;
     for (var i=0; i < options.num; i++) {
       // fetch all IDs
@@ -152,21 +150,17 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       var HtmlOffDict    = document.getElementById(IDBasename+"_off_dict");
       var HtmlOffText    = document.getElementById(IDBasename+"_off_text");
       var HtmlState      = document.getElementById(IDBasename+"_state");
-
       var CheckToggleBits = (HtmlToggleDict.checked) ? MenuDef : 0;
       CheckToggleBits    |= (HtmlToggleFav.checked)  ? MenuFav : 0;
       var CheckOnBits     = (HtmlOnDict.checked)     ? MenuDef : 0;
       CheckOnBits        |= (HtmlOnFav.checked)      ? MenuFav : 0;
       var CheckOffBits    = (HtmlOffDict.checked)    ? MenuDef : 0;
       CheckOffBits       |= (HtmlOffFav.checked)     ? MenuFav : 0;
-
       console.log("ToggleBits: " + CheckToggleBits + "\n" +
                   "OnBits:     " + CheckOnBits + "\n" +
                   "OffBits:    " + CheckOffBits + "\n");
-
       console.log("ToggleText: "+ HtmlToggleText.value);
       console.log("HtmlDescrText: " + HtmlDescrText.value);
-
       if (HtmlCk.checked) {
         if (CheckToggleBits != 0) {
           FHEM_Types[DeviceType].push( 
@@ -217,7 +211,6 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       } else
         options[DeviceType][i].checked = false;
     }
-
     return_opts['TypeDevices'] = FHEM_Types;
     return return_opts;
   }
@@ -325,16 +318,16 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     };
 
     var optionsString = getQueryString("options", "{" + DeviceType + ":''}");
-    var options = JSON.parse(optionsString);
+    var FHEM_Types = JSON.parse(optionsString);
 
     var Key = "FHEM_DEVICES_" + DeviceType;
     localStorage[Key] = optionsString;
 
-    if (options.num == null) {
+    if (FHEM_Types.num == null) {
       HTMLElement.innerHTML = "Nothing received from Pebble.js";
       return;
     }
-    if (options.num == 0) {
+    if (FHEM_Types.num == 0) {
       HTMLElement.innerHTML = "No " + DeviceType + " devices found";
       return;
     }
@@ -342,19 +335,19 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     HTMLElement.innerHTML = "";
 
     // checked not yet working since the data from localStorage is overwritten above
-    for (var i = 0; i < options.num; i++) {
-      var Descr = options[DeviceType][i].Descr;
+    for (var i = 0; i < FHEM_Types.num; i++) {
+      var Descr        = FHEM_Types[DeviceType][i].Descr;
       var EditID       = "\"Device_" + i + "_descr\"";
       var EditIDButton = "\"Device_" + i + "_descr_button\"";
 
       var ih = i+1;      
       var HTMLDevice =
          "<div class='item-container-content'><label>" + 
-         " <!-- [" + ih + "/" + options.num + "] -->" + 
+         " <!-- [" + ih + "/" + FHEM_Types.num + "] -->" + 
 
          "  <input id='Device_" + i + "' type='checkbox' "+
-	 "   value=" + options[DeviceType][i].checked + ">" +
-	 options[DeviceType][i].Room +
+	 "   value=" + FHEM_Types[DeviceType][i].checked + ">" +
+	 FHEM_Types[DeviceType][i].Room +
 	 "   </label>" +
 
          /* Description */
@@ -374,15 +367,15 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	   "    <td>State</td>" +
 	   "  </tr-->";
 	 
-	 HTMLDevice += AddState2Device(i, options[DeviceType], 'toggle');
-	 HTMLDevice += AddState2Device(i, options[DeviceType], 'on');
-	 HTMLDevice += AddState2Device(i, options[DeviceType], 'off');
+	 HTMLDevice += AddState2Device(i, FHEM_Types[DeviceType], 'toggle');
+	 HTMLDevice += AddState2Device(i, FHEM_Types[DeviceType], 'on');
+	 HTMLDevice += AddState2Device(i, FHEM_Types[DeviceType], 'off');
 
 	 HTMLDevice +=
 	   "  <tr>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_state' type='checkbox' "+
-	   "           value=" + options[DeviceType][i].checked + ">" +
+	   "           value=" + FHEM_Types[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td></td>" +
 	   "    <td>State of Device</td>" +
@@ -400,11 +393,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	   "  <tr id = 'toggle'>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_toggle_fav' type='checkbox' "+
-	   "           value=" + options[DeviceType][i].checked + ">" +
+	   "           value=" + FHEM_Types[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_toggle_dict' type='checkbox' "+
-	   "            value=" + options[DeviceType][i].checked + ">" +
+	   "            value=" + FHEM_Types[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_toggle_text' type='text' "+
@@ -414,11 +407,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	   "  <tr id = 'on'>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_on_fav' type='checkbox' "+
-	   "           value=" + options[DeviceType][i].checked + ">" +
+	   "           value=" + FHEM_Types[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_on_dict' type='checkbox' "+
-	   "            value=" + options[DeviceType][i].checked + ">" +
+	   "            value=" + FHEM_Types[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_on_state' type='text' "+
@@ -428,11 +421,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	   "  <tr id = 'on'>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_off_fav' type='checkbox' "+
-	   "           value=" + options[DeviceType][i].checked + ">" +
+	   "           value=" + FHEM_Types[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_off_dict' type='checkbox' "+
-	   "            value=" + options[DeviceType][i].checked + ">" +
+	   "            value=" + FHEM_Types[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_off_state' type='text' "+
@@ -442,11 +435,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	   "  <tr id = 'state'>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_state_fav' type='checkbox' "+
-	   "           value=" + options[DeviceType][i].checked + ">" +
+	   "           value=" + FHEM_Types[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_state_dict' type='checkbox' "+
-	   "            value=" + options[DeviceType][i].checked + ">" +
+	   "            value=" + FHEM_Types[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td>State of Device</td>" +
 	   "  </tr>" +
@@ -456,25 +449,25 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 /*
 	 
          "   <div class='item-container-content-small'>" +
-	  // options[DeviceType][i].Descr +
+	  // FHEM_Types[DeviceType][i].Descr +
 	 "     <label>" +
          "       <input id='Device_" + i + "_toggle' type='checkbox' "+
-	 "       value=" + options[DeviceType][i].checked +
+	 "       value=" + FHEM_Types[DeviceType][i].checked +
 	 "       >&nbsp;" + "toggle" +
 	 "     </label>" +	 
 	 "     <label>" +
          "       <input id='Device_" + i + "_on' type='checkbox' "+
-	 "       value=" + options[DeviceType][i].checked +
+	 "       value=" + FHEM_Types[DeviceType][i].checked +
 	 "       >&nbsp;" + "on" +
 	 "     </label>" +	 
 	 "     <label>" +
          "       <input id='Device_" + i + "_off' type='checkbox' "+
-	 "       value=" + options[DeviceType][i].checked +
+	 "       value=" + FHEM_Types[DeviceType][i].checked +
 	 "       >&nbsp;" + "off" +
 	 "     </label>" +	 
 	 "     <label>" +
          "       <input id='Device_" + i + "_state' type='checkbox' "+
-	 "       value=" + options[DeviceType][i].checked +
+	 "       value=" + FHEM_Types[DeviceType][i].checked +
 	 "       >&nbsp;" + "state" +
 	 "     </label>" +	 
 	 "   </div>" + 

@@ -251,6 +251,46 @@ function RequestTypes(URL, DeviceType)
 }
 
 
+// helper function
+function FindDeviceInFHEM(FHEM_Types, DevCfg)
+{
+  var DeviceType = "FS20"; // TODO
+
+  for (var i = 0; i < FHEM_Types.num; i++) {
+    var Dev = FHEM_Types[DeviceType][i];
+    if (Dev.Device == DevCfg.Device)
+      return DevCfg;
+  }
+
+  return null;
+}
+
+
+// proceed through all FHEM_DevCfg and see whether there is a matching device from FHEM
+function MergeTypesWithDevices(FHEM_Types, FHEM_DevCfg)
+{
+  if (FHEM_Types.num == null || FHEM_Types.num == 0)
+    return FHEM_Types;
+
+  if (FHEM_DevCfg === null)
+    return FHEM_Types;
+
+  for (var j = 0; j < FHEM_DevCfg.length; j++) {
+    var DevCfg = FHEM_DevCfg[i];
+
+    var FoundDevice = FindDeviceInFHEM(FHEM_Types, DevCfg);
+    if (FoundDevice === null)
+      continue;
+
+    console.log("Found Config for " + "");
+  }
+
+  return FHEM_Types;
+}
+
+
+
+
 
 var FHEM_Devices_buf;
 var SendBusy = false;
@@ -354,7 +394,15 @@ Pebble.addEventListener('showConfiguration',
     };
     // var FHEM_Types = JSON.stringify(FHEM_Types_Obj); 
     */
-          
+
+/*
+    if(FHEM_Types !== null) {
+      var FHEM_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
+      if (FHEM_Devices !== null)
+	      FHEM_Types = MergeTypesWithDevices(FHEM_Types, FHEM_Devices);
+      url = url + "?options=" + encodeURIComponent(FHEM_Types);
+    }
+*/
     if(FHEM_Types !== null)
       url = url + "?options=" + encodeURIComponent(FHEM_Types);
 
