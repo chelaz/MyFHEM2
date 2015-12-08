@@ -76,7 +76,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>WristFHEM - Home Automation on your Wrist - Commit 43
+    <h1 class='title'>WristFHEM - Home Automation on your Wrist - Commit 44
     </h1>
 
     <div class='item-container'>
@@ -552,10 +552,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   // Main Function
   (function() {
     var Cnt = 0;
-    if (localStorage['FHEM_CONFIG_CNT'] === null) {
+    var CntObj = localStorage['FHEM_CONFIG_CNT'];
+    if (CntObj == null) {
       localStorage['FHEM_CONFIG_CNT'] = JSON.stringify(Cnt);
     } else {
-      Cnt = JSON.parse(localStorage['FHEM_CONFIG_CNT']);
+      Cnt = JSON.parse(CntObj);
       localStorage['FHEM_CONFIG_CNT'] = JSON.stringify(Cnt+1);
     }
     MyConsole("Config Counter: " + localStorage['FHEM_CONFIG_CNT']);
