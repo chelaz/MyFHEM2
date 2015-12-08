@@ -76,7 +76,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>WristFHEM - Home Automation on your Wrist - Commit 40
+    <h1 class='title'>WristFHEM - Home Automation on your Wrist - Commit 41
     </h1>
 
     <div class='item-container'>
@@ -556,7 +556,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     if (localStorage['teststorage'] === null)
       localStorage['teststorage'] = 0;
     else
-      localStorage['teststorage']++;
+      localStorage['teststorage'] = localStorage['teststorage'] + 1;
  	
     MyConsole("Local Storage: " + localStorage['teststorage']);
      
