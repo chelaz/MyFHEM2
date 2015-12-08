@@ -7,13 +7,25 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   Documenation of JSON Data Exchange
   ----------------------------------
   
-  From PebbleJS:
+  From PebbleJS: FHEM_Devices
   --------------
+  	{ "FS20" : [
+  		{ "State"  : "toggle",
+  		  "Device" : "FS20_fr_bel",
+  		  "Descr"  : "Licht umschalten",
+  		  "Room"   : "Küche"
+  		},
+  		{ "State"  : "toggle",
+  		  "Device" : "FS20_fz_bel",
+  		  "Descr"  : "Licht an/aus",
+  		  "Room"   : "Wohnzimmer"
+  		}
+  	  ],
+  	  "num" : 2
+  	}
   
   
-  
-  
-  To PebbleJS:
+  To PebbleJS:   Cfg_Devices
   --------------
 	{ "FHEM_SERVER_URL" : "http://mypi:8083/fhem",
 	  "TypeDevices"     : {
@@ -22,11 +34,17 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	  	    "Device" : "FS20_fr_bel",
 	  	    "Descr"  : "Licht umschalten toggle",
 	  	    "Room"   : "Küche",
-	  	    "Check"  :2
+	  	    "Check"  : 2
 	  	  },
 	  	  { "State"  : "on",
 	  	    "Device" : "FS20_fr_bel",
 	  	    "Descr"  : "Licht umschalten on",
+	  	    "Room"   : "Küche",
+	  	    "Check"  : 1
+	  	  },
+	  	  { "State"  : "off",
+	  	    "Device" : "FS20_fr_bel",
+	  	    "Descr"  : "Licht umschalten off",
 	  	    "Room"   : "Küche",
 	  	    "Check"  : 1
 	  	  },
@@ -58,7 +76,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>WristFHEM - Home Automation on your Wrist - Commit 39
+    <h1 class='title'>WristFHEM - Home Automation on your Wrist - Commit 40
     </h1>
 
     <div class='item-container'>
@@ -115,10 +133,20 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
         <input id='submit_button' type='button' class='item-button' value='SUBMIT'>
       </div>
     </div>
+    <div class='item-container'>
+      <div class='item-container-header'>Debug Console</div>
+      <div class='item-container-content' id="Console">
+      </div>
+    </div>
   </body>
+  
+  <!-- --------------------------------------------------------------------------------------------------
+  	javascript starts here -->
+  
   
   <script>
 
+  // defines for checkbuttons
   var MenuDef   = 1;
   var MenuFav   = 2;
   var MenuState = 4;
@@ -514,9 +542,25 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     }
   }
 
+  function MyConsole(text)
+  {
+    var Console = document.getElementById('Console').innerHTML;
+    Console += text;
+  }
+
   /////////////////////////////////////
   // Main Function
   (function() {
+    MyConsole("Test Output");
+ 
+    if (localStorage['teststorage'] === null)
+      localStorage['teststorage'] = 0;
+    else
+      localStorage['teststorage']++;
+ 	
+    MyConsole("Local Storage: " + localStorage['teststorage']);
+     
+     
     var FHEM_SERVER_URL_textinput = document.getElementById('FHEM_SERVER_URL');
     // var highContrastCheckbox = document.getElementById('high_contrast_checkbox');
 
