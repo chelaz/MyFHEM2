@@ -76,7 +76,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>WristFHEM - Home Automation on your Wrist - Commit 44
+    <h1 class='title'>WristFHEM - Home Automation on your Wrist - Commit 45
     </h1>
 
     <div class='item-container'>
@@ -145,12 +145,55 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   
   
   <script>
+  ////////////////////////////////////
+  // General Helper Functions
 
-  // defines for checkbuttons
+  // Set the return URL depending on the runtime environment
+  function getQueryParam(variable, defaultValue) {
+    var query = location.search.substring(1);
+    var vars = query.split('&');
+    for (var i = 0; i < vars.length; i++) {
+      var pair = vars[i].split('=');
+      if (pair[0] === variable) {
+        return decodeURIComponent(pair[1]);
+      }
+    }
+    return defaultValue || false;
+  }
+
+  // Extract the args from the URI of this document
+  // Returns the string corresponding to the given key
+  // Example: var optionsString = getQueryString("options", "foobar");  // for "URL=https://localhost/index.html?options=FOOBAR"
+  function getQueryString(key, default_) {
+	  if (default_ == null) default_ = "";
+	  key = key.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+	  var regex = new RegExp("[\\?&]" + key + "=([^&#]*)");
+	  var qs = regex.exec(window.location.href);
+	  if (qs == null)
+	    return default_;
+	  else
+	    return decodeURIComponent(qs[1]);
+  }
+
+  /////////////////////////////////////
+  // Submit button clicked 
+  var submitButton = document.getElementById('submit_button');
+  submitButton.addEventListener('click', function() {
+    console.log('Submit');
+
+    var return_to = getQueryParam('return_to', 'pebblejs://close#');
+    document.location = return_to + encodeURIComponent(JSON.stringify(getInputMain()));
+  });
+
+
+  ////////////////////////////////////
+  // Defines for checkbuttons
   var MenuDef   = 1;
   var MenuFav   = 2;
   var MenuState = 4;
 
+  // -----------------------------------------------------
+  // Read data from HTML Input
 
   function GetInputServerURL(return_opts)
   {
@@ -277,17 +320,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     return return_opts;
   }
 
-  /////////////////////////////////////
-  // Get data from html form input tags
-  function getUserInput() {
-    // var highContrastCheckbox = document.getElementById('high_contrast_checkbox');
-
-    /* var options = {
-      'FHEM_SERVER_URL': FHEM_SERVER_URL_textinput.value
-    }; */
-    //      // 'high_contrast': highContrastCheckbox.checked
-
-    // localStorage['high_contrast'] = options['high_contrast'];
+  // Input main function
+  function getInputMain() {
 
     DeviceType = "FS20";
 
@@ -300,46 +334,13 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     return options;
   }
 
-  /////////////////////////////////////
-  // Helper Function:
-  // Set the return URL depending on the runtime environment
-  function getQueryParam(variable, defaultValue) {
-    var query = location.search.substring(1);
-    var vars = query.split('&');
-    for (var i = 0; i < vars.length; i++) {
-      var pair = vars[i].split('=');
-      if (pair[0] === variable) {
-        return decodeURIComponent(pair[1]);
-      }
-    }
-    return defaultValue || false;
-  }
 
-  /////////////////////////////////////
-  // Submit button clicked 
-  var submitButton = document.getElementById('submit_button');
-  submitButton.addEventListener('click', function() {
-    console.log('Submit');
-
-    var return_to = getQueryParam('return_to', 'pebblejs://close#');
-    document.location = return_to + encodeURIComponent(JSON.stringify(getUserInput()));
-  });
+  // -----------------------------------------------------
+  // ...
 
 
   /////////////////////////////////////
   // Helper Function:
-  // Extract the args from the URI of this document
-  // Returns the string corresponding to the given key
-  function getQueryString(key, default_) {
-	  if (default_ == null) default_ = "";
-	  key = key.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-	  var regex = new RegExp("[\\?&]" + key + "=([^&#]*)");
-	  var qs = regex.exec(window.location.href);
-	  if (qs == null)
-	    return default_;
-	  else
-	    return decodeURIComponent(qs[1]);
-  }
 
   function ShowEdit(inputID, buttonID)
   {
@@ -379,7 +380,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       return RetStr;
     };
 
-    var optionsString = getQueryString("options", "{" + DeviceType + ":''}");
+    var Default_FHEM_Devices = "{" + DeviceType + ":''}";
+    var optionsString = getQueryString("options", Default_FHEM_Devices);
     
     console.log("From PebbleJS: "+optionsString);
     
