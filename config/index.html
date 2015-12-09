@@ -58,6 +58,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
 <!DOCTYPE html>
 <html>
+  <div id="CommitNumber"> 46 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -340,8 +341,16 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
 
   /////////////////////////////////////
-  // Helper Function:
+  // Helper Functions
 
+  // A button shows a text. If the user presses on the button
+  // an edit control appears with the same text.
+  // Used for the following HTML input:
+  //  <label>
+  //    <input id="inputID"       type="hidden" value="Text">
+  //    <input id="buttonID" type="button" value="Text"
+  //           onclick='ShowEdit("inputID","buttonID");'>
+  //  </label>
   function ShowEdit(inputID, buttonID)
   {
     var HTMLInput = document.getElementById(inputID);
@@ -562,6 +571,9 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       localStorage['FHEM_CONFIG_CNT'] = JSON.stringify(Cnt+1);
     }
     MyConsole("Config Counter: " + localStorage['FHEM_CONFIG_CNT']);
+    
+    var TagCommitNumber = document.getElementById('CommitNumber');
+    MyConsole("Commit: "+ TagCommitNumber.innerHTML);
      
     var FHEM_SERVER_URL_textinput = document.getElementById('FHEM_SERVER_URL');
     // var highContrastCheckbox = document.getElementById('high_contrast_checkbox');
