@@ -58,7 +58,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
 <!DOCTYPE html>
 <html>
-  <div id="CommitNumber" hidden> 48 </div>
+  <div id="CommitNumber" hidden> 49 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -77,7 +77,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>WristFHEM - Home Automation on your Wrist - Commit 45
+    <h1 class='title'>WristFHEM - Home Automation on your Wrist
     </h1>
 
     <div class='item-container'>
@@ -141,11 +141,15 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     </div>
   </body>
   
+  
   <!-- --------------------------------------------------------------------------------------------------
   	javascript starts here -->
-  
-  
   <script>
+  
+  var Debug=true;
+  
+  
+  
   ////////////////////////////////////
   // General Helper Functions
 
@@ -182,10 +186,21 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   submitButton.addEventListener('click', function() {
     console.log('Submit');
 
+    var ReturnString = JSON.stringify(getInputMain());
+
+    if (Debug)
+      return;
+
     var return_to = getQueryParam('return_to', 'pebblejs://close#');
-    document.location = return_to + encodeURIComponent(JSON.stringify(getInputMain()));
+    document.location = return_to + encodeURIComponent(ReturnString);
   });
 
+
+  function MyConsole(text)
+  {
+    var Console = document.getElementById('Console');
+    Console.innerHTML += "<p>" + text + "</p>";
+  }
 
   ////////////////////////////////////
   // Defines for checkbuttons
@@ -331,6 +346,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     options = GetInputServerURL(options);    
     options = GetInputDevices(options, DeviceType);
 
+    MyConsole("Cfg_Devices: " + JSON.stringify(options));
+
     console.log('Got options: ' + JSON.stringify(options));
     return options;
   }
@@ -392,7 +409,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     var Default_FHEM_Devices = "{" + DeviceType + ":''}";
     var FHEM_DevicesString = getQueryString("options", Default_FHEM_Devices);
     
-    console.log("From PebbleJS: "+FHEM_DevicesString);
+    MyConsole("From PebbleJS: "+FHEM_DevicesString);
     
     var FHEM_Devices = JSON.parse(FHEM_DevicesString);
 
@@ -413,6 +430,9 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     // checked not yet working since the data from localStorage is overwritten above
     for (var i = 0; i < FHEM_Devices.num; i++) {
       var Descr        = FHEM_Devices[DeviceType][i].Descr;
+      
+      // TODO: check whether we already have saved a config in localStorage
+      
       var EditID       = "\"Device_" + i + "_descr\"";
       var EditIDButton = "\"Device_" + i + "_descr_button\"";
 
@@ -553,11 +573,6 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     }
   }
 
-  function MyConsole(text)
-  {
-    var Console = document.getElementById('Console');
-    Console.innerHTML += "<p>" + text + "</p>";
-  }
 
   /////////////////////////////////////
   // Main Function
