@@ -58,7 +58,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
 <!DOCTYPE html>
 <html>
-  <div id="CommitNumber"> 46 </div>
+  <div id="CommitNumber" hidden> 48 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -390,20 +390,20 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     };
 
     var Default_FHEM_Devices = "{" + DeviceType + ":''}";
-    var optionsString = getQueryString("options", Default_FHEM_Devices);
+    var FHEM_DevicesString = getQueryString("options", Default_FHEM_Devices);
     
-    console.log("From PebbleJS: "+optionsString);
+    console.log("From PebbleJS: "+FHEM_DevicesString);
     
-    var FHEM_Types = JSON.parse(optionsString);
+    var FHEM_Devices = JSON.parse(FHEM_DevicesString);
 
     var Key = "FHEM_DEVICES_" + DeviceType;
-    localStorage[Key] = optionsString;
+    localStorage[Key] = FHEM_DevicesString;
 
-    if (FHEM_Types.num == null) {
+    if (FHEM_Devices.num == null) {
       HTMLElement.innerHTML = "Nothing received from Pebble.js";
       return;
     }
-    if (FHEM_Types.num == 0) {
+    if (FHEM_Devices.num == 0) {
       HTMLElement.innerHTML = "No " + DeviceType + " devices found";
       return;
     }
@@ -411,19 +411,19 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     HTMLElement.innerHTML = "";
 
     // checked not yet working since the data from localStorage is overwritten above
-    for (var i = 0; i < FHEM_Types.num; i++) {
-      var Descr        = FHEM_Types[DeviceType][i].Descr;
+    for (var i = 0; i < FHEM_Devices.num; i++) {
+      var Descr        = FHEM_Devices[DeviceType][i].Descr;
       var EditID       = "\"Device_" + i + "_descr\"";
       var EditIDButton = "\"Device_" + i + "_descr_button\"";
 
       var ih = i+1;      
       var HTMLDevice =
          "<div class='item-container-content'><label>" + 
-         " <!-- [" + ih + "/" + FHEM_Types.num + "] -->" + 
+         " <!-- [" + ih + "/" + FHEM_Devices.num + "] -->" + 
 
          "  <input id='Device_" + i + "' type='checkbox' "+
-	 "   value=" + FHEM_Types[DeviceType][i].checked + ">" +
-	 FHEM_Types[DeviceType][i].Room +
+	 "   value=" + FHEM_Devices[DeviceType][i].checked + ">" +
+	 FHEM_Devices[DeviceType][i].Room +
 	 "   </label>" +
 
          /* Description */
@@ -443,15 +443,15 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	   "    <td>State</td>" +
 	   "  </tr-->";
 	 
-	 HTMLDevice += AddState2Device(i, FHEM_Types[DeviceType], 'toggle');
-	 HTMLDevice += AddState2Device(i, FHEM_Types[DeviceType], 'on');
-	 HTMLDevice += AddState2Device(i, FHEM_Types[DeviceType], 'off');
+	 HTMLDevice += AddState2Device(i, FHEM_Devices[DeviceType], 'toggle');
+	 HTMLDevice += AddState2Device(i, FHEM_Devices[DeviceType], 'on');
+	 HTMLDevice += AddState2Device(i, FHEM_Devices[DeviceType], 'off');
 
 	 HTMLDevice +=
 	   "  <tr>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_state' type='checkbox' "+
-	   "           value=" + FHEM_Types[DeviceType][i].checked + ">" +
+	   "           value=" + FHEM_Devices[DeviceType][i].checked + ">" +
 	   "    </label></td>" +
 	   "    <td></td>" +
 	   "    <td>State of Device</td>" +
