@@ -25,10 +25,10 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   	}
   
   
-  To PebbleJS:   Cfg_Devices
+  To PebbleJS:   FHEM_Config
   --------------
 	{ "FHEM_SERVER_URL" : "http://mypi:8083/fhem",
-	  "TypeDevices"     : {
+	  "Cfg_Devices"     : {
 	  	"FS20" : [
 	  	  { "State"  : "toggle",
 	  	    "Device" : "FS20_fr_bel",
@@ -59,7 +59,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 <!DOCTYPE html>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
 <html>
-  <div id="CommitNumber" hidden> 51 </div>
+  <div id="CommitNumber" hidden> 52 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -246,6 +246,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
   function GetInputDevices(return_opts, DeviceType)
   {
+    // todo: rearrange localstorage for Cfg_Devices
+    
     var Key = "FHEM_DEVICES_" + DeviceType;
     
     var options = JSON.parse(localStorage[Key]);
@@ -253,9 +255,9 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     if (options.num == null || options.num == 0)
       return return_opts;
     
-    var FHEM_Types = {}
-    FHEM_Types[DeviceType] = [];
-    console.log('FHEM_TYPES: ' + JSON.stringify(options));
+    var Cfg_Devices = {}
+    Cfg_Devices[DeviceType] = [];
+    // console.log('Cfg_Devices: ' + JSON.stringify(options));
     var cnt=0;
     for (var i=0; i < options.num; i++) {
       // fetch all IDs
@@ -285,7 +287,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       console.log("HtmlDescrText: " + HtmlDescrText.value);
       if (HtmlCk.checked) {
         if (CheckToggleBits != 0) {
-          FHEM_Types[DeviceType].push( 
+          Cfg_Devices[DeviceType].push( 
            { 
             "State"  : "toggle",
             "Device" : options[DeviceType][i].Device,
@@ -296,7 +298,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
           cnt++;
         }
         if (CheckOnBits != 0) {
-          FHEM_Types[DeviceType].push( 
+          Cfg_Devices[DeviceType].push( 
            { 
             "State"  : "on",
             "Device" : options[DeviceType][i].Device,
@@ -307,7 +309,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
           cnt++;
         }
         if (CheckOffBits != 0) {
-          FHEM_Types[DeviceType].push( 
+          Cfg_Devices[DeviceType].push( 
            { 
             "State"  : "off",
             "Device" : options[DeviceType][i].Device,
@@ -318,7 +320,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
           cnt++;
         }
         if (HtmlState.checked != 0) {
-          FHEM_Types[DeviceType].push( 
+          Cfg_Devices[DeviceType].push( 
            { 
             "State"  : "toggle",
             "Device" : options[DeviceType][i].Device,
@@ -333,7 +335,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       } else
         options[DeviceType][i].checked = false;
     }
-    return_opts['TypeDevices'] = FHEM_Types;
+    return_opts['Cfg_Devices'] = Cfg_Devices;
     return return_opts;
   }
 
