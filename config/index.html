@@ -59,7 +59,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 <!DOCTYPE html>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
 <html>
-  <div id="CommitNumber" hidden> 53 </div>
+  <div id="CommitNumber" hidden> 54 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -268,27 +268,35 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       var IDBasename     = "Device_" + i;
       var HtmlCk         = document.getElementById(IDBasename);
       var HtmlDescrText  = document.getElementById(IDBasename+"_descr");
+
+      // toggle      
       var HtmlToggleFav  = document.getElementById(IDBasename+"_toggle_fav");
       var HtmlToggleDict = document.getElementById(IDBasename+"_toggle_dict");
       var HtmlToggleText = document.getElementById(IDBasename+"_toggle_text");
+      var CheckToggleBits = (HtmlToggleDict.checked) ? MenuDef : 0;
+      CheckToggleBits    |= (HtmlToggleFav.checked)  ? MenuFav : 0;
+      
+      // on
       var HtmlOnFav      = document.getElementById(IDBasename+"_on_fav");
       var HtmlOnDict     = document.getElementById(IDBasename+"_on_dict");
       var HtmlOnText     = document.getElementById(IDBasename+"_on_text");
+      var CheckOnBits     = (HtmlOnDict.checked)     ? MenuDef : 0;
+      CheckOnBits        |= (HtmlOnFav.checked)      ? MenuFav : 0;
+      
+      // off
       var HtmlOffFav     = document.getElementById(IDBasename+"_off_fav");
       var HtmlOffDict    = document.getElementById(IDBasename+"_off_dict");
       var HtmlOffText    = document.getElementById(IDBasename+"_off_text");
-      var HtmlState      = document.getElementById(IDBasename+"_state");
-      var CheckToggleBits = (HtmlToggleDict.checked) ? MenuDef : 0;
-      CheckToggleBits    |= (HtmlToggleFav.checked)  ? MenuFav : 0;
-      var CheckOnBits     = (HtmlOnDict.checked)     ? MenuDef : 0;
-      CheckOnBits        |= (HtmlOnFav.checked)      ? MenuFav : 0;
       var CheckOffBits    = (HtmlOffDict.checked)    ? MenuDef : 0;
       CheckOffBits       |= (HtmlOffFav.checked)     ? MenuFav : 0;
+      
+      var HtmlState      = document.getElementById(IDBasename+"_state");
       console.log("ToggleBits: " + CheckToggleBits + "\n" +
                   "OnBits:     " + CheckOnBits + "\n" +
                   "OffBits:    " + CheckOffBits + "\n");
       console.log("ToggleText: "+ HtmlToggleText.value);
       console.log("HtmlDescrText: " + HtmlDescrText.value);
+
       if (HtmlCk.checked) {
         if (CheckToggleBits != 0) {
           Cfg_Devices[DeviceType].push( 
