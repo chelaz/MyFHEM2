@@ -59,7 +59,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 <!DOCTYPE html>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
 <html>
-  <div id="CommitNumber" hidden> 52 </div>
+  <div id="CommitNumber" hidden> 53 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -250,16 +250,16 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     
     var Key = "FHEM_DEVICES_" + DeviceType;
     
-    var options = JSON.parse(localStorage[Key]);
+    var FHEM_Devices = JSON.parse(localStorage[Key]);
     
-    if (options.num == null || options.num == 0)
+    if (FHEM_Devices.num == null || FHEM_Devices.num == 0)
       return return_opts;
     
     var Cfg_Devices = {}
     Cfg_Devices[DeviceType] = [];
-    // console.log('Cfg_Devices: ' + JSON.stringify(options));
+    // console.log('Cfg_Devices: ' + JSON.stringify(FHEM_Devices));
     var cnt=0;
-    for (var i=0; i < options.num; i++) {
+    for (var i=0; i < FHEM_Devices.num; i++) {
       // fetch all IDs
       var IDBasename     = "Device_" + i;
       var HtmlCk         = document.getElementById(IDBasename);
@@ -290,9 +290,9 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
           Cfg_Devices[DeviceType].push( 
            { 
             "State"  : "toggle",
-            "Device" : options[DeviceType][i].Device,
+            "Device" : FHEM_Devices[DeviceType][i].Device,
             "Descr"  : HtmlDescrText.value + " " +HtmlToggleText.value,
-            "Room"   : options[DeviceType][i].Room,
+            "Room"   : FHEM_Devices[DeviceType][i].Room,
             "Check"  : CheckToggleBits
            });
           cnt++;
@@ -301,9 +301,9 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
           Cfg_Devices[DeviceType].push( 
            { 
             "State"  : "on",
-            "Device" : options[DeviceType][i].Device,
+            "Device" : FHEM_Devices[DeviceType][i].Device,
             "Descr"  : HtmlDescrText.value + " " +HtmlOnText.value,
-            "Room"   : options[DeviceType][i].Room,
+            "Room"   : FHEM_Devices[DeviceType][i].Room,
             "Check"  : CheckOnBits
            });
           cnt++;
@@ -312,9 +312,9 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
           Cfg_Devices[DeviceType].push( 
            { 
             "State"  : "off",
-            "Device" : options[DeviceType][i].Device,
+            "Device" : FHEM_Devices[DeviceType][i].Device,
             "Descr"  : HtmlDescrText.value + " " +HtmlOffText.value,
-            "Room"   : options[DeviceType][i].Room,
+            "Room"   : FHEM_Devices[DeviceType][i].Room,
             "Check"  : CheckOffBits
            });
           cnt++;
@@ -323,17 +323,17 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
           Cfg_Devices[DeviceType].push( 
            { 
             "State"  : "toggle",
-            "Device" : options[DeviceType][i].Device,
+            "Device" : FHEM_Devices[DeviceType][i].Device,
             "Descr"  : HtmlDescrText.value,
-            "Room"   : options[DeviceType][i].Room,
+            "Room"   : FHEM_Devices[DeviceType][i].Room,
             "Check"  : MenuState
            });
           cnt++;
         }
-    // options[DeviceType][i].checked = true;
+    // FHEM_Devices[DeviceType][i].checked = true;
         cnt++;
       } else
-        options[DeviceType][i].checked = false;
+        FHEM_Devices[DeviceType][i].checked = false;
     }
     return_opts['Cfg_Devices'] = Cfg_Devices;
     return return_opts;
@@ -344,15 +344,15 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
     DeviceType = "FS20";
 
-    var options = {}
+    var FHEM_Config = {}
 
-    options = GetInputServerURL(options);    
-    options = GetInputDevices(options, DeviceType);
+    FHEM_Config = GetInputServerURL(FHEM_Config);    
+    FHEM_Config = GetInputDevices(FHEM_Config, DeviceType);
 
-    MyConsole("Cfg_Devices: " + JSON.stringify(options));
+    MyConsole("FHEM_Config: " + JSON.stringify(FHEM_Config));
+    // console.log('FHEM_Config: ' + JSON.stringify(FHEM_Config));
 
-    console.log('Got options: ' + JSON.stringify(options));
-    return options;
+    return FHEM_Config;
   }
 
 
