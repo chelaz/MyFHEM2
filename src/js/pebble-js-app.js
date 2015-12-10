@@ -29,8 +29,8 @@
 //
 ///////////////////////////////
 // global variables
-//   FHEM_Devices_buf: buffer array of devices to be sent to watch (finally empty)
-//   SendBusy:         locking mechanism for FHEM_Devices_buf
+//   Cfg_Devices_buf: buffer array of devices to be sent to watch (finally empty)
+//   SendBusy:        locking mechanism for Cfg_Devices_buf
 
 
 
@@ -222,7 +222,7 @@ function RequestTypes(URL, DeviceType)
     FHEM_Types.num = cnt;
   }
     // test:
-  /*
+  /* Todo: rename to "FHEM_Devices"
   FHEM_Types = {
       "FS20" : [
         { 
@@ -292,21 +292,21 @@ function MergeTypesWithDevices(FHEM_Types, FHEM_DevCfg)
 
 
 
-var FHEM_Devices_buf;
+var Cfg_Devices_buf;
 var SendBusy = false;
 
 function SendNextDevice()
 {
-  if (FHEM_Devices_buf === 0) {
+  if (Cfg_Devices_buf === 0) {
     console.log('SendNextDev: List not defined');
     return;
   }
-  if (FHEM_Devices_buf.length === 0) {
+  if (Cfg_Devices_buf.length === 0) {
     console.log('SendNextDev: List empty');
     return;
   }
   
-  var FHEMDevice = FHEM_Devices_buf.shift();
+  var FHEMDevice = Cfg_Devices_buf.shift();
   
   console.log('SendNextDev: shifted device: ' + JSON.stringify(FHEMDevice));
 
@@ -324,20 +324,20 @@ function SendNextDevice()
     Pebble.sendAppMessage(dict, ack, nack);
 
     function ack() {
-      console.log('AppMsg: TYPE_DEVICES successful. Still ' + FHEM_Devices_buf.length + ' to send');
+      console.log('AppMsg: TYPE_DEVICES successful. Still ' + Cfg_Devices_buf.length + ' to send');
       SendBusy = false;
-      if (FHEM_Devices_buf.length) {
+      if (Cfg_Devices_buf.length) {
 	SendNextDevice();
       }
     }
 
     function nack() {
-      FHEM_Devices_buf.unshift(FHEMDevice);
-      console.log('AppMsg: TYPE_DEVICES failed. Still ' + FHEM_Devices_buf.length + ' to send');
+      Cfg_Devices_buf.unshift(FHEMDevice);
+      console.log('AppMsg: TYPE_DEVICES failed. Still ' + Cfg_Devices_buf.length + ' to send');
       SendNextDevice();
     }
   } else { // busy
-    FHEM_Devices_buf.unshift(FHEMDevice);
+    Cfg_Devices_buf.unshift(FHEMDevice);
   }
 }
 
@@ -355,11 +355,11 @@ Pebble.addEventListener('ready',
     var DeviceType = "FS20"; // TODO
     // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
     
-    var FHEM_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
-    if (FHEM_Devices !== null) {
+    var Cfg_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
+    if (Cfg_Devices !== null) {
       // fill global buffer for SendNextDevice()
-      console.log('Using FHEM_Devices of localStorage:' + FHEM_Devices);
-      FHEM_Devices_buf = FHEM_Devices[DeviceType];
+      console.log('Using Cfg_Devices of localStorage:' + Cfg_Devices);
+      Cfg_Devices_buf = Cfg_Devices[DeviceType];
       SendNextDevice();
     }
 
@@ -397,9 +397,9 @@ Pebble.addEventListener('showConfiguration',
 
 /*
     if(FHEM_Types !== null) {
-      var FHEM_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
-      if (FHEM_Devices !== null)
-	      FHEM_Types = MergeTypesWithDevices(FHEM_Types, FHEM_Devices);
+      var Cfg_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
+      if (Cfg_Devices !== null)
+	      FHEM_Types = MergeTypesWithDevices(FHEM_Types, Cfg_Devices);
       url = url + "?options=" + encodeURIComponent(FHEM_Types);
     }
 */
@@ -425,18 +425,18 @@ Pebble.addEventListener('webviewclosed',
 
     var DeviceType = "FS20"; // todo
     
-    localStorage.setItem('FHEM_DEVS_CONFIG', JSON.stringify(configData['TypeDevices']));
+    localStorage.setItem('FHEM_DEVS_CONFIG', JSON.stringify(configData['Cfg_Devices']));
 
     
-    var FHEM_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
-    if (FHEM_Devices !== null) {
+    var Cfg_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
+    if (Cfg_Devices !== null) {
       // fill global buffer for SendNextDevice()
-      FHEM_Devices_buf = FHEM_Devices[DeviceType];
+      Cfg_Devices_buf = Cfg_Devices[DeviceType];
       SendNextDevice();
     }
 
     // fill global buffer for SendNextDevice()
-    // FHEM_Devices_buf = configData['TypeDevices'][DeviceType]; 
+    // Cfg_Devices_buf = configData['TypeDevices'][DeviceType]; 
     // SendNextDevice();
 
     /*
