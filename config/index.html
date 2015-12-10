@@ -260,6 +260,10 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     // console.log('Cfg_Devices: ' + JSON.stringify(FHEM_Devices));
     var cnt=0;
     for (var i=0; i < FHEM_Devices.num; i++) {
+    	
+      // apply previous config here:
+    	
+    	
       // fetch all IDs
       var IDBasename     = "Device_" + i;
       var HtmlCk         = document.getElementById(IDBasename);
