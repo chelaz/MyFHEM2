@@ -59,7 +59,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 <!DOCTYPE html>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
 <html>
-  <div id="CommitNumber" hidden> 55 </div>
+  <div id="CommitNumber" hidden> 56 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -300,6 +300,19 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       var HtmlDescrText  = document.getElementById(IDBasename+"_descr");
       var HtmlRoomText_value = FHEM_Devices[DeviceType][i].Room; // todo
       
+      if (HtmlCk.checked) {
+      	
+      	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][i].Device, 
+  				 HtmlRoomText_value, HtmlDescrText.value, "toggle"))
+  	  cnt++;
+      	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][i].Device, 
+  				 HtmlRoomText_value, HtmlDescrText.value, "on"))
+  	  cnt++;
+      	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][i].Device, 
+  				 HtmlRoomText_value, HtmlDescrText.value, "off"))
+  	  cnt++;
+      	
+      	      /*
       // toggle      
       var HtmlToggleFav  = document.getElementById(IDBasename+"_toggle_fav");
       var HtmlToggleDict = document.getElementById(IDBasename+"_toggle_dict");
@@ -320,20 +333,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       var HtmlOffText    = document.getElementById(IDBasename+"_off_text");
       var CheckOffBits    = (HtmlOffDict.checked)    ? MenuDef : 0;
       CheckOffBits       |= (HtmlOffFav.checked)     ? MenuFav : 0;
-      
-      var HtmlState      = document.getElementById(IDBasename+"_state");
-      console.log("ToggleBits: " + CheckToggleBits + "\n" +
-                  "OnBits:     " + CheckOnBits + "\n" +
-                  "OffBits:    " + CheckOffBits + "\n");
-      console.log("ToggleText: "+ HtmlToggleText.value);
-      console.log("HtmlDescrText: " + HtmlDescrText.value);
+      */
 
-      if (HtmlCk.checked) {
-      	
-      	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][i].Device, 
-  				 HtmlRoomText_value, HtmlDescrText.value, "toggle"))
-  	  cnt++;
-      	
         /* if (CheckToggleBits != 0) {
           Cfg_Devices[DeviceType].push( 
            { 
@@ -346,7 +347,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
           cnt++;
         } */
         
-        if (CheckOnBits != 0) {
+        /*if (CheckOnBits != 0) {
           Cfg_Devices[DeviceType].push( 
            { 
             "State"  : "on",
@@ -356,7 +357,9 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
             "Check"  : CheckOnBits
            });
           cnt++;
-        }
+        } */
+        
+        /*
         if (CheckOffBits != 0) {
           Cfg_Devices[DeviceType].push( 
            { 
@@ -367,7 +370,9 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
             "Check"  : CheckOffBits
            });
           cnt++;
-        }
+        }*/
+        
+        var HtmlState      = document.getElementById(IDBasename+"_state");
         if (HtmlState.checked != 0) {
           Cfg_Devices[DeviceType].push( 
            { 
