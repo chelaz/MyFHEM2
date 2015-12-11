@@ -65,7 +65,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 <!DOCTYPE html>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
 <html>
-  <div id="CommitNumber" hidden> 57 </div>
+  <div id="CommitNumber" hidden> 58 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -299,9 +299,6 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     var cnt=0;
     for (var i=0; i < FHEM_Devices.num; i++) {
     	
-      // apply previous config here:
-    	
-    	
       // fetch all IDs
       var IDBasename     = "Device_" + i;
       var HtmlCk         = document.getElementById(IDBasename);
@@ -413,8 +410,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     FHEM_Config = GetInputServerURL(FHEM_Config);    
     FHEM_Config = GetInputDevices(FHEM_Config, DeviceType);
 
-    MyConsole("FHEM_Config: " + JSON.stringify(FHEM_Config));
-    // console.log('FHEM_Config: ' + JSON.stringify(FHEM_Config));
+    var FHEM_Config_Str = JSON.stringify(FHEM_Config);
+
+    MyConsole("FHEM_Config: " + FHEM_Config_Str);
+
+    localStorage["FHEM_Config"] = FHEM_Config_Str;
 
     return FHEM_Config;
   }
@@ -492,11 +492,17 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       return;
     }
 
+    var FHEM_Config_prev = JSON.parse(localStorage["FHEM_Config"]);
+
+    MyConsole("FHEM_Config_prev: " + JSON.stringify(FHEM_Config_prev));
+
     HTMLElement.innerHTML = "";
 
     // checked not yet working since the data from localStorage is overwritten above
     for (var i = 0; i < FHEM_Devices.num; i++) {
       var Alias = FHEM_Devices[DeviceType][i].Alias;
+      
+      // if (FHEM_Config_prev[])
       
       // TODO: check whether we already have saved a config in localStorage
       
