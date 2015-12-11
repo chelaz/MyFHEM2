@@ -198,7 +198,7 @@ function RequestTypes(URL, DeviceType)
     for (var i=0; i < DevJSON.totalResultsReturned; i++) {
       var State  = DevJSON.Results[i].Internals.STATE;
       var Device = DevJSON.Results[i].Internals.NAME;
-      var Descr  = DevJSON.Results[i].Attributes.alias;
+      var Alias  = DevJSON.Results[i].Attributes.alias; // part of Description
       var Room   = DevJSON.Results[i].Attributes.room;
       console.log('\t#: ' + i);
       if (Room == null) {
@@ -206,7 +206,7 @@ function RequestTypes(URL, DeviceType)
 	      continue;
       }
       console.log('\t  Room:   ' + JSON.stringify(Room));
-      console.log('\t  Descr:  ' + JSON.stringify(Descr));
+      console.log('\t  Alias:  ' + JSON.stringify(Alias));
       console.log('\t  Device: ' + JSON.stringify(Device));
       console.log('\t  State:  ' + JSON.stringify(State));
       
@@ -214,7 +214,7 @@ function RequestTypes(URL, DeviceType)
         { 
           "State"  : State,
           "Device" : Device,
-          "Descr"  : Descr,
+          "Alias"  : Alias,
           "Room"   : Room
         });
       cnt++;
@@ -228,13 +228,13 @@ function RequestTypes(URL, DeviceType)
         { 
           "State"  : "toggle",
           "Device" : "FS20_fr_bel",
-          "Descr"  : "Licht umschalten",
+          "Alias"  : "Licht umschalten",
           "Room"   : "Küche"
         },
         { 
           "State"  : "toggle",
           "Device" : "FS20_fz_bel",
-          "Descr"  : "Licht an/aus",
+          "Alias"  : "Licht an/aus",
           "Room"   : "Wohnzimmer"
         }
       ],
@@ -380,13 +380,13 @@ Pebble.addEventListener('showConfiguration',
         { 
           "State"  : "toggle",
           "Device" : "FS20_fr_bel",
-          "Descr"  : "Licht umschalten",
+          "Alias"  : "Licht umschalten",
           "Room"   : "Küche"
         },
         { 
           "State"  : "toggle",
           "Device" : "FS20_fz_bel",
-          "Descr"  : "Licht an/aus",
+          "Alias"  : "Licht an/aus",
           "Room"   : "Wohnzimmer"
         }
       ],
