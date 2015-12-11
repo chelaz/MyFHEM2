@@ -65,7 +65,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 <!DOCTYPE html>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
 <html>
-  <div id="CommitNumber" hidden> 56 </div>
+  <div id="CommitNumber" hidden> 57 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -268,11 +268,13 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     if (CheckBits != 0) {
       Cfg_Devices_Type.push( 
            { 
-            "State"  : state,
-            "Device" : DeviceName,
-            "Descr"  : HtmlDescrText_value + " " + HtmlStateText.value,
-            "Room"   : HtmlRoomText_value,
-            "Check"  : CheckBits
+            "State"     : state,
+            "StateText" : HtmlStateText.value,
+            "Device"    : DeviceName,
+            "Alias"     : HtmlDescrText_value,
+            "Descr"     : HtmlDescrText_value + " " + HtmlStateText.value,
+            "Room"      : HtmlRoomText_value,
+            "Check"     : CheckBits
            });
        return true;
      }
@@ -382,10 +384,12 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
         if (HtmlState.checked != 0) {
           Cfg_Devices[DeviceType].push( 
            { 
-            "State"  : "toggle",
+            "State"     : "toggle",
+            "StateText" : "toggle", /* irrelevant */
             "Device" : FHEM_Devices[DeviceType][i].Device,
+            "Alias"  : HtmlDescrText.value,
             "Descr"  : HtmlDescrText.value,
-            "Room"   : FHEM_Devices[DeviceType][i].Room,
+            "Room"   : HtmlRoomText_value,
             "Check"  : MenuState
            });
           cnt++;
