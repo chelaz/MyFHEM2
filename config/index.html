@@ -447,24 +447,62 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   // Fetches all devices from args (URI) and shows it on the page
   function ShowDevicesFromArgs(DeviceType, HTMLElement)
   {
-    function AddState2Device(i, Device, StateStr)
+    // previous configuration:
+    function FindDeviceStates(CfgDevices, Device)
     {
-      var EditID       = "\"Device_" + i + "_" + StateStr + "_text\"";
-      var EditIDButton = "\"Device_" + i + "_" + StateStr + "_text_button\"";
+      var StatesArr = [];
+      for (var D in CfgDevices) {
+        if (CfgDevices[D].Device == Device)
+          StatesArr.push(CfgDevices[D]);
+      }
+      return StatesArr;
+    }
+
+    function AddCfgDevState2Device(i, CfgDev)
+    {
+      var EditID       = "\"Device_" + i + "_" + CfgDev.State + "_text\"";
+      var EditIDButton = "\"Device_" + i + "_" + CfgDev.State + "_text_button\"";
       var RetStr = 	
 	   "  <tr>\n" +
 	   "    <td><label>\n" +
-           "       <input id='Device_" + i + "_" + StateStr + "_fav' type='checkbox' "+
+           "       <input id='Device_" + i + "_" + CfgDev.State + "_fav' type='checkbox' "+
+	   "           checked='" + (CfgDev.Check == MenuFav) + "'>\n" +
+	   "    </label></td>\n" +
+	   "    <td><label>\n" +
+           "       <input id='Device_" + i + "_" + CfgDev.State + "_dict' type='checkbox'"+
+	   "           checked=" + (CfgDev.Check == MenuDef) + ">\n" +
+	   "    </label></td>\n" +
+	   "    <td><label>\n" +
+           "       <input id=" + EditID       + " type='hidden' "+
+	   "           value=" + CfgDev.StateText + ">\n" + 
+	   "       <input id=" + EditIDButton + " type='button' value='" + CfgDev.StateText +
+	   "        ' onclick='ShowEdit(" + EditID +"," + EditIDButton + ");'>" +
+	   "    </label></td>\n" +
+	   "  </tr>\n\n";
+	   
+      // console.log(RetStr);
+      return RetStr;
+    };
+
+
+    function AddState2Device(i, Device, State, StateText)
+    {
+      var EditID       = "\"Device_" + i + "_" + State + "_text\"";
+      var EditIDButton = "\"Device_" + i + "_" + State + "_text_button\"";
+      var RetStr = 	
+	   "  <tr>\n" +
+	   "    <td><label>\n" +
+           "       <input id='Device_" + i + "_" + State + "_fav' type='checkbox' "+
 	   "           value='" + Device[i].checked + "'>\n" +
 	   "    </label></td>\n" +
 	   "    <td><label>\n" +
-           "       <input id='Device_" + i + "_" + StateStr + "_dict' type='checkbox'"+
+           "       <input id='Device_" + i + "_" + State + "_dict' type='checkbox'"+
 	   "           value='" + Device[i].checked + "'>\n" +
 	   "    </label></td>\n" +
 	   "    <td><label>\n" +
            "       <input id=" + EditID       + " type='hidden' "+
-	   "           value='" + StateStr + "'>\n" + 
-	   "       <input id=" + EditIDButton + " type='button' value='" + StateStr +
+	   "           value='" + StateText + "'>\n" + 
+	   "       <input id=" + EditIDButton + " type='button' value='" + StateText +
 	   "        ' onclick='ShowEdit(" + EditID +"," + EditIDButton + ");'>" +
 	   "    </label></td>\n" +
 	   "  </tr>\n\n";
@@ -499,13 +537,32 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 
     MyConsole("FHEM_Config_prev: " + JSON.stringify(FHEM_Config_prev));
 
+    var DeviceType_prev;
+
+    if (FHEM_Config_prev) {
+      var Cfg_Devices_prev = FHEM_Config_prev['Cfg_Devices'];
+      if (Cfg_Devices_prev)
+        DeviceType_prev = Cfg_Devices_prev[DeviceType];
+    }
+
     HTMLElement.innerHTML = "";
 
     // checked not yet working since the data from localStorage is overwritten above
     for (var i = 0; i < FHEM_Devices.num; i++) {
-      var Alias = FHEM_Devices[DeviceType][i].Alias;
-      
-      // if (FHEM_Config_prev[])
+      var Device = FHEM_Devices[DeviceType][i].Device;
+
+      var Alias  = FHEM_Devices[DeviceType][i].Alias;
+
+      var StateChecked = false;
+
+      var StatesArr = [];
+      if (DeviceType_prev) {
+        StatesArr = FindDeviceStates(DeviceType_prev, Device);
+        if (StatesArr.length > 0) {
+          Alias = StatesArr[0].Alias;
+        }
+      }
+
       
       // TODO: check whether we already have saved a config in localStorage
       
@@ -539,15 +596,19 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 	   "    <td>State</td>" +
 	   "  </tr-->";
 	 
-	 HTMLDevice += AddState2Device(i, FHEM_Devices[DeviceType], 'toggle');
-	 HTMLDevice += AddState2Device(i, FHEM_Devices[DeviceType], 'on');
-	 HTMLDevice += AddState2Device(i, FHEM_Devices[DeviceType], 'off');
+         for (var s in StatesArr) {
+	   HTMLDevice += AddCfgDevState2Device(i, StatesArr[s]);
+         }
+
+	 HTMLDevice += AddState2Device(i, FHEM_Devices[DeviceType], "toggle", "toggle");
+	 HTMLDevice += AddState2Device(i, FHEM_Devices[DeviceType], 'on', 'on');
+	 HTMLDevice += AddState2Device(i, FHEM_Devices[DeviceType], 'off', 'off');
 
 	 HTMLDevice +=
 	   "  <tr>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_state' type='checkbox' "+
-	   "           value=" + FHEM_Devices[DeviceType][i].checked + ">" +
+	   "           value=" + StateChecked + ">" +
 	   "    </label></td>" +
 	   "    <td></td>" +
 	   "    <td>State of Device</td>" +
