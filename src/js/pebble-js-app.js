@@ -469,7 +469,8 @@ Pebble.addEventListener('appmessage',
     }
     if (e.payload['FHEM_URL_REQ_TYPE']) {
       var DeviceType = "FS20"; // TODO
-      var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
+      //      var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
+      var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2&XHR=1"), DeviceType);
     
       // RequestTypes(GetServerURL(e.payload['FHEM_URL_REQ_TYPE']), "FS20");
       return;
