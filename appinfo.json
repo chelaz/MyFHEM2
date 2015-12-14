@@ -1,17 +1,18 @@
 {
     "appKeys": {
-        "FHEM_URL_KEY": 0,
         "FHEM_COM_ID_KEY": 1,
+        "FHEM_DEV_CHECK": 11,
+        "FHEM_DEV_DESCR": 8,
+        "FHEM_DEV_DEVICE": 7,
+        "FHEM_DEV_ROOM": 10,
+        "FHEM_DEV_STATE": 9,
+        "FHEM_MSG_ID": 5,
+        "FHEM_NEW_DEV_BEG": 6,
+        "FHEM_NEW_DEV_END": 12,
         "FHEM_RESP_KEY": 2,
         "FHEM_URL_GET_STATE": 3,
-        "FHEM_URL_REQ_TYPE": 4,
-        "FHEM_MSG_ID": 5,
-	"FHEM_NEW_DEV" : 6,
-	"FHEM_DEV_DEVICE" : 7,
-	"FHEM_DEV_DESCR" : 8,
-	"FHEM_DEV_STATE":9,
-	"FHEM_DEV_ROOM":10,
-	"FHEM_DEV_CHECK":11
+        "FHEM_URL_KEY": 0,
+        "FHEM_URL_REQ_TYPE": 4
     },
     "capabilities": [
         "configurable"
@@ -63,6 +64,7 @@
             },
             {
                 "file": "images/menu_icon_ok.png",
+                "menuIcon": true,
                 "name": "IMAGE_MENU_ICON_OK",
                 "targetPlatforms": [
                     "aplite",

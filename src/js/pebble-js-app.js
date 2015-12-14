@@ -21,11 +21,13 @@
 //   FHEM_RESP_KEY      (S) send command/get state response -> watch
 //   FHEM_COM_ID_KEY    (S/R) given ID from watch
 //   FHEM_MSG_ID        (S/R) given message ID from watch
-//   FHEM_NEW_DEV       (S) FHEMDevice.Device
+//   FHEM_NEW_DEV_BEG   (S) Indicates that new devices are sent
+//   FHEM_DEV_DEVICE    (S) FHEMDevice.Device
 //   FHEM_DEV_DESCR     (S) FHEMDevice.Descr
 //   FHEM_DEV_STATE     (S) FHEMDevice.State
 //   FHEM_DEV_ROOM      (S) FHEMDevice.Room
 //   FHEM_DEV_CHECK     (S) FHEMDevice.Check
+//   FHEM_NEW_DEV_END   (S) Indicates the end of sending new devices
 //
 ///////////////////////////////
 // global variables
@@ -295,12 +297,34 @@ function MergeTypesWithDevices(FHEM_Types, FHEM_DevCfg)
 var Cfg_Devices_buf;
 var SendBusy = false;
 
-function SendNextDevice()
+function SendDevices(DeviceType)
 {
   if (Cfg_Devices_buf === 0) {
-    console.log('SendNextDev: List not defined');
+    console.log('SendDevices: List not defined');
     return;
   }
+  if (Cfg_Devices_buf.length == 0) {
+    console.log('SendDevices: no devices available ');
+    return;
+  }
+  
+  var dict = {
+    'FHEM_NEW_DEV_BEG' : DeviceType,
+  };
+
+  Pebble.sendAppMessage(dict, ack, function(e) { console.log('AppMsg: send FHEM_NEW_DEV_BEG failed!'); });
+                        
+  function ack() {
+    console.log('AppMsg: Starting to send ' + Cfg_Devices_buf.length + ' new devices');
+    SendBusy = false;
+    if (Cfg_Devices_buf.length) {
+      SendNextDevice();
+    }
+  }
+}
+
+function SendNextDevice()
+{
   if (Cfg_Devices_buf.length === 0) {
     console.log('SendNextDev: List empty');
     return;
@@ -314,11 +338,11 @@ function SendNextDevice()
     SendBusy = true;
     
     var dict = {
-      'FHEM_NEW_DEV'  : FHEMDevice.Device,
-      'FHEM_DEV_DESCR': FHEMDevice.Descr,
-      'FHEM_DEV_STATE': FHEMDevice.State,
-      'FHEM_DEV_ROOM' : FHEMDevice.Room,
-      'FHEM_DEV_CHECK': FHEMDevice.Check
+      'FHEM_DEV_DEVICE' : FHEMDevice.Device,
+      'FHEM_DEV_DESCR'  : FHEMDevice.Descr,
+      'FHEM_DEV_STATE'  : FHEMDevice.State,
+      'FHEM_DEV_ROOM'   : FHEMDevice.Room,
+      'FHEM_DEV_CHECK'  : FHEMDevice.Check
     };
       
     Pebble.sendAppMessage(dict, ack, nack);
@@ -327,7 +351,21 @@ function SendNextDevice()
       console.log('AppMsg: TYPE_DEVICES successful. Still ' + Cfg_Devices_buf.length + ' to send');
       SendBusy = false;
       if (Cfg_Devices_buf.length) {
-	SendNextDevice();
+	      SendNextDevice();
+      } else {
+        // finished
+        var dict = {
+          'FHEM_NEW_DEV_END' : DeviceType,
+        };
+
+        Pebble.sendAppMessage(dict,
+                              function(e) {
+                                console.log('AppMsg: Sent new devices successful.');
+                              },
+                              function(e) {
+                                console.log('AppMsg: send FHEM_NEW_DEV_END failed!');
+                              }
+                             );     
       }
     }
 
@@ -357,10 +395,10 @@ Pebble.addEventListener('ready',
     
     var Cfg_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
     if (Cfg_Devices !== null) {
-      // fill global buffer for SendNextDevice()
+      // fill global buffer for SendDevice()
       console.log('Using Cfg_Devices of localStorage:' + Cfg_Devices);
       Cfg_Devices_buf = Cfg_Devices[DeviceType];
-      SendNextDevice();
+      SendDevices(DeviceType);
     }
 
   }
@@ -430,20 +468,10 @@ Pebble.addEventListener('webviewclosed',
     
     var Cfg_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
     if (Cfg_Devices !== null) {
-      // fill global buffer for SendNextDevice()
+      // fill global buffer for SendDevices()
       Cfg_Devices_buf = Cfg_Devices[DeviceType];
-      SendNextDevice();
+      SendDevices(DeviceType);
     }
-
-    // fill global buffer for SendNextDevice()
-    // Cfg_Devices_buf = configData['TypeDevices'][DeviceType]; 
-    // SendNextDevice();
-
-    /*
-    for (var i in configData['TypeDevices'][DeviceType]) {
-      SendNewDev(configData['TypeDevices'][DeviceType][i]);
-    }
-    */
     
   }
 );

@@ -428,12 +428,13 @@ static const uint32_t FHEM_URL_REQ_TYPE  = 4;
 static const uint32_t FHEM_MSG_ID        = 5;
 
 // add new device:
-static const uint32_t FHEM_NEW_DEV       =  6;
+static const uint32_t FHEM_NEW_DEV_BEG   =  6;
 static const uint32_t FHEM_DEV_DEVICE    =  7;
 static const uint32_t FHEM_DEV_DESCR     =  8;
 static const uint32_t FHEM_DEV_STATE     =  9;
 static const uint32_t FHEM_DEV_ROOM      = 10;
 static const uint32_t FHEM_DEV_CHECK     = 11;
+static const uint32_t FHEM_NEW_DEV_END   = 12;
 
 
 // persisent storage keys
@@ -495,55 +496,56 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       set_menu_icon(MENU_STATE_COMS, MenuStateIdx, OK);
     } 
   } else
-    if ((data = dict_find(iterator, FHEM_NEW_DEV)) != NULL) {
-//      char* NewDevState = (char*)data->value->cstring;
-//      if (!strcmp("off", result)) {
+    if ((data = dict_find(iterator, FHEM_NEW_DEV_BEG)) != NULL) {
+      Coms_Cnt = 0;      
+  } else
+    if ((data = dict_find(iterator, FHEM_NEW_DEV_END)) != NULL) {
+      RecreateMenu();     
+  } else
+    if ((data = dict_find(iterator, FHEM_DEV_DEVICE)) != NULL) {
       
       Coms_Map_t NewCom = InitCom();
       
       /* Coms data structure and its members:
-	Coms_Map_t NewCom = {
-	  .Room         = "Küche",
-	  .Description  = "Licht umschalten",
-	  .URL          = NULL,
-	  .Device       = "FS20_fr_bel",
-	  .Command      = "toggle",
-	  .MenuDefIdx   = MenuDef,
-	  .MenuFavIdx   = MenuFav,
-	  .MenuStateIdx = MenuOmit,
+    	Coms_Map_t NewCom = {
+    	  .Room         = "Küche",
+    	  .Description  = "Licht umschalten",
+    	  .URL          = NULL,
+    	  .Device       = "FS20_fr_bel",
+    	  .Command      = "toggle",
+    	  .MenuDefIdx   = MenuDef,
+    	  .MenuFavIdx   = MenuFav,
+    	  .MenuStateIdx = MenuOmit,
       */
-      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_NEW_DEV received: %s", (char*)data->value->cstring);
+      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_DEVICE received: %s", (char*)data->value->cstring);
       
       NewCom.Device = AddNewStr((char*)data->value->cstring);
       if ((data = dict_find(iterator, FHEM_DEV_DESCR)) != NULL) {
-	NewCom.Description = AddNewStr((char*)data->value->cstring);
-	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_DESCR received: %s", NewCom.Description);
+      	NewCom.Description = AddNewStr((char*)data->value->cstring);
+	      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_DESCR received: %s", NewCom.Description);
       }
       // todo: cleanup state and command
       if ((data = dict_find(iterator, FHEM_DEV_STATE)) != NULL) {
-	NewCom.Command = AddNewStr((char*)data->value->cstring);
-	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_STATE received: %s", NewCom.Command);
+	      NewCom.Command = AddNewStr((char*)data->value->cstring);
+	      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_STATE received: %s", NewCom.Command);
       }
       if ((data = dict_find(iterator, FHEM_DEV_ROOM)) != NULL) {
-	NewCom.Room = AddNewStr((char*)data->value->cstring);
-	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_ROOM received: %s", NewCom.Room);
+	      NewCom.Room = AddNewStr((char*)data->value->cstring);
+	      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_ROOM received: %s", NewCom.Room);
       }
       if ((data = dict_find(iterator, FHEM_DEV_CHECK)) != NULL) {
-	MenuBits_t MenuBits = (MenuBits_t)data->value->int32;
-	NewCom.MenuDefIdx   = (MenuBits & MenuDefB)   ? MenuDef   : MenuOmit;
-	NewCom.MenuFavIdx   = (MenuBits & MenuFavB)   ? MenuFav   : MenuOmit;
-	NewCom.MenuStateIdx = (MenuBits & MenuStateB) ? MenuState : MenuOmit;
-	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_CHECK received: %d", MenuBits);
+      	MenuBits_t MenuBits = (MenuBits_t)data->value->int32;
+      	NewCom.MenuDefIdx   = (MenuBits & MenuDefB)   ? MenuDef   : MenuOmit;
+      	NewCom.MenuFavIdx   = (MenuBits & MenuFavB)   ? MenuFav   : MenuOmit;
+      	NewCom.MenuStateIdx = (MenuBits & MenuStateB) ? MenuState : MenuOmit;
+      	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_CHECK received: %d", MenuBits);
       }
       NewCom.MenuDefIdx = MenuDef; // todo
       
       AddCom(&NewCom);
       
       APP_LOG(APP_LOG_LEVEL_DEBUG, "... added new com. Now we have %d coms",
-	GetNumComs());
-
-      // maybe later: better add key to start/stop transfer of new devices
-      RecreateMenu();
+	    GetNumComs());
 
     } else {
       APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
