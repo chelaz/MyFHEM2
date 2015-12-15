@@ -1,6 +1,8 @@
 <!-- Example URL:
 http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Alias%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22%7D%2C%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Alias%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22%7D%5D%2C%22num%22%3A2%7D&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
 https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Alias%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22%7D%2C%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Alias%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22%7D%5D%2C%22num%22%3A2%7D&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
+// with date:
+https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3A[{%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Descr%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22}%2C{%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Descr%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22}]%2C%22num%22%3A2%2C%22Date%22%3A%2215.12.%22}&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
 -->
 
 <!--
@@ -66,7 +68,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 <!DOCTYPE html>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
 <html>
-  <div id="CommitNumber" hidden> 61 </div>
+  <div id="CommitNumber" hidden> 62 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -537,7 +539,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     }
 
     if (FHEM_Devices.Date)
-	HTMLElement.innerHTML = "<p><em>Last Update from FHEM server:</em>" + FHEM_Devices.Date + "</p>";
+	HTMLElement.innerHTML = "<div class='item-container-footer'>Last Update from FHEM server: " + FHEM_Devices.Date + "</div>";
     else
 	HTMLElement.innerHTML = "";
 
