@@ -50,7 +50,8 @@ function GetServerURL(URL_Args)
   return URL + URL_Args;
 }
 
-function HTTPGET(url) {
+function HTTPGET(url)
+{
     var req = new XMLHttpRequest();
     req.open("GET", url, false);
     req.send(null);
@@ -187,9 +188,9 @@ function RequestTypes(URL, DeviceType)
       */
 
   // var FHEM_Types = { DeviceType : [], "num": 0 };
-  var FHEM_Types = {}
+  var FHEM_Types = {};
   FHEM_Types[DeviceType] = [];
-  FHEM_Types.num = cnt;
+  FHEM_Types.num = 0;
   
   if (response !== null) {
     var DevJSON = JSON.parse(response);
@@ -221,7 +222,9 @@ function RequestTypes(URL, DeviceType)
         });
       cnt++;
     }
-    FHEM_Types.num = cnt;
+    FHEM_Types.num  = cnt;
+    var today = new Date();
+    FHEM_Types.Date = today.toLocaleFormat('%F %R');
   }
     // test:
   /* Todo: rename to "FHEM_Devices"
@@ -240,7 +243,8 @@ function RequestTypes(URL, DeviceType)
           "Room"   : "Wohnzimmer"
         }
       ],
-      "num": 2
+      "num": 2,
+      "Date" : "15.12.2015 12.00"
       };  */
   
     /* FHEM_Types = { "FS20" : "test" }; */
@@ -251,48 +255,6 @@ function RequestTypes(URL, DeviceType)
 
   return JSON.stringify(FHEM_Types);
 }
-
-
-// helper function
-function FindDeviceInFHEM(FHEM_Types, DevCfg)
-{
-  var DeviceType = "FS20"; // TODO
-
-  for (var i = 0; i < FHEM_Types.num; i++) {
-    var Dev = FHEM_Types[DeviceType][i];
-    if (Dev.Device == DevCfg.Device)
-      return DevCfg;
-  }
-
-  return null;
-}
-
-
-// proceed through all FHEM_DevCfg and see whether there is a matching device from FHEM
-function MergeTypesWithDevices(FHEM_Types, FHEM_DevCfg)
-{
-  if (FHEM_Types.num == null || FHEM_Types.num == 0)
-    return FHEM_Types;
-
-  if (FHEM_DevCfg === null)
-    return FHEM_Types;
-
-  for (var j = 0; j < FHEM_DevCfg.length; j++) {
-    var DevCfg = FHEM_DevCfg[i];
-
-    var FoundDevice = FindDeviceInFHEM(FHEM_Types, DevCfg);
-    if (FoundDevice === null)
-      continue;
-
-    console.log("Found Config for " + "");
-  }
-
-  return FHEM_Types;
-}
-
-
-
-
 
 var Cfg_Devices_buf;
 var SendBusy = false;
@@ -309,7 +271,7 @@ function SendDevices(DeviceType)
   }
   
   var dict = {
-    'FHEM_NEW_DEV_BEG' : DeviceType,
+    'FHEM_NEW_DEV_BEG' : DeviceType
   };
 
   Pebble.sendAppMessage(dict, ack, function(e) { console.log('AppMsg: send FHEM_NEW_DEV_BEG failed!'); });
@@ -354,8 +316,9 @@ function SendNextDevice()
 	      SendNextDevice();
       } else {
         // finished
+        var DeviceType = "FS20"; // todo
         var dict = {
-          'FHEM_NEW_DEV_END' : DeviceType,
+          'FHEM_NEW_DEV_END' : DeviceType
         };
 
         Pebble.sendAppMessage(dict,
@@ -392,23 +355,25 @@ Pebble.addEventListener('ready',
     console.log('MyFHEM2 JavaScript ready!');
     var DeviceType = "FS20"; // TODO
     // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
+    var Cfg_DevicesStr = localStorage.getItem('FHEM_DEVS_CONFIG');
+    console.log('CFGDevStr:' + Cfg_DevicesStr);
+    if (Cfg_DevicesStr == "None")
+      return;
     
-    var Cfg_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
-    if (Cfg_Devices !== null) {
-      // fill global buffer for SendDevice()
-      console.log('Using Cfg_Devices of localStorage:' + Cfg_Devices);
-      Cfg_Devices_buf = Cfg_Devices[DeviceType];
-      SendDevices(DeviceType);
-    }
-
+    var Cfg_Devices = JSON.parse(Cfg_DevicesStr);
+    
+    // fill global buffer for SendDevice()
+    console.log('Using Cfg_Devices of localStorage:' + Cfg_Devices);
+    Cfg_Devices_buf = Cfg_Devices[DeviceType];
+    SendDevices(DeviceType);
   }
 );
 
 // https://developer.getpebble.com/guides/pebble-apps/pebblekit-js/app-configuration/#testing-on-pebble
 Pebble.addEventListener('showConfiguration', 
   function(e) {
-    // var url = 'https://rawgit.com/chelaz/MyFHEM2/master/config/index.html';
-    var url = 'http://madita/config/index.html';
+    var url = 'https://rawgit.com/chelaz/MyFHEM2/master/config/index.html';
+    // var url = 'http://madita/config/index.html';
    
     var FHEM_Types = localStorage.getItem('FHEM_URL_REQ_TYPE');
 
@@ -463,7 +428,10 @@ Pebble.addEventListener('webviewclosed',
 
     var DeviceType = "FS20"; // todo
     
-    localStorage.setItem('FHEM_DEVS_CONFIG', JSON.stringify(configData['Cfg_Devices']));
+    if (!configData.Cfg_Devices)
+      return;
+    
+    localStorage.setItem('FHEM_DEVS_CONFIG', JSON.stringify(configData.Cfg_Devices));
 
     
     var Cfg_Devices = JSON.parse(localStorage.getItem('FHEM_DEVS_CONFIG'));
