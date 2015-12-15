@@ -27,7 +27,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   
   To PebbleJS:   FHEM_Config
   --------------
-	{ "FHEM_SERVER_URL" : "http://mypi:8083/fhem",
+	{ "FHEM_SERVER_URL" : "http://localhost:8083/fhem",
 	  "Cfg_Devices"     : {
 	  	"FS20" : [
 	  	  { "State"     : "toggle",
@@ -65,7 +65,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 <!DOCTYPE html>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
 <html>
-  <div id="CommitNumber" hidden> 59 </div>
+  <div id="CommitNumber" hidden> 60 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -114,12 +114,12 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     </div>
 
     <div class='item-container'>
-      <div class='item-container-header'>FS20 Devices <!-- button id="RequestFS20fromFHEM">Request FS20 Devices</button--></div>
+      <div class='item-container-header'>FHEM Devices</div>
       <div class='item-container-content'>
-        <div id="FS20Content">...</div>
+        <div id="FHEMDevices">...</div>
       </div>
       <div class='item-container-footer'>
-	You can see all FS20 devices of your FHEM server.
+	You can see all (filtered) devices of your FHEM server.
       </div>
     </div>
 
@@ -764,10 +764,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     }
     
     // for debugging: if args of URI are not present, the URI stays
-    var FS20Element=document.getElementById('FS20Content');
-    FS20Element.innerHTML = "URL of this document: <em>" + window.location.href + "</em>";
+    var DevicesElement=document.getElementById('FHEMDevices');
+    DevicesElement.innerHTML = "URL of this document: <em>" + window.location.href + "</em>";
 
-    ShowDevicesFromArgs("FS20", FS20Element);
+    DeviceType = "FS20";
+    ShowDevicesFromArgs(DeviceType, DevicesElement);
 
   })();
   </script>
