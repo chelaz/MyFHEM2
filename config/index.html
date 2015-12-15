@@ -21,7 +21,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
   		  "Room"   : "Wohnzimmer"
   		}
   	  ],
-  	  "num" : 2
+  	  "num" : 2,
+  	  "Date" : "15.12.2015 12.00"
   	}
   
   
@@ -65,7 +66,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
 <!DOCTYPE html>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
 <html>
-  <div id="CommitNumber" hidden> 60 </div>
+  <div id="CommitNumber" hidden> 61 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -114,7 +115,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
     </div>
 
     <div class='item-container'>
-      <div class='item-container-header'>FHEM Devices</div>
+      <div class='item-container-header' id="FHEMDevices_header">FHEM Devices</div>
       <div class='item-container-content'>
         <div id="FHEMDevices">...</div>
       </div>
@@ -535,6 +536,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       return;
     }
 
+    if (FHEM_Devices.Date)
+	HTMLElement.innerHTML = "<p><em>Last Update from FHEM server:</em>" + FHEM_Devices.Date + "</p>";
+    else
+	HTMLElement.innerHTML = "";
+
     var FHEM_Config_prev = {};
     
     if (localStorage["FHEM_Config"])
@@ -549,8 +555,6 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options=%7B%22FS20%22
       if (Cfg_Devices_prev)
         DeviceType_prev = Cfg_Devices_prev[DeviceType];
     }
-
-    HTMLElement.innerHTML = "";
 
     // checked not yet working since the data from localStorage is overwritten above
     for (var i = 0; i < FHEM_Devices.num; i++) {
