@@ -500,7 +500,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       Coms_Cnt = 0;      
   } else
     if ((data = dict_find(iterator, FHEM_NEW_DEV_END)) != NULL) {
-      RecreateMenu();     
+      Coms_UseDyn = true;
+      RecreateMenu();
+      // request all states now
+      SendCommand(0, true, MSG_ID_SEND_COM_REQ_STATE_NEXT);
   } else
     if ((data = dict_find(iterator, FHEM_DEV_DEVICE)) != NULL) {
       
