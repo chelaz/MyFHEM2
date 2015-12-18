@@ -256,12 +256,13 @@ function RequestTypes(URL, DeviceType)
   return JSON.stringify(FHEM_Types);
 }
 
-var Cfg_Devices_buf;
+var DebugSend=false;
+var Cfg_Devices_buf = null;
 var SendBusy = false;
 
 function SendDevices(DeviceType)
 {
-  if (Cfg_Devices_buf === 0) {
+  if (Cfg_Devices_buf === null) {
     console.log('SendDevices: List not defined');
     return;
   }
@@ -277,7 +278,8 @@ function SendDevices(DeviceType)
   Pebble.sendAppMessage(dict, ack, function(e) { console.log('AppMsg: send FHEM_NEW_DEV_BEG failed!'); });
                         
   function ack() {
-    console.log('AppMsg: Starting to send ' + Cfg_Devices_buf.length + ' new devices');
+    if (DebugSend)
+      console.log('AppMsg: Starting to send ' + Cfg_Devices_buf.length + ' new devices');
     SendBusy = false;
     if (Cfg_Devices_buf.length) {
       SendNextDevice();
@@ -294,7 +296,8 @@ function SendNextDevice()
   
   var FHEMDevice = Cfg_Devices_buf.shift();
   
-  console.log('SendNextDev: shifted device: ' + JSON.stringify(FHEMDevice));
+  if (DebugSend)
+    console.log('SendNextDev: shifted device: ' + JSON.stringify(FHEMDevice));
 
   if (!SendBusy) {
     SendBusy = true;
@@ -309,8 +312,10 @@ function SendNextDevice()
       
     Pebble.sendAppMessage(dict, ack, nack);
 
-    function ack() {
-      console.log('AppMsg: TYPE_DEVICES successful. Still ' + Cfg_Devices_buf.length + ' to send');
+    function ack()
+    {
+      if (DebugSend) 
+        console.log('AppMsg: TYPE_DEVICES successful. Still ' + Cfg_Devices_buf.length + ' to send');
       SendBusy = false;
       if (Cfg_Devices_buf.length) {
 	      SendNextDevice();
@@ -323,6 +328,7 @@ function SendNextDevice()
 
         Pebble.sendAppMessage(dict,
                               function(e) {
+                              if (DebugSend)
                                 console.log('AppMsg: Sent new devices successful.');
                               },
                               function(e) {
@@ -364,7 +370,8 @@ Pebble.addEventListener('ready',
     
     // fill global buffer for SendDevice()
     console.log('Using Cfg_Devices of localStorage:' + Cfg_Devices);
-    Cfg_Devices_buf = Cfg_Devices[DeviceType];
+    if (Cfg_Devices != null)
+      Cfg_Devices_buf = Cfg_Devices[DeviceType];
     SendDevices(DeviceType);
   }
 );

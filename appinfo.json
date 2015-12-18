@@ -30,7 +30,7 @@
                     "basalt",
                     "chalk"
                 ],
-                "type": "png"
+                "type": "bitmap"
             },
             {
                 "file": "images/status_on",
@@ -40,7 +40,7 @@
                     "basalt",
                     "chalk"
                 ],
-                "type": "png"
+                "type": "bitmap"
             },
             {
                 "file": "images/status_off",
@@ -50,17 +50,7 @@
                     "basalt",
                     "chalk"
                 ],
-                "type": "png"
-            },
-            {
-                "file": "images/menu_icon_send.png",
-                "name": "MENU_ICON_SEND",
-                "targetPlatforms": [
-                    "aplite",
-                    "basalt",
-                    "chalk"
-                ],
-                "type": "png"
+                "type": "bitmap"
             },
             {
                 "file": "images/menu_icon_ok.png",
@@ -71,7 +61,17 @@
                     "basalt",
                     "chalk"
                 ],
-                "type": "png"
+                "type": "bitmap"
+            },
+            {
+                "file": "images/menu_icon_send.png",
+                "name": "MENU_ICON_SEND",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "bitmap"
             },
             {
                 "file": "images/menu_icon_failed.png",
@@ -81,7 +81,7 @@
                     "basalt",
                     "chalk"
                 ],
-                "type": "png"
+                "type": "bitmap"
             }
         ]
     },
