@@ -22,6 +22,8 @@
 #  define ENABLE_DICTATION
 #endif
 
+#undef DEBUG_ADD_COM
+
 
 
 // string memory management
@@ -260,7 +262,10 @@ bool AddCom(Coms_Map_t* PCom)
   memcpy((void*)&Coms_Map_Dyn[Coms_Cnt], (void*)PCom, sizeof(Coms_Map_t));
   
   APP_LOG(APP_LOG_LEVEL_DEBUG, "ComAdd[%d]", Coms_Cnt);
+
+#ifdef DEBUG_ADD_COM
   PrintCom(&Coms_Map_Dyn[Coms_Cnt]);
+#endif
 
   Coms_Cnt++;
   return true;
@@ -407,7 +412,9 @@ typedef enum _MsgID {
 bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status);
 // todo:
 bool set_menu_text(Menu_t Menu, MapIdx_t CmdIdx, int index, const char text[]);
-  
+
+void set_status(const char text[]);
+
 bool SendCommand(MapIdx_t CmdIdx, bool requestStatus, MsgID_t ID);
 
 bool SendCom(MapIdx_t CmdIdx)  { return SendCommand(CmdIdx, false, MSG_ID_DEFAULT); }
@@ -497,11 +504,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     } 
   } else
     if ((data = dict_find(iterator, FHEM_NEW_DEV_BEG)) != NULL) {
-      Coms_Cnt = 0;      
+      Coms_Cnt = 0;
+      set_status("Receiving...");
+
   } else
     if ((data = dict_find(iterator, FHEM_NEW_DEV_END)) != NULL) {
       Coms_UseDyn = true;
-      RecreateMenu();
+      RecreateMenu();     
+      set_status("Devs received.");
       // request all states now
       SendCommand(0, true, MSG_ID_SEND_COM_REQ_STATE_NEXT);
   } else
@@ -740,6 +750,9 @@ static SimpleMenuItem s_special_menu_items[MAX_NUM_MENU_ITEMS_FAVOURITES];
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
 static SimpleMenuLayer* s_simple_menu_layer;
 
+// for debugging output on watch
+static SimpleMenuItem* s_special_status_item;
+
 // Create and destroy menu
 SimpleMenuLayer* CreateMenu(Window *window);
 void DestroyMenu(SimpleMenuLayer* Layer);
@@ -797,6 +810,12 @@ bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
  
   return true;
+}
+
+void set_status(const char text[])
+{
+  s_special_status_item->subtitle = text;
+  layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
 
 
@@ -1260,7 +1279,8 @@ int create_special_menu()
     .callback = switch_stat_dyn_callback,
     .subtitle = Coms_UseDyn ? "dynamic" : "static",
   };
-
+  s_special_status_item=&s_special_menu_items[MenuCnt-1];
+  
   return MenuCnt;
 }
 
