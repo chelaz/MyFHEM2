@@ -152,7 +152,7 @@ function GetState(ComID, MsgID, URL)
 
 }
 
-function RequestTypes(URL, DeviceType)
+function RequestTypes(URL, DeviceType, RoomFilter)
 {
   console.log('RequestTypes: ' + URL + "of types: " + DeviceType);
   var response = HTTPGET(URL);
@@ -205,9 +205,30 @@ function RequestTypes(URL, DeviceType)
       var Room   = DevJSON.Results[i].Attributes.room;
       console.log('\t#: ' + i);
       if (Room == null) {
-	      console.log('\t  -> not used device: ' + JSON.stringify(Device));
-	      continue;
+	console.log('\t  -> not used device: ' + JSON.stringify(Device));
+	continue;
       }
+      if (RoomFilter != null && RoomFilter != "") {
+	var FilterFound = false;
+	// remove room RoomFilter
+	var Rooms = Room.split(',');
+	Room = "";
+	for (var j = 0; j < Rooms.length; j++) {
+	  if (Rooms[j] != RoomFilter) {
+	    if (Room == "")
+	      Room = Rooms[j];
+	    else
+	      Room = Room + "," + Rooms[j];
+	  } else
+	    FilterFound = true;
+	}
+	if (!FilterFound) {
+	  console.log('\t  -> RoomFilter not found for device: ' 
+		      + JSON.stringify(Device));  
+	  continue;
+	}
+      }
+
       console.log('\t  Room:   ' + JSON.stringify(Room));
       console.log('\t  Alias:  ' + JSON.stringify(Alias));
       console.log('\t  Device: ' + JSON.stringify(Device));
@@ -472,8 +493,9 @@ Pebble.addEventListener('appmessage',
     }
     if (e.payload['FHEM_URL_REQ_TYPE']) {
       var DeviceType = "FS20"; // TODO
+      var RoomFilter = "Pebble";
       //      var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
-      var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2&XHR=1"), DeviceType);
+      var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2&XHR=1"), DeviceType, RoomFilter);
     
       // RequestTypes(GetServerURL(e.payload['FHEM_URL_REQ_TYPE']), "FS20");
       return;

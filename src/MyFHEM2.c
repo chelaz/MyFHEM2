@@ -44,7 +44,7 @@ char* AllocStr(int size)
 
 char* AddNewStr(const char* text)
 {
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Try to add new string %s", text);
+  // APP_LOG(APP_LOG_LEVEL_DEBUG, "Try to add new string %s", text);
 
   int len = strlen(text)+1;
   char* Str = AllocStr(len);
@@ -254,16 +254,14 @@ static bool Coms_UseDyn = false;
 
 bool AddCom(Coms_Map_t* PCom)
 {
-  // Coms_UseDyn = true; // deactivated unless dynamic is working like the static array
   if (Coms_Cnt >= MaxNumCom)
     return false;
 
   // simple copy
   memcpy((void*)&Coms_Map_Dyn[Coms_Cnt], (void*)PCom, sizeof(Coms_Map_t));
   
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "ComAdd[%d]", Coms_Cnt);
-
 #ifdef DEBUG_ADD_COM
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "ComAdd[%d]", Coms_Cnt);
   PrintCom(&Coms_Map_Dyn[Coms_Cnt]);
 #endif
 
@@ -468,7 +466,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if ((data=dict_find(iterator, FHEM_MSG_ID)) != NULL) {
     MsgID = (MsgID_t)data->value->int32;
   }
+#ifdef DEBUG_ADD_COM
   APP_LOG(APP_LOG_LEVEL_DEBUG, "MsgID: %d of CmdIdx %d", MsgID, (int)index);
+#endif
   
   bool successfull = true;
 
@@ -530,35 +530,47 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     	  .MenuFavIdx   = MenuFav,
     	  .MenuStateIdx = MenuOmit,
       */
+#ifdef DEBUG_ADD_COM
       APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_DEVICE received: %s", (char*)data->value->cstring);
+#endif
       
       NewCom.Device = AddNewStr((char*)data->value->cstring);
       if ((data = dict_find(iterator, FHEM_DEV_DESCR)) != NULL) {
       	NewCom.Description = AddNewStr((char*)data->value->cstring);
-	      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_DESCR received: %s", NewCom.Description);
+#ifdef DEBUG_ADD_COM
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_DESCR received: %s", NewCom.Description);
+#endif
       }
       // todo: cleanup state and command
       if ((data = dict_find(iterator, FHEM_DEV_STATE)) != NULL) {
-	      NewCom.Command = AddNewStr((char*)data->value->cstring);
-	      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_STATE received: %s", NewCom.Command);
+	NewCom.Command = AddNewStr((char*)data->value->cstring);
+#ifdef DEBUG_ADD_COM
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_STATE received: %s", NewCom.Command);
+#endif
       }
       if ((data = dict_find(iterator, FHEM_DEV_ROOM)) != NULL) {
-	      NewCom.Room = AddNewStr((char*)data->value->cstring);
-	      APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_ROOM received: %s", NewCom.Room);
+	NewCom.Room = AddNewStr((char*)data->value->cstring);
+#ifdef DEBUG_ADD_COM
+	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_ROOM received: %s", NewCom.Room);
+#endif
       }
       if ((data = dict_find(iterator, FHEM_DEV_CHECK)) != NULL) {
       	MenuBits_t MenuBits = (MenuBits_t)data->value->int32;
       	NewCom.MenuDefIdx   = (MenuBits & MenuDefB)   ? MenuDef   : MenuOmit;
       	NewCom.MenuFavIdx   = (MenuBits & MenuFavB)   ? MenuFav   : MenuOmit;
       	NewCom.MenuStateIdx = (MenuBits & MenuStateB) ? MenuState : MenuOmit;
+#ifdef DEBUG_ADD_COM
       	APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_DEV_CHECK received: %d", MenuBits);
+#endif
       }
       NewCom.MenuDefIdx = MenuDef; // todo
       
       AddCom(&NewCom);
       
+#ifdef DEBUG_ADD_COM
       APP_LOG(APP_LOG_LEVEL_DEBUG, "... added new com. Now we have %d coms",
-	    GetNumComs());
+	      GetNumComs());
+#endif
 
     } else {
       APP_LOG(APP_LOG_LEVEL_ERROR, "FHEM_RESP_KEY not received.");
