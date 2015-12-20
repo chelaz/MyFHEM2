@@ -17,7 +17,7 @@
 // appKeys (see also appinfo.json)
 //   FHEM_URL_KEY       (R) special url from watch (SendCom)
 //   FHEM_URL_GET_STATE (R) special url from watch (GetState)
-//   FHEM_URL_REQ_TYPE  (R) special url from watch (RequestType from FHEM)
+//   FHEM_URL_REQ_TYPE  (S/R) special url from watch (RequestType from FHEM)
 //   FHEM_RESP_KEY      (S) send command/get state response -> watch
 //   FHEM_COM_ID_KEY    (S/R) given ID from watch
 //   FHEM_MSG_ID        (S/R) given message ID from watch
@@ -274,6 +274,23 @@ function RequestTypes(URL, DeviceType, RoomFilter)
 
   localStorage.setItem('FHEM_URL_REQ_TYPE', JSON.stringify(FHEM_Types));
 
+  // send answer
+  var dict;
+
+  if (FHEM_Types.num > 0)
+    dict = { 'FHEM_URL_REQ_TYPE' : 'success' };
+  else
+    dict = { 'FHEM_URL_REQ_TYPE' : 'failed' };
+
+  Pebble.sendAppMessage(dict,
+                        function(e) {
+                          console.log('AppMsg: RequestTypes successful.');
+                        },
+                        function(e) {
+                          console.log('AppMsg: RequestTypes failed!');
+                        }
+		       );
+  
   return JSON.stringify(FHEM_Types);
 }
 
@@ -381,7 +398,6 @@ Pebble.addEventListener('ready',
   function(e) {
     console.log('MyFHEM2 JavaScript ready!');
     var DeviceType = "FS20"; // TODO
-    // var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
     var Cfg_DevicesStr = localStorage.getItem('FHEM_DEVS_CONFIG');
     console.log('CFGDevStr:' + Cfg_DevicesStr);
     if (Cfg_DevicesStr == "None")

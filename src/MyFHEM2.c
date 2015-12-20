@@ -407,6 +407,11 @@ typedef enum _MsgID {
 
 ///////////////////////
 // Forward declarations
+
+// index IDs for set_menu_icon/text
+static int s_special_menu_id_status;
+static int s_special_menu_id_ReqFHEM;
+
 bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status);
 // todo:
 bool set_menu_text(Menu_t Menu, MapIdx_t CmdIdx, int index, const char text[]);
@@ -472,6 +477,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   
   bool successfull = true;
 
+
+  if ((data = dict_find(iterator, FHEM_URL_REQ_TYPE)) != NULL) {
+    char* result = (char*)data->value->cstring;
+    if (!strcmp("success", result)) {
+      set_menu_icon(MENU_SPECIAL, s_special_menu_id_ReqFHEM, OK);
+    } else {
+      set_menu_icon(MENU_SPECIAL, s_special_menu_id_ReqFHEM, FAILED);      
+    }    
+  } else
   if ((data = dict_find(iterator, FHEM_RESP_KEY)) != NULL) {
     char* result = (char*)data->value->cstring;
     APP_LOG(APP_LOG_LEVEL_INFO, "FHEM_RESP_KEY received: %s of index %d", result, (int)index);
@@ -495,7 +509,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     } else if (!strcmp("not connected", result)) {
       set_menu_icon(MENU_DEF_COMS, MenuDefIdx, FAILED);
       if (MsgID != MSG_ID_SEND_COM_REQ_STATE_NEXT)
-	    vibes_long_pulse();
+	vibes_long_pulse();
     } else {
       set_menu_text(MENU_STATE_COMS, index, MenuStateIdx, result); // todo
       set_menu_icon(MENU_DEF_COMS, MenuDefIdx,   OK);
@@ -762,9 +776,6 @@ static SimpleMenuItem s_special_menu_items[MAX_NUM_MENU_ITEMS_FAVOURITES];
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
 static SimpleMenuLayer* s_simple_menu_layer;
 
-// for debugging output on watch
-static SimpleMenuItem* s_special_status_item;
-
 // Create and destroy menu
 SimpleMenuLayer* CreateMenu(Window *window);
 void DestroyMenu(SimpleMenuLayer* Layer);
@@ -826,7 +837,7 @@ bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
 
 void set_status(const char text[])
 {
-  s_special_status_item->subtitle = text;
+  s_special_menu_items[s_special_menu_id_status].subtitle = text;
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
 
@@ -1210,8 +1221,7 @@ static void request_fs20_devices_callback(int index, void* ctx)
     return;
   }
 
-  // reset current list
-  Coms_Cnt = 0; 
+  set_menu_icon(MENU_SPECIAL, s_special_menu_id_ReqFHEM, SEND);
 }
 
 
@@ -1281,17 +1291,20 @@ int create_special_menu()
   };
   */
 
-  s_special_menu_items[MenuCnt++] = (SimpleMenuItem) {
-    .title = "Req. FS20",
+  s_special_menu_items[MenuCnt] = (SimpleMenuItem) {
+    .title    = "Request",
+    .subtitle = "FHEM Devices",
     .callback = request_fs20_devices_callback,
   };
+  s_special_menu_id_ReqFHEM = MenuCnt++;
 
-  s_special_menu_items[MenuCnt++] = (SimpleMenuItem) {
+  s_special_menu_items[MenuCnt] = (SimpleMenuItem) {
     .title = "Switch coms list",
     .callback = switch_stat_dyn_callback,
     .subtitle = Coms_UseDyn ? "dynamic" : "static",
   };
-  s_special_status_item=&s_special_menu_items[MenuCnt-1];
+  s_special_menu_id_status = MenuCnt++;
+  // s_special_status_item=&s_special_menu_items[];
   
   return MenuCnt;
 }
