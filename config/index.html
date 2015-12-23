@@ -30,7 +30,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
   
   To PebbleJS:   FHEM_Config
   --------------
-	{ "FHEM_SERVER_URL" : "http://localhost:8083/fhem",
+	{ "FHEM_SERVER_URL"  : "http://localhost:8083/fhem",
+	  "FHEM_ROOM_FILTER" : "Pebble",
 	  "Cfg_Devices"     : {
 	  	"FS20" : [
 	  	  { "State"     : "toggle",
@@ -68,7 +69,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 <!DOCTYPE html>
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
 <html>
-  <div id="CommitNumber" hidden> 62 </div>
+  <div id="CommitNumber" hidden> 63 </div>
   <head>
   <title>WristFHEM - Pebble App for FHEM Home Automation Server</title>
   <link rel='stylesheet' type='text/css' href='css/slate.css'>
@@ -108,6 +109,10 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
         <label class='item'>
           Server URL
           <input id='FHEM_SERVER_URL' type='text' value='http://localhost:8083/fhem'>
+        </label>
+        <label class='item'>
+          Room Filter
+          <input id='FHEM_ROOM_FILTER' type='text' value='Pebble'>
         </label>
       </div>
       <div class='item-container-footer'>
@@ -226,8 +231,12 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
     var FHEM_SERVER_URL_textinput = document.getElementById('FHEM_SERVER_URL');
     return_opts['FHEM_SERVER_URL'] = FHEM_SERVER_URL_textinput.value;
 
+    var FHEM_ROOM_FILTER_textinput = document.getElementById('FHEM_ROOM_FILTER');
+    return_opts['FHEM_ROOM_FILTER'] = FHEM_ROOM_FILTER_textinput.value;
+
     // Save for next launch
-    localStorage['FHEM_SERVER_URL'] = return_opts['FHEM_SERVER_URL'];
+    localStorage['FHEM_SERVER_URL']  = return_opts['FHEM_SERVER_URL'];
+    localStorage['FHEM_ROOM_FILTER'] = return_opts['FHEM_ROOM_FILTER'];
 
     return return_opts;
   }
@@ -760,13 +769,18 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
     var TagCommitNumber = document.getElementById('CommitNumber');
     MyConsole("Commit: "+ TagCommitNumber.innerHTML);
      
+    // Server URL
     var FHEM_SERVER_URL_textinput = document.getElementById('FHEM_SERVER_URL');
-    // var highContrastCheckbox = document.getElementById('high_contrast_checkbox');
-
     // Load any previously saved configuration, if available
     if(localStorage['FHEM_SERVER_URL']) {
       FHEM_SERVER_URL_textinput.value = localStorage['FHEM_SERVER_URL'];
-      //highContrastCheckbox.checked = JSON.parse(localStorage['high_contrast']);
+    }
+
+    // Room Filter
+    var FHEM_ROOM_FILTER_textinput = document.getElementById('FHEM_ROOM_FILTER');
+    // Load any previously saved configuration, if available
+    if(localStorage['FHEM_ROOM_FILTER']) {
+      FHEM_ROOM_FILTER_textinput.value = localStorage['FHEM_ROOM_FILTER'];
     }
     
     // for debugging: if args of URI are not present, the URI stays
