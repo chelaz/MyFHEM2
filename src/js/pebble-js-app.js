@@ -10,6 +10,7 @@
 ///////////////////////////////
 // localStorage:
 //   FHEM_SERVER_URL:   server URL eg. "http://mypi:8083/fhem"
+//   FHEM_ROOM_FILTER:  room filter eg. "Pebble" which can be defined on FHEM server
 //   FHEM_URL_REQ_TYPE: received devices from FHEM
 //   FHEM_DEVS_CONFIG:  received device configuration from settings page
 //
@@ -42,12 +43,21 @@
 function GetServerURL(URL_Args)
 {
   var URL="";
-  //  if(localStorage['FHEM_SERVER_URL'])
   var storageURL = localStorage.getItem('FHEM_SERVER_URL');
   if(storageURL !== null)
     URL = storageURL;
   
   return URL + URL_Args;
+}
+
+function GetRoomFilter()
+{
+  var RoomFilter="";
+  var storageRoomFilter = localStorage.getItem('FHEM_ROOM_FILTER');
+  if(storageRoomFilter !== null)
+    RoomFilter = storageRoomFilter;
+  
+  return RoomFilter;
 }
 
 function HTTPGET(url)
@@ -466,9 +476,12 @@ Pebble.addEventListener('webviewclosed',
     console.log('Configuration page returned: ' + JSON.stringify(configData));
 
     var FHEM_SERVER_URL = configData['FHEM_SERVER_URL'];
-    console.log('FHEM server URL: ' + FHEM_SERVER_URL);
-    
     localStorage.setItem('FHEM_SERVER_URL', FHEM_SERVER_URL);
+    console.log('FHEM server URL: ' + FHEM_SERVER_URL);
+
+    var FHEM_ROOM_FILTER = configData['FHEM_ROOM_FILTER'];
+    localStorage.setItem('FHEM_ROOM_FILTER', FHEM_ROOM_FILTER);
+    console.log('FHEM Room Filter: ' + FHEM_ROOM_FILTER);
 
     var DeviceType = "FS20"; // todo
     
@@ -509,7 +522,7 @@ Pebble.addEventListener('appmessage',
     }
     if (e.payload['FHEM_URL_REQ_TYPE']) {
       var DeviceType = "FS20"; // TODO
-      var RoomFilter = "Pebble";
+      var RoomFilter = GetRoomFilter();
       //      var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
       var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2&XHR=1"), DeviceType, RoomFilter);
     
