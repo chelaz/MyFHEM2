@@ -426,8 +426,8 @@ Pebble.addEventListener('ready',
 // https://developer.getpebble.com/guides/pebble-apps/pebblekit-js/app-configuration/#testing-on-pebble
 Pebble.addEventListener('showConfiguration', 
   function(e) {
-    // var url = 'https://rawgit.com/chelaz/MyFHEM2/master/config/index.html';
-    var url = 'http://madita/config/index.html';
+    var url = 'https://rawgit.com/chelaz/MyFHEM2/master/config/index.html';
+    // var url = 'http://madita/config/index.html';
    
     var FHEM_Types = localStorage.getItem('FHEM_URL_REQ_TYPE');
 
