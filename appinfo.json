@@ -53,9 +53,8 @@
                 "type": "bitmap"
             },
             {
-                "file": "images/menu_icon_ok.png",
-                "menuIcon": true,
-                "name": "IMAGE_MENU_ICON_OK",
+                "file": "images/menu_icon_send.png",
+                "name": "MENU_ICON_SEND",
                 "targetPlatforms": [
                     "aplite",
                     "basalt",
@@ -64,8 +63,9 @@
                 "type": "bitmap"
             },
             {
-                "file": "images/menu_icon_send.png",
-                "name": "MENU_ICON_SEND",
+                "file": "images/menu_icon_ok.png",
+                "menuIcon": true,
+                "name": "IMAGE_MENU_ICON_OK",
                 "targetPlatforms": [
                     "aplite",
                     "basalt",
