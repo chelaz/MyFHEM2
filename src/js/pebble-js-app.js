@@ -42,12 +42,11 @@
 
 function GetServerURL(URL_Args)
 {
-  var URL="";
   var storageURL = localStorage.getItem('FHEM_SERVER_URL');
   if(storageURL !== null)
-    URL = storageURL;
-  
-  return URL + URL_Args;
+    return storageURL + URL_Args;
+  else
+    return "";
 }
 
 function GetRoomFilter()
@@ -164,7 +163,7 @@ function GetState(ComID, MsgID, URL)
 
 function RequestTypes(URL, DeviceType, RoomFilter)
 {
-  console.log('RequestTypes: ' + URL + "of types: " + DeviceType);
+  console.log('RequestTypes: ' + URL + " of types: " + DeviceType + ". Room Filter: '"+ RoomFilter + "'");
   var response = HTTPGET(URL);
 
   // jsonlist2 TYPE=FS20
@@ -523,10 +522,15 @@ Pebble.addEventListener('appmessage',
     if (e.payload['FHEM_URL_REQ_TYPE']) {
       var DeviceType = "FS20"; // TODO
       var RoomFilter = GetRoomFilter();
-      //      var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2%20TYPE="+DeviceType+"&XHR=1"), DeviceType);
-      var FHEM_Types = RequestTypes(GetServerURL("?cmd=jsonlist2&XHR=1"), DeviceType, RoomFilter);
-    
-      // RequestTypes(GetServerURL(e.payload['FHEM_URL_REQ_TYPE']), "FS20");
+      var ServerURL  = GetServerURL("?cmd=jsonlist2&XHR=1");
+      if (ServerURL != "") {
+	      var FHEM_Types = RequestTypes(ServerURL, DeviceType, RoomFilter);
+        // RequestTypes(GetServerURL(e.payload['FHEM_URL_REQ_TYPE']), "FS20");
+      } else {
+        console.log('Server URL not yet set!');
+        // todo: show on watch
+      }
+      
       return;
     }
     console.log('Unknown appmessage received: ' + JSON.stringify(e.payload));   

@@ -150,6 +150,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
       </div>
     </div>
     <div class='item-container'>
+      <div class='button-container'>
+        <input id='reset_button'  type='button' class='item-button' value='Reset'>
+      </div>
+    </div>
+    <div class='item-container'>
       <div class='item-container-header'>Debug Console</div>
       <div class='item-container-footer'><ul id="Console"><li>Status: Ready</li></ul>
       </div>
@@ -203,6 +208,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 
     var ReturnString = JSON.stringify(getInputMain());
 
+    MyConsole("Submit: "+ ReturnString);
+
     if (Debug)
       return;
 
@@ -210,6 +217,20 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
     document.location = return_to + encodeURIComponent(ReturnString);
   });
 
+
+  var resetButton = document.getElementById('reset_button');
+  resetButton.addEventListener('click', function() {
+    MyConsole("Reset clicked. Cleaning local storage");
+
+    localStorage['FHEM_SERVER_URL']  = "";
+    localStorage['FHEM_ROOM_FILTER'] = "";
+
+    var DeviceType = "FS20";
+    var Key = "FHEM_DEVICES_" + DeviceType;
+    localStorage[Key] = "";
+    localStorage["FHEM_Config"] = "";
+    MyConsole("Cleaning local storage done");
+  });
 
   function MyConsole(text)
   {
@@ -300,6 +321,9 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
     
     var Key = "FHEM_DEVICES_" + DeviceType;
     
+    if (localStorage[Key] == "")
+      return return_opts;
+
     var FHEM_Devices = JSON.parse(localStorage[Key]);
     
     if (FHEM_Devices.num == null || FHEM_Devices.num == 0)
@@ -785,7 +809,11 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
     
     // for debugging: if args of URI are not present, the URI stays
     var DevicesElement=document.getElementById('FHEMDevices');
-    DevicesElement.innerHTML = "URL of this document: <em>" + window.location.href + "</em>";
+    if (Debug)
+      DevicesElement.innerHTML = "URL of this document: <em>" +
+        window.location.href + "</em>";
+    else
+      DevicesElement.innerHTML = "Go to settings on watch and press <em>Request</em>. Then return to this page to edit FHEM devices.";
 
     DeviceType = "FS20";
     ShowDevicesFromArgs(DeviceType, DevicesElement);
