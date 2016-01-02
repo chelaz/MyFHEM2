@@ -39,7 +39,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 	  	    "Device"    : "FS20_fr_bel",
 	  	    "Alias"     : "Licht",
 	  	    "Descr"     : "Licht umschalten",
-	  	    "Room"      : "Küche",
+	  	    "Room"      : "Kitchen",
 	  	    "Check"     : 2
 	  	  },
 	  	  { "State"     : "on",
@@ -47,7 +47,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 	  	    "Device"    : "FS20_fr_bel",
 	  	    "Alias"     : "Licht",
 	  	    "Descr"     : "Licht an",
-	  	    "Room"      : "Küche",
+	  	    "Room"      : "Kitchen",
 	  	    "Check"     : 1
 	  	  },
 	  	  { "State"     : "off",
@@ -55,7 +55,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 	  	    "Device"    : "FS20_fr_bel",
 	  	    "Alias"     : "Licht",
 	  	    "Descr"     : "Licht aus",
-	  	    "Room"      : "Küche",
+	  	    "Room"      : "Kitchen",
 	  	    "Check"     : 1
 	  	  },
 	  	  ...
@@ -116,9 +116,16 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
         </label>
       </div>
       <div class='item-container-footer'>
+<p>
 	Please specify FHEM server URL. Note https is not yet supported as well
-	as username/password access. Example: <em>http://www.myfhem.org:8083/fhem</em>.
+	as username/password access. Example:
+<em>http://www.myfhem.org:8083/fhem</em>.</p>
+<p>Optionally you can specify a
+room. All devices are filtered by this room after requesting the new devices
+from your watch.</p>
+      <div align=right><input id='reset_button'  type='button' class='item-button-small' value='Reset'>
       </div>
+     </div>    
     </div>
 
     <div class='item-container'>
@@ -147,11 +154,6 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
     <div class='item-container'>
       <div class='button-container'>
         <input id='submit_button' type='button' class='item-button' value='SUBMIT'>
-      </div>
-    </div>
-    <div class='item-container'>
-      <div class='button-container'>
-        <input id='reset_button'  type='button' class='item-button' value='Reset'>
       </div>
     </div>
     <div class='item-container'>
@@ -220,6 +222,13 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 
   var resetButton = document.getElementById('reset_button');
   resetButton.addEventListener('click', function() {
+    var r = confirm("Do you really want to reset all settings?");
+    if (r != true) {
+      // reload same page
+      var location=document.location;
+      document.location = location;
+      return;
+    }
     MyConsole("Reset clicked. Cleaning local storage");
 
     localStorage['FHEM_SERVER_URL']  = "";
@@ -230,6 +239,10 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
     localStorage[Key] = "";
     localStorage["FHEM_Config"] = "";
     MyConsole("Cleaning local storage done");
+
+    // reload same page
+    var location=document.location;
+    document.location = location;
   });
 
   function MyConsole(text)
@@ -265,6 +278,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
   /*
     IDs: 
        Room (check) Device_0
+       Room Label:  Device_0_room
+                    Device_0_room_button
        Descr:       Device_0_descr
                     Device_0_descr_button
 
@@ -339,79 +354,21 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
       var IDBasename     = "Device_" + i;
       var HtmlCk         = document.getElementById(IDBasename);
       var HtmlDescrText  = document.getElementById(IDBasename+"_descr");
-      var HtmlRoomText_value = FHEM_Devices[DeviceType][i].Room; // todo
+      var HtmlRoomText   = document.getElementById(IDBasename+"_room");
+      // var HtmlRoomText_value = FHEM_Devices[DeviceType][i].Room; // todo
       
       if (HtmlCk.checked) {
       	
       	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][i].Device, 
-  				 HtmlRoomText_value, HtmlDescrText.value, "toggle"))
+  				 HtmlRoomText.value, HtmlDescrText.value, "toggle"))
   	  cnt++;
       	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][i].Device, 
-  				 HtmlRoomText_value, HtmlDescrText.value, "on"))
+  				 HtmlRoomText.value, HtmlDescrText.value, "on"))
   	  cnt++;
       	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][i].Device, 
-  				 HtmlRoomText_value, HtmlDescrText.value, "off"))
+  				 HtmlRoomText.value, HtmlDescrText.value, "off"))
   	  cnt++;
       	
-      	      /*
-      // toggle      
-      var HtmlToggleFav  = document.getElementById(IDBasename+"_toggle_fav");
-      var HtmlToggleDict = document.getElementById(IDBasename+"_toggle_dict");
-      var HtmlToggleText = document.getElementById(IDBasename+"_toggle_text");
-      var CheckToggleBits = (HtmlToggleDict.checked) ? MenuDef : 0;
-      CheckToggleBits    |= (HtmlToggleFav.checked)  ? MenuFav : 0;
-      
-      // on
-      var HtmlOnFav      = document.getElementById(IDBasename+"_on_fav");
-      var HtmlOnDict     = document.getElementById(IDBasename+"_on_dict");
-      var HtmlOnText     = document.getElementById(IDBasename+"_on_text");
-      var CheckOnBits     = (HtmlOnDict.checked)     ? MenuDef : 0;
-      CheckOnBits        |= (HtmlOnFav.checked)      ? MenuFav : 0;
-      
-      // off
-      var HtmlOffFav     = document.getElementById(IDBasename+"_off_fav");
-      var HtmlOffDict    = document.getElementById(IDBasename+"_off_dict");
-      var HtmlOffText    = document.getElementById(IDBasename+"_off_text");
-      var CheckOffBits    = (HtmlOffDict.checked)    ? MenuDef : 0;
-      CheckOffBits       |= (HtmlOffFav.checked)     ? MenuFav : 0;
-      */
-
-        /* if (CheckToggleBits != 0) {
-          Cfg_Devices[DeviceType].push( 
-           { 
-            "State"  : "toggle",
-            "Device" : FHEM_Devices[DeviceType][i].Device,
-            "Descr"  : HtmlDescrText.value + " " +HtmlToggleText.value,
-            "Room"   : FHEM_Devices[DeviceType][i].Room,
-            "Check"  : CheckToggleBits
-           });
-          cnt++;
-        } */
-        
-        /*if (CheckOnBits != 0) {
-          Cfg_Devices[DeviceType].push( 
-           { 
-            "State"  : "on",
-            "Device" : FHEM_Devices[DeviceType][i].Device,
-            "Descr"  : HtmlDescrText.value + " " +HtmlOnText.value,
-            "Room"   : FHEM_Devices[DeviceType][i].Room,
-            "Check"  : CheckOnBits
-           });
-          cnt++;
-        } */
-        
-        /*
-        if (CheckOffBits != 0) {
-          Cfg_Devices[DeviceType].push( 
-           { 
-            "State"  : "off",
-            "Device" : FHEM_Devices[DeviceType][i].Device,
-            "Descr"  : HtmlDescrText.value + " " +HtmlOffText.value,
-            "Room"   : FHEM_Devices[DeviceType][i].Room,
-            "Check"  : CheckOffBits
-           });
-          cnt++;
-        }*/
         
         var HtmlState      = document.getElementById(IDBasename+"_state");
         if (HtmlState.checked != 0) {
@@ -422,12 +379,12 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
             "Device" : FHEM_Devices[DeviceType][i].Device,
             "Alias"  : HtmlDescrText.value,
             "Descr"  : HtmlDescrText.value,
-            "Room"   : HtmlRoomText_value,
+            "Room"   : HtmlRoomText.value,
             "Check"  : MenuState
            });
           cnt++;
         }
-    // FHEM_Devices[DeviceType][i].checked = true;
+        // FHEM_Devices[DeviceType][i].checked = true;
         cnt++;
       } else
         FHEM_Devices[DeviceType][i].checked = false;
@@ -467,7 +424,7 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
   // an edit control appears with the same text.
   // Used for the following HTML input:
   //  <label>
-  //    <input id="inputID"       type="hidden" value="Text">
+  //    <input id="inputID"  type="hidden" value="Text">
   //    <input id="buttonID" type="button" value="Text"
   //           onclick='ShowEdit("inputID","buttonID");'>
   //  </label>
@@ -477,6 +434,13 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
     HTMLInput.type = "text";
     var HTMLButton = document.getElementById(buttonID);
     HTMLButton.type = "hidden";
+   }
+
+  function CheckDevice(DeviceID)
+  {
+    //DeviceID.checked = true;
+    var DeviceCkInput = document.getElementById(DeviceID);
+    DeviceCkInput.checked = true;
    }
 
   /////////////////////////////////////
@@ -496,7 +460,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 
     function AddCfgDevState2Device(i, CfgDev)
     {
-      var InputIDBase  = "Device_" + i + "_" + CfgDev.State;
+      var DeviceID     = "Device_" + i;
+      var InputIDBase  = DeviceID + "_" + CfgDev.State;
       var EditID       = "\"" + InputIDBase + "_text\"";
       var EditIDButton = "\"" + InputIDBase + "_text_button\"";
 
@@ -507,11 +472,13 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 	   "  <tr>\n" +
 	   "    <td><label>\n" +
            "       <input id='" + InputIDBase + "_fav'"+
-           "        type='checkbox' " + CheckedFavStr + ">\n" +
+           "        type='checkbox' " + CheckedFavStr + 
+           "        onclick='CheckDevice(\"" + DeviceID + "\");'>\n" +
 	   "    </label></td>\n" +
 	   "    <td><label>\n" +
            "       <input id='" + InputIDBase + "_dict'"+
-           "        type='checkbox' " + CheckedDevStr + ">\n" +
+           "        type='checkbox' " + CheckedDevStr +
+           "        onclick='CheckDevice(\"" + DeviceID + "\");'>\n" +
 	   "    </label></td>\n" +
 	   "    <td><label>\n" +
            "       <input id=" + EditID       + " type='hidden' "+
@@ -528,17 +495,20 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 
     function AddState2Device(i, Device, State, StateText)
     {
+      var DeviceID     = "Device_" + i;
       var EditID       = "\"Device_" + i + "_" + State + "_text\"";
       var EditIDButton = "\"Device_" + i + "_" + State + "_text_button\"";
       var RetStr = 	
 	   "  <tr>\n" +
 	   "    <td><label>\n" +
            "       <input id='Device_" + i + "_" + State + "_fav' type='checkbox' "+
-	   "           value='" + Device[i].checked + "'>\n" +
+	   "        value='" + Device[i].checked + "'" +
+           "        onclick='CheckDevice(\"" + DeviceID + "\");'>\n" +
 	   "    </label></td>\n" +
 	   "    <td><label>\n" +
            "       <input id='Device_" + i + "_" + State + "_dict' type='checkbox'"+
-	   "           value='" + Device[i].checked + "'>\n" +
+	   "           value='" + Device[i].checked + "'" +
+           "        onclick='CheckDevice(\"" + DeviceID + "\");'>\n" +
 	   "    </label></td>\n" +
 	   "    <td><label>\n" +
            "       <input id=" + EditID       + " type='hidden' "+
@@ -594,8 +564,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
     // checked not yet working since the data from localStorage is overwritten above
     for (var i = 0; i < FHEM_Devices.num; i++) {
       var Device = FHEM_Devices[DeviceType][i].Device;
-
       var Alias  = FHEM_Devices[DeviceType][i].Alias;
+      var Room   = FHEM_Devices[DeviceType][i].Room;
 
       var StateChecked = false;
 
@@ -605,29 +575,39 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
         StatesArr = FindDeviceStates(DeviceType_prev, Device);
         if (StatesArr.length > 0) {
           Alias = StatesArr[0].Alias;
+          Room  = StatesArr[0].Room;
           DeviceCheckedStr = "checked";
         }
       }
 
       var DeviceID     = "Device_" + i;
-      var EditID       = "\"Device_" + i + "_descr\"";
-      var EditIDButton = "\"Device_" + i + "_descr_button\"";
+
+      var RoomID       = "\"Device_" + i + "_room\"";
+      var RoomIDButton = "\"Device_" + i + "_room_button\"";
+
+      var AliasID       = "\"Device_" + i + "_descr\"";
+      var AliasIDButton = "\"Device_" + i + "_descr_button\"";
 
       var ih = i+1;      
       var HTMLDevice =
-         "<div class='item-container-content'><label>" + 
-         " <!-- [" + ih + "/" + FHEM_Devices.num + "] -->" + 
+         "<div class='item-container-content'>"+
+         "   <label>" + 
+         "     <!-- [" + ih + "/" + FHEM_Devices.num + "] -->" + 
 
-         "  <input id='" + DeviceID + "' type='checkbox' "+DeviceCheckedStr+">"+
-	 FHEM_Devices[DeviceType][i].Room +
+         "     <input id='" + DeviceID + "' type='checkbox' "+DeviceCheckedStr+">"+
 	 "   </label>" +
+         "       <input id=" + RoomID       + " type='hidden' class='button-room' " +
+	 "           value='" + Room + "'>\n" + 
+	 "       <input id=" + RoomIDButton + " type='button' class='button-room' " +
+         "           value='" + Room +
+	 "        ' onclick='ShowEdit(" + RoomID +"," + RoomIDButton + ");'>" +
 
          /* Description */
          "   <label>\n" +
-         "       <input id=" + EditID       + " type='hidden' "+
+         "       <input id=" + AliasID       + " type='hidden' "+
 	 "           value='" + Alias + "'>\n" + 
-	 "       <input id=" + EditIDButton + " type='button' value='" + Alias +
-	 "        ' onclick='ShowEdit(" + EditID +"," + EditIDButton + ");'>" +
+	 "       <input id=" + AliasIDButton + " type='button' value='" + Alias +
+	 "        ' onclick='ShowEdit(" + AliasID +"," + AliasIDButton + ");'>" +
 	 "    </label>";
 	 
          /* States choice */
@@ -673,7 +653,8 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 	   "  <tr>" +
 	   "    <td><label>" +
            "       <input id='Device_" + i + "_state' type='checkbox' "
-                    + CheckedStr + ">" +
+                    + CheckedStr + 
+           "        onclick='CheckDevice(\"" + DeviceID + "\");'>\n" +
 	   "    </label></td>" +
 	   "    <td></td>" +
 	   "    <td>State of Device</td>" +
