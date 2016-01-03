@@ -23,7 +23,7 @@
 #endif
 
 #undef DEBUG_ADD_COM
-
+#undef DICTATE_COMS_IN_MENU
 
 
 // string memory management
@@ -448,8 +448,10 @@ static const uint32_t FHEM_NEW_DEV_END   = 12;
 
 
 // persisent storage keys
-static const uint32_t FHEM_PERSIST_USEDYN = 0; // storage key to switch between static/dynamic ComMap
-
+static const uint32_t FHEM_PERSIST_USEDYN           = 0; // storage key to switch between static/dynamic ComMap
+static const uint32_t FHEM_PERSIST_MENU_FAV_NUM     = 1; // save number of favourite menu items to build the menu on startup without content
+static const uint32_t FHEM_PERSIST_MENU_STATES_NUM  = 2; // save number of states menu items
+static const uint32_t FHEM_PERSIST_MENU_SPECIAL_NUM = 3; // save number of special menu items
 
 
 
@@ -769,15 +771,23 @@ static GBitmap *s_menu_icon_image_send;
 static GBitmap *s_menu_icon_image_off;
 static GBitmap *s_menu_icon_image_on;
 static GBitmap *s_menu_icon_image_toggle;
+
+#ifdef DICTATE_COMS_IN_MENU
 static SimpleMenuItem s_def_menu_items[NUM_COM];
+#endif
+
 static SimpleMenuItem s_fav_menu_items[NUM_COM];
+static int s_menu_fav_NumItems = 0;
 static SimpleMenuItem s_states_menu_items[NUM_COM];
+static int s_menu_states_NumItems = 0;
 static SimpleMenuItem s_special_menu_items[MAX_NUM_MENU_ITEMS_FAVOURITES];
+static int s_menu_special_NumItems = 0;
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
+static int s_menu_sections_NumItems = 0;
 static SimpleMenuLayer* s_simple_menu_layer;
 
 // Create and destroy menu
-SimpleMenuLayer* CreateMenu(Window *window);
+bool CreateMenu(bool InitialEmpty);
 void DestroyMenu(SimpleMenuLayer* Layer);
 
 bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
@@ -793,9 +803,11 @@ bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
     case MENU_SPECIAL:
       pMenu = &s_special_menu_items[index];
       break;
+#ifdef DICTATE_COMS_IN_MENU
     case MENU_DEF_COMS:
       pMenu = &s_def_menu_items[index];
       break;   
+#endif
     case MENU_FAV_COMS:
       pMenu = &s_fav_menu_items[index];
       break;   
@@ -858,9 +870,11 @@ bool set_menu_text(Menu_t Menu, MapIdx_t CmdIdx, int index, const char text[])
     case MENU_SPECIAL:
       pMenu = &s_special_menu_items[index];
       break;
+#ifdef DICTATE_COMS_IN_MENU
     case MENU_DEF_COMS:
       pMenu = &s_def_menu_items[index];
       break;   
+#endif
     case MENU_FAV_COMS:
       pMenu = &s_fav_menu_items[index];
       break;   
@@ -896,6 +910,7 @@ bool set_menu_text(Menu_t Menu, MapIdx_t CmdIdx, int index, const char text[])
 // todo: for tests
 static bool s_special_flag = false;
 
+#ifdef DICTATE_COMS_IN_MENU
 static void def_menu_select_callback(int index, void *ctx)
 {
   MapIdx_t CmdIdx = GetCmdIdxFromDefMenu(index);
@@ -906,7 +921,7 @@ static void def_menu_select_callback(int index, void *ctx)
   else
     set_menu_icon(MENU_DEF_COMS, index, FAILED);
 }
-
+#endif
 
 static void fav_menu_select_callback(int index, void *ctx)
 {
@@ -1116,6 +1131,7 @@ static void request_states_select_callback(int index, void* ctx)
 */
 }
 
+#ifdef DICTATE_COMS_IN_MENU
 static void volume_select_callback(int index, void* ctx)
 {
 #if 0
@@ -1158,6 +1174,7 @@ static void volume_select_callback(int index, void* ctx)
   }
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
+#endif
 
 
 static void switch_stat_dyn_callback(int index, void* ctx)
@@ -1171,7 +1188,7 @@ static void switch_stat_dyn_callback(int index, void* ctx)
     PrintCom(GetCom(i));
   }
 
-  simple_menu_layer_set_selected_index(s_simple_menu_layer, index, false);
+  // simple_menu_layer_set_selected_index(s_simple_menu_layer, index, false);
 }
 
 
@@ -1309,7 +1326,7 @@ int create_special_menu()
   return MenuCnt;
 }
 
-
+#ifdef DICTATE_COMS_IN_MENU
 int create_default_menu()
 {
   int MenuCnt=0;
@@ -1339,6 +1356,7 @@ int create_default_menu()
   }
   return MenuCnt;
 }
+#endif
 
 
 int create_favourites_menu()
@@ -1353,7 +1371,6 @@ int create_favourites_menu()
 	.title    = PCom->Room,
 	.subtitle = PCom->Description,
 	.callback = fav_menu_select_callback,
-	// .icon     = PBL_IF_RECT_ELSE(s_menu_icon_image_ok, NULL),
       };
       PCom->MenuFavIdx = MenuCnt;
       MenuCnt++;
@@ -1394,24 +1411,55 @@ int create_states_menu()
 
 void RecreateMenu()
 {
+  if (CreateMenu(false)) {
+    // new menu has same items as previous. So we dont need to destroy the menu and rebuild
+    layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "RecreateMenu: No rebuild");
+    return;
+  }
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "RecreateMenu: Doing a rebuild!!!!!");
+  
   DestroyMenu(s_simple_menu_layer);
-
-  s_simple_menu_layer = CreateMenu(s_window);
   
   Layer *window_layer = window_get_root_layer(s_window);
-
+  GRect bounds = layer_get_frame(window_layer);
+  
+  s_simple_menu_layer = simple_menu_layer_create(bounds, s_window, 
+						 s_menu_sections,
+						 s_menu_sections_NumItems,
+						 NULL);
+  
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
 }
 
-SimpleMenuLayer* CreateMenu(Window *window)
-{
-  // create menu sections
 
+// InitialEmpty: true: the contents of the menu items are not filled
+bool CreateMenu(bool InitialEmpty)
+{
+  bool NumItemsChanged=false;
+
+  // create menu sections
   int NumItems=0;
   int NumSections=0;
 
   // special menu
-  NumItems=create_special_menu();
+
+#if 0
+  // we always can create the special menu since the menu items dont change
+  if (InitialEmpty && s_menu_special_NumItems != 0)
+    NumItems = s_menu_special_NumItems;
+  else 
+#endif
+  {
+    NumItems = create_special_menu();
+    
+    if (s_menu_special_NumItems != NumItems) {
+      NumItemsChanged = true;
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "CreateMenu: special old and new: %d <> %d",
+	      s_menu_special_NumItems, NumItems);
+      s_menu_special_NumItems = NumItems;
+    }
+  }
   if (NumItems > 0) {
     s_menu_sections[NumSections++] = (SimpleMenuSection) {
       .title = "Special",
@@ -1421,7 +1469,18 @@ SimpleMenuLayer* CreateMenu(Window *window)
   }
 
   // favourite menu
-  NumItems=create_favourites_menu();
+  if (InitialEmpty && s_menu_fav_NumItems != 0)
+    NumItems = s_menu_fav_NumItems;
+  else {
+    NumItems = create_favourites_menu();
+    
+    if (s_menu_fav_NumItems != NumItems) {
+      NumItemsChanged = true;
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "CreateMenu: fav old and new: %d <> %d",
+	      s_menu_fav_NumItems, NumItems);
+      s_menu_fav_NumItems = NumItems;
+    }
+  }
   s_menu_sections[NumSections++] = (SimpleMenuSection) {
     .title = "Favourites",
     .num_items = NumItems,
@@ -1429,13 +1488,24 @@ SimpleMenuLayer* CreateMenu(Window *window)
   };
 
   // states menu
-  NumItems=create_states_menu();
+  if (InitialEmpty && s_menu_states_NumItems != 0)
+    NumItems = s_menu_states_NumItems;
+  else {
+    NumItems = create_states_menu();
+    if (s_menu_states_NumItems != NumItems) {
+      NumItemsChanged = true;
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "CreateMenu: States old and new: %d <> %d",
+	      s_menu_states_NumItems, NumItems);
+      s_menu_states_NumItems = NumItems;
+    }
+  }
   s_menu_sections[NumSections++] = (SimpleMenuSection) {
     .title = "States",
     .num_items = NumItems,
     .items = s_states_menu_items,
   };
 
+#ifdef DICTATE_COMS_IN_MENU
   // default menu
   NumItems=create_default_menu();
   s_menu_sections[NumSections++] = (SimpleMenuSection) {
@@ -1443,13 +1513,16 @@ SimpleMenuLayer* CreateMenu(Window *window)
     .num_items = NumItems,
     .items = s_def_menu_items,
   };
+#endif
 
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_frame(window_layer);
+  s_menu_sections_NumItems = NumSections;
 
-  return simple_menu_layer_create(bounds, window, 
-				  s_menu_sections, NumSections,
-				  NULL);
+  if (!NumItemsChanged) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "CreateMenu: number of items are the same. No rebuild");
+    return true;
+  }
+
+  return false;
 }
 
 
@@ -1478,10 +1551,16 @@ static void main_window_load(Window *window)
   // test dynamic com_map
   // TestAddCom();
 
-  s_simple_menu_layer = CreateMenu(window);
+  CreateMenu(true);
   
   Layer *window_layer = window_get_root_layer(window);
-
+  GRect bounds = layer_get_frame(window_layer);
+  
+  s_simple_menu_layer = simple_menu_layer_create(bounds, window, 
+						 s_menu_sections, 
+						 s_menu_sections_NumItems,
+						 NULL);
+  
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
 
 
@@ -1536,6 +1615,22 @@ static void init(void)
     Coms_UseDyn = persist_read_bool(FHEM_PERSIST_USEDYN);
   }
 
+  if (persist_exists(FHEM_PERSIST_MENU_FAV_NUM)) {
+    s_menu_fav_NumItems = persist_read_int(FHEM_PERSIST_MENU_FAV_NUM);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Read storage: fav: %d", s_menu_fav_NumItems);
+  } else
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Read storage: fav: -");
+
+  
+  if (persist_exists(FHEM_PERSIST_MENU_STATES_NUM)) {
+    s_menu_states_NumItems = persist_read_int(FHEM_PERSIST_MENU_STATES_NUM);
+  }
+
+  if (persist_exists(FHEM_PERSIST_MENU_SPECIAL_NUM)) {
+    s_menu_special_NumItems = persist_read_int(FHEM_PERSIST_MENU_SPECIAL_NUM);
+  }
+
+  
   s_window = window_create();
 
   window_set_window_handlers(s_window, (WindowHandlers) {
@@ -1552,14 +1647,19 @@ static void init(void)
   app_message_register_outbox_failed(outbox_failed_callback);
   app_message_register_outbox_sent(outbox_sent_callback);
 
-  app_message_open(app_message_inbox_size_maximum(),
+  /*  app_message_open(app_message_inbox_size_maximum(),
 		   app_message_outbox_size_maximum());
-  //  app_message_open(256, 256);
+  */
+  app_message_open(512, 512);
 
 }
 
 static void deinit(void)
 {
+  persist_write_int(FHEM_PERSIST_MENU_SPECIAL_NUM, s_menu_special_NumItems);
+  persist_write_int(FHEM_PERSIST_MENU_STATES_NUM, s_menu_states_NumItems);
+  persist_write_int(FHEM_PERSIST_MENU_FAV_NUM,    s_menu_fav_NumItems);
+  
   persist_write_bool(FHEM_PERSIST_USEDYN, Coms_UseDyn);
   FreeStr();
   window_destroy(s_window);
