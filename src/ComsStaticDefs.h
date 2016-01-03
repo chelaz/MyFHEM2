@@ -1,3 +1,36 @@
+#ifndef _COMSSTATICDEFS_H_
+#define _COMSSTATICDEFS_H_
+
+// use this to specify in which menu the command shall appear.
+typedef enum MenuIdx_ {
+  MenuOmit  = -1,
+  MenuDef   = -2,
+  MenuFav   = -3,
+  MenuState = -4,
+} MenuIdx_t;
+
+typedef enum MenuBits_ {
+  MenuDefB   = 1,
+  MenuFavB   = 2,
+  MenuStateB = 4,
+} MenuBits_t;
+
+typedef int MapIdx_t; // type to access Coms_Map array (index for array)
+
+// the menu indices are overwritten during creation of menu if not MenuOmit
+typedef struct Coms_Map_
+{
+  const char* Room;
+  const char* Description;
+  const char* URL; // if used
+  const char* Device;
+  const char* Command;
+  MenuIdx_t   MenuDefIdx;    // default: either MenuDef or MenuOmit
+  MenuIdx_t   MenuFavIdx;    // default: either MenuDef or MenuFav
+  MenuIdx_t   MenuStateIdx;  // default: either MenuDef or MenuState
+} Coms_Map_t;
+
+
 static Coms_Map_t Coms_Map[] = {
   {
     "Balkon",
@@ -118,3 +151,5 @@ static Coms_Map_t Coms_Map[] = {
     MenuDef, MenuFav, MenuOmit,
   },
 };
+
+#endif

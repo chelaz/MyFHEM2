@@ -63,6 +63,12 @@ https://rawgit.com/chelaz/MyFHEM2/master/config/index.html?options={%22FS20%22%3
 	  }
 	}
 
+
+  // local storage:
+  FHEM_SERVER_URL
+  FHEM_ROOM_FILTER
+  FHEM_DEVICES_FS20 see FHEM_Devices above
+  FHEM_Config       see Cfg_Devices above (to use previous settings)
 -->
 
 
@@ -348,24 +354,25 @@ from your watch.</p>
     Cfg_Devices[DeviceType] = [];
     // console.log('Cfg_Devices: ' + JSON.stringify(FHEM_Devices));
     var cnt=0;
-    for (var i=0; i < FHEM_Devices.num; i++) {
-    	
-      // fetch all IDs
-      var IDBasename     = "Device_" + i;
+    for (var j=0; j < FHEM_Devices.num; j++) {    	
+      // fetch all IDs in the order of appearance of div with ID ComItem_j
+      var ComIDDiv = document.getElementById("ComItem_" + j);
+      var ID = ComIDDiv.firstElementChild.id;
+
+      var IDBasename     = "Device_" + ID;
       var HtmlCk         = document.getElementById(IDBasename);
       var HtmlDescrText  = document.getElementById(IDBasename+"_descr");
       var HtmlRoomText   = document.getElementById(IDBasename+"_room");
-      // var HtmlRoomText_value = FHEM_Devices[DeviceType][i].Room; // todo
       
       if (HtmlCk.checked) {
       	
-      	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][i].Device, 
+      	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][ID].Device, 
   				 HtmlRoomText.value, HtmlDescrText.value, "toggle"))
   	  cnt++;
-      	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][i].Device, 
+      	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][ID].Device, 
   				 HtmlRoomText.value, HtmlDescrText.value, "on"))
   	  cnt++;
-      	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][i].Device, 
+      	if (AddCfgDeviceFromInput(Cfg_Devices[DeviceType], IDBasename, FHEM_Devices[DeviceType][ID].Device, 
   				 HtmlRoomText.value, HtmlDescrText.value, "off"))
   	  cnt++;
       	
@@ -376,7 +383,7 @@ from your watch.</p>
            { 
             "State"     : "toggle",
             "StateText" : "toggle", /* irrelevant */
-            "Device" : FHEM_Devices[DeviceType][i].Device,
+            "Device" : FHEM_Devices[DeviceType][ID].Device,
             "Alias"  : HtmlDescrText.value,
             "Descr"  : HtmlDescrText.value,
             "Room"   : HtmlRoomText.value,
@@ -384,10 +391,9 @@ from your watch.</p>
            });
           cnt++;
         }
-        // FHEM_Devices[DeviceType][i].checked = true;
         cnt++;
       } else
-        FHEM_Devices[DeviceType][i].checked = false;
+        FHEM_Devices[DeviceType][ID].checked = false;
     }
     return_opts['Cfg_Devices'] = Cfg_Devices;
     return return_opts;
@@ -561,7 +567,13 @@ from your watch.</p>
         DeviceType_prev = Cfg_Devices_prev[DeviceType];
     }
 
-    // checked not yet working since the data from localStorage is overwritten above
+    // first build empty tags
+    for (var i = 0; i < FHEM_Devices.num; i++) {
+      HTMLElement.innerHTML += 
+         "<div class='item-container-content' id='ComItem_" + i + "'></div>";
+    }
+
+    var FoundDevices=0;
     for (var i = 0; i < FHEM_Devices.num; i++) {
       var Device = FHEM_Devices[DeviceType][i].Device;
       var Alias  = FHEM_Devices[DeviceType][i].Alias;
@@ -590,8 +602,8 @@ from your watch.</p>
 
       var ih = i+1;      
       var HTMLDevice =
-         "<div class='item-container-content'>"+
-         "   <label>" + 
+         // "<div class='item-container-content'>"+
+         "   <label id='" + i + "'>" + 
          "     <!-- [" + ih + "/" + FHEM_Devices.num + "] -->" + 
 
          "     <input id='" + DeviceID + "' type='checkbox' "+DeviceCheckedStr+">"+
@@ -661,99 +673,31 @@ from your watch.</p>
 	   "  </tr>";
 
 	 HTMLDevice += 
-	   " </table>" +
-	   "</div>";
+	   " </table>";
+	   // "</div>";
 
-	HTMLElement.innerHTML += HTMLDevice;
+//          if (false) {
+         if (StateChecked || AddedToggle || AddedOn || AddedOff) {
+           var Pos = FoundDevices;
 
+           var ComIDDivI   = document.getElementById("ComItem_" + i);
+           var ComIDDivPos = document.getElementById("ComItem_" + Pos);
 
-	// console.log("HTMLInner:--------------\n" + HTMLElement.innerHTML + "\n-------------------------\n");
+           if (i != Pos) {
+             // swap positions
+             var tmp = ComIDDivPos.innerHTML;
+             ComIDDivPos.innerHTML = HTMLDevice;
+             ComIDDivI.innerHTML   = tmp;
+           } else {
+             ComIDDivPos.innerHTML = HTMLDevice;    
+           }
 
-/*	 HTMLElement.innerHTML += 
-	   "  <tr id = 'toggle'>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_toggle_fav' type='checkbox' "+
-	   "           value=" + FHEM_Types[DeviceType][i].checked + ">" +
-	   "    </label></td>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_toggle_dict' type='checkbox' "+
-	   "            value=" + FHEM_Types[DeviceType][i].checked + ">" +
-	   "    </label></td>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_toggle_text' type='text' "+
-	   "        value='toggle'>" +
-	   "    </label></td>" +
-	   "  </tr>" +
-	   "  <tr id = 'on'>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_on_fav' type='checkbox' "+
-	   "           value=" + FHEM_Types[DeviceType][i].checked + ">" +
-	   "    </label></td>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_on_dict' type='checkbox' "+
-	   "            value=" + FHEM_Types[DeviceType][i].checked + ">" +
-	   "    </label></td>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_on_state' type='text' "+
-	   "        value='on'>" +
-	   "    </label></td>" +
-	   "  </tr>" +
-	   "  <tr id = 'on'>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_off_fav' type='checkbox' "+
-	   "           value=" + FHEM_Types[DeviceType][i].checked + ">" +
-	   "    </label></td>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_off_dict' type='checkbox' "+
-	   "            value=" + FHEM_Types[DeviceType][i].checked + ">" +
-	   "    </label></td>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_off_state' type='text' "+
-	   "        value='off'>" +
-	   "    </label></td>" +
-	   "  </tr>" +
-	   "  <tr id = 'state'>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_state_fav' type='checkbox' "+
-	   "           value=" + FHEM_Types[DeviceType][i].checked + ">" +
-	   "    </label></td>" +
-	   "    <td><label>" +
-           "       <input id='Device_" + i + "_state_dict' type='checkbox' "+
-	   "            value=" + FHEM_Types[DeviceType][i].checked + ">" +
-	   "    </label></td>" +
-	   "    <td>State of Device</td>" +
-	   "  </tr>" +
-	   " </table>" +
-	   "</div>";
-*/	   
-/*
-	 
-         "   <div class='item-container-content-small'>" +
-	  // FHEM_Types[DeviceType][i].Descr +
-	 "     <label>" +
-         "       <input id='Device_" + i + "_toggle' type='checkbox' "+
-	 "       value=" + FHEM_Types[DeviceType][i].checked +
-	 "       >&nbsp;" + "toggle" +
-	 "     </label>" +	 
-	 "     <label>" +
-         "       <input id='Device_" + i + "_on' type='checkbox' "+
-	 "       value=" + FHEM_Types[DeviceType][i].checked +
-	 "       >&nbsp;" + "on" +
-	 "     </label>" +	 
-	 "     <label>" +
-         "       <input id='Device_" + i + "_off' type='checkbox' "+
-	 "       value=" + FHEM_Types[DeviceType][i].checked +
-	 "       >&nbsp;" + "off" +
-	 "     </label>" +	 
-	 "     <label>" +
-         "       <input id='Device_" + i + "_state' type='checkbox' "+
-	 "       value=" + FHEM_Types[DeviceType][i].checked +
-	 "       >&nbsp;" + "state" +
-	 "     </label>" +	 
-	 "   </div>" + 
-	 "  "+
-	 "";
-	 */
+           FoundDevices++;
+         } else {
+           var ComIDDiv = document.getElementById("ComItem_" + i);
+           ComIDDiv.innerHTML = HTMLDevice;
+         }
+	 // HTMLElement.innerHTML += HTMLDevice;
     }
   }
 
