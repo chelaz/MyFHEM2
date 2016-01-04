@@ -405,7 +405,7 @@ function SendNextDevice()
 // Listen for when the watchface is opened
 Pebble.addEventListener('ready', 
   function(e) {
-    console.log('MyFHEM2 JavaScript ready!');
+    console.log('WristFHEM JavaScript ready!');
     var DeviceType = "FS20"; // TODO
     var Cfg_DevicesStr = localStorage.getItem('FHEM_DEVS_CONFIG');
     console.log('CFGDevStr:' + Cfg_DevicesStr);
@@ -425,7 +425,7 @@ Pebble.addEventListener('ready',
 // https://developer.getpebble.com/guides/pebble-apps/pebblekit-js/app-configuration/#testing-on-pebble
 Pebble.addEventListener('showConfiguration', 
   function(e) {
-			  //var url = 'https://rawgit.com/chelaz/MyFHEM2/master/config/index.html';
+			  //var url = 'https://rawgit.com/chelaz/WristFHEM/master/config/index.html';
     var url = 'http://madita/config/index.html';
    
     var FHEM_Types = localStorage.getItem('FHEM_URL_REQ_TYPE');

@@ -86,7 +86,7 @@
         ]
     },
     "sdkVersion": "3",
-    "shortName": "MyFHEM2",
+    "shortName": "WristFHEM",
     "targetPlatforms": [
         "aplite",
         "basalt",
