@@ -26,6 +26,7 @@
 
 #undef DEBUG_ADD_COM
 #undef DICTATE_COMS_IN_MENU
+#undef REQUEST_STATES_IN_MAIN_MENU
 
 
 // string memory management
@@ -1235,12 +1236,14 @@ int create_states_menu()
 {
   int MenuCnt=0;
 
+#ifdef REQUEST_STATES_IN_MAIN_MENU
   s_states_menu_items[MenuCnt++] = (SimpleMenuItem) {
     .title = "Request",
     .subtitle = "States",
     .callback = request_states_select_callback,
     .icon = s_menu_icon_image_send,
   };
+#endif
 
   for (int i=0; i < GetNumComs(); i++) {
     Coms_Map_t* PCom = GetCom(i);

@@ -1,8 +1,8 @@
 <!-- Example URL:
-http://madita/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Alias%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22%7D%2C%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Alias%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22%7D%5D%2C%22num%22%3A2%7D&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
-https://rawgit.com/chelaz/WristFHEM/master/config/index.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Alias%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22%7D%2C%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Alias%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22%7D%5D%2C%22num%22%3A2%7D&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
+http://madita/html/config.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Alias%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22%7D%2C%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Alias%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22%7D%5D%2C%22num%22%3A2%7D&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
+https://rawgit.com/chelaz/WristFHEM/master/html/config.html?options=%7B%22FS20%22%3A%5B%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Alias%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22%7D%2C%7B%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Alias%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22%7D%5D%2C%22num%22%3A2%7D&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
 // with date:
-https://rawgit.com/chelaz/WristFHEM/master/config/index.html?options={%22FS20%22%3A[{%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Descr%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22}%2C{%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Descr%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22}]%2C%22num%22%3A2%2C%22Date%22%3A%2215.12.%22}&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
+https://rawgit.com/chelaz/WristFHEM/master/html/config.html?options={%22FS20%22%3A[{%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fr_bel%22%2C%22Descr%22%3A%22Licht%20umschalten%22%2C%22Room%22%3A%22K%C3%BCche%22}%2C{%22State%22%3A%22toggle%22%2C%22Device%22%3A%22FS20_fz_bel%22%2C%22Descr%22%3A%22Licht%20an%2Faus%22%2C%22Room%22%3A%22Wohnzimmer%22}]%2C%22num%22%3A2%2C%22Date%22%3A%2215.12.%22}&return_to=https%3A//cloudpebble.net/ide/emulator/config%3F
 -->
 
 <!--
@@ -82,10 +82,15 @@ https://rawgit.com/chelaz/WristFHEM/master/config/index.html?options={%22FS20%22
   <!--script src='js/slate.js'></script-->
   <style>
   .title {
-    padding: 15px 10px;
-    text-transform: uppercase;
+    padding: 15px 5px;
     font-family: 'PT Sans', sans-serif;
-    font-size: 1.2em;j
+    color: #888888;
+    text-align: center;
+  }
+  .subtitle {
+    padding: 5px 5px;
+    font-family: 'PT Sans', sans-serif;
+    font-size: 1em;
     font-weight: 500;
     color: #888888;
     text-align: center;
@@ -94,8 +99,8 @@ https://rawgit.com/chelaz/WristFHEM/master/config/index.html?options={%22FS20%22
   </head>
 
   <body>
-    <h1 class='title'>WristFHEM - Home Automation on your Wrist
-    </h1>
+    <h1 class='title'>WristFHEM</h1>
+    <h1 class='subtitle'>Home Automation on your Wrist</h1>
 
     <div class='item-container'>
       <div class='item-container-content'>
@@ -103,7 +108,7 @@ https://rawgit.com/chelaz/WristFHEM/master/config/index.html?options={%22FS20%22
 	  Please dontate to support and motivate the further development of
 	  this watch app by spending
 	  <a
-	    href="bitcoin:18YzPQVfQ5ss51uvgGJQ5MfbbK28S9ebbP?label=Pebble%20FHEM%20Donation"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Bitcoin_logo.svg/220px-Bitcoin_logo.svg.png" height="16"alt="Bitcoin" target="Donation"></a> (for more details see Wikipedia&#8217;s <a href="http://en.wikipedia.org/wiki/Bitcoin">Bitcoin</a>&nbsp;article).
+	    href="bitcoin:18YzPQVfQ5ss51uvgGJQ5MfbbK28S9ebbP?label=Pebble%20FHEM%20Donation"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Bitcoin_logo.svg/220px-Bitcoin_logo.svg.png" height="16" alt="Bitcoin" target="Donation"></a> (for more details see Wikipedia&#8217; <a href="http://en.wikipedia.org/wiki/Bitcoin">Bitcoin</a>&nbsp;article).
 	  
         </div>
       </div>
@@ -623,12 +628,12 @@ from your watch.</p>
 	 
          /* States choice */
 	 HTMLDevice += 
-	   " <table cellpadding='0' cellspacing='0'>" +
-	   "  <!--tr id = 'header'>" +
-	   "    <td>Fav</td>" +
-	   "    <td>Dict</td>" +
-	   "    <td>State</td>" +
-	   "  </tr-->";
+	   " <table cellpadding='0' cellspacing='0' class='DeviceTable'>" +
+	   "  <tr class='header'>" +
+	   "    <td><img src='img/star.png' width='12' alt='Favourites'></td>" +
+	   "    <td><img src='img/dict.png' width='12' alt='Dictation'></td>" +
+	   "    <td align='left'>State</td>" +
+	   "  </tr>";
 	 
          var AddedToggle  = false;
          var AddedOn      = false;

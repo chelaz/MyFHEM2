@@ -83,7 +83,8 @@ input[type=date] {
   font-family: 'PT Sans', sans-serif;
   font-size: .8em;
   font-weight: 500;
-  color: #A8A8A8; }
+  color: #A8A8A8;
+}
 
 .item-container-content {
   padding: 3px;
@@ -104,6 +105,15 @@ div#FS20Content table tr td {
   font-size: .7em;
   padding: 0px 1px 0 0;
   margin: 0 0 0 0;
+}
+
+tr#header { 
+}
+
+.DeviceTable tr.header { 
+  text-align: center;
+  font-size: .7em;
+  margin: 0px;
 }
 
 .item-container-footer {
