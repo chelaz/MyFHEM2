@@ -9,7 +9,13 @@
   .title {
     padding: 15px 10px;
     font-family: 'PT Sans', sans-serif;
-    font-size: 1.2em;j
+    color: #888888;
+    text-align: center;
+  }
+  .subtitle {
+    padding: 15px 10px;
+    font-family: 'PT Sans', sans-serif;
+    font-size: 1em;
     font-weight: 500;
     color: #888888;
     text-align: center;
@@ -18,8 +24,8 @@
   </head>
 
   <body>
-    <h1 class='title'>WristFHEM - Home Automation on your Wrist
-    </h1>
+    <h1 class='title'>WristFHEM</h1>
+    <h1 class='subtitle'>Home Automation on your Wrist</h1>
 
     <div class='item-container'>
       <div class='item-container-content'>
@@ -27,7 +33,7 @@
 	  Please dontate to support and motivate the further development of
 	  this watch app by spending
 	  <a
-	    href="bitcoin:18YzPQVfQ5ss51uvgGJQ5MfbbK28S9ebbP?label=WristFHEM%20Donation"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Bitcoin_logo.svg/220px-Bitcoin_logo.svg.png" height="16"alt="Bitcoin" target="Donation"></a> (for more details see Wikipedia&#8217;s <a href="http://en.wikipedia.org/wiki/Bitcoin">Bitcoin</a>&nbsp;article).
+	    href="bitcoin:18YzPQVfQ5ss51uvgGJQ5MfbbK28S9ebbP?label=WristFHEM"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Bitcoin_logo.svg/220px-Bitcoin_logo.svg.png" height="16"alt="Bitcoin" target="Donation"></a> (for more details see Wikipedia&#8217;s <a href="http://en.wikipedia.org/wiki/Bitcoin">Bitcoin</a>&nbsp;article).
 	  
         </div>
       </div>
@@ -47,31 +53,31 @@
     <div class='item-container'>
       <div class='item-container-header'>Features</div>
       <div class='item-container-content'>
-      	Overview of Features
+        <div class='item-container-header'>Overview</div>
+         <div class='item-container-content'>
 	  <ul>
 	    <li>Send FHEM commannds</li>
 	    <li>Receive status of FHEM devices</li>
 	    <li>Show states with icons (on/off/toggle)</li>
-	    <li>Speak commands by using the Dictation API (Pebble) microphone necessary</li>
+	    <li>Speak commands by using the Dictation API (Pebble) for watches with microphone</li>
 	  </ul>
-	Configuration on Phone
+        </div>
+        <div class='item-container-header'>Configuration</div>
+        <div class='item-container-content'>
 	  <ul>
 	    <li>Request list of devices from FHEM server (can be filtered by given room eg. room <em>Pebble</em>)</li>
 	    <li>Specifiy which devices should appear as favourites and/or used by dictation</li>
 	    <li>Rename of room name, device name, states</li>
 	    <li>Remember settings and reapply if new device list is received</li>
 	  </ul>
-      </div>
-      <!--div class='item-container-footer'>
-	    Here are some screenshots
-      </div-->
+       </div>    
      </div>    
     </div>
 
     <div class='item-container'>
       <div class='item-container-header'>Contact</div>
-        <div class='item-container-content'>
-          Chelaz - <img src="img/email.png" widht="139" height="16">
+        <div class='item-container-content' id="Contact" >
+           <img src="img/email.png" widht="175" height="21" align="top">
         </div>
       </div>
     </div>

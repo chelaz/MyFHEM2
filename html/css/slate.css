@@ -72,6 +72,11 @@ input[type=date] {
   color: #333333;
   margin-top: 15px; }
 
+.item-container #Contact { 
+  padding-bottom: 0px;
+  padding-top: 5px;
+}
+
 .item-container-header {
   padding: 3px 10px;
   text-transform: uppercase;
