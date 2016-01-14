@@ -533,3 +533,14 @@ tr#header {
   color: #000000;
   font-size: 16px;
 }
+
+.watch_bg {
+  height: 272px;
+  width: 236px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 104px;
+  background-image: url("../img/pebbles/bobby-silver.12387f469e95.png");
+  padding-top: 91px;
+  padding-left: 4px;
+}
