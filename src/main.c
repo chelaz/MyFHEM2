@@ -609,6 +609,7 @@ bool SendCommand(MapIdx_t index, bool requestStatus, MsgID_t MsgID)
 
 // Todo: do we need this?
 static Window *s_window;
+static Window *s_settings_window;
 
 
 // icons moved from here
@@ -641,6 +642,18 @@ static SimpleMenuLayer* s_simple_menu_layer;
 // Create and destroy menu
 bool CreateMenu(bool InitialEmpty);
 void DestroyMenu(SimpleMenuLayer* Layer);
+
+// settings menu
+#define NUM_SETTINGS_MENU_SECTIONS 1 // max value
+#define NUM_SETTINGS_MENU_ITEMS 8    // max value
+static SimpleMenuSection s_settings_menu_sections[NUM_SETTINGS_MENU_SECTIONS];
+static int s_settings_menu_sections_NumItems = 0;
+static SimpleMenuLayer* s_settings_menu_layer;
+static SimpleMenuItem s_settings_menu_items[NUM_SETTINGS_MENU_ITEMS];
+static int s_settings_menu_NumItems = 0;
+
+
+
 
 bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
 {
@@ -1043,6 +1056,10 @@ static void switch_stat_dyn_callback(int index, void* ctx)
   // simple_menu_layer_set_selected_index(s_simple_menu_layer, index, false);
 }
 
+static void settings_menu_push_callback(int index, void* ctx)
+{
+  window_stack_push(s_settings_window, true);
+}
 
 static void request_fs20_devices_callback(int index, void* ctx)
 {
@@ -1091,6 +1108,99 @@ static void request_fs20_devices_callback(int index, void* ctx)
   }
 
   set_menu_icon(MENU_SPECIAL, s_special_menu_id_ReqFHEM, SEND);
+}
+
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+// Settings Menu           /////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+bool CreateSettingsMenu();
+int  CreateSettingsMenuItems();
+
+
+void AddSettingsMenu(Window *window)
+{
+  CreateSettingsMenu();
+   
+  Layer *window_layer = window_get_root_layer(window);
+  GRect bounds = layer_get_frame(window_layer);
+  
+  s_settings_menu_layer = simple_menu_layer_create(bounds, window, 
+						 s_settings_menu_sections,
+						 s_settings_menu_sections_NumItems,
+						 NULL);
+  
+  layer_add_child(window_layer, simple_menu_layer_get_layer(s_settings_menu_layer));
+}
+
+
+bool CreateSettingsMenu()
+{
+  // int NumItems=0;
+  int NumSections=0;
+
+  s_settings_menu_NumItems = CreateSettingsMenuItems();
+    
+  if (s_settings_menu_NumItems > 0) {
+    s_settings_menu_sections[NumSections++] = (SimpleMenuSection) {
+      .title = "General",
+      .num_items = s_settings_menu_NumItems,
+      .items = s_settings_menu_items,
+    };
+  }
+
+  s_settings_menu_sections_NumItems = NumSections;
+
+  return true;
+}
+
+
+int CreateSettingsMenuItems()
+{
+  int MenuCnt=0;
+
+  s_settings_menu_items[MenuCnt++] = (SimpleMenuItem) {
+    .title = "Settings 1",
+    .callback = request_states_select_callback, /* todo */
+    .icon = s_menu_icon_image_send,
+  };
+
+  s_settings_menu_items[MenuCnt++] = (SimpleMenuItem) {
+    .title = "Version",
+    .subtitle = "1.0.0",
+    .callback = NULL,
+    .icon = s_menu_icon_image_ok,
+  };
+
+  return MenuCnt;
+}
+
+// Settings Window
+static void settings_window_load(Window *window)
+{
+  /*
+  s_menu_icon_image_ok     = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MENU_ICON_OK);
+  s_menu_icon_image_failed = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MENU_ICON_FAILED);
+  s_menu_icon_image_send   = gbitmap_create_with_resource(RESOURCE_ID_MENU_ICON_SEND);
+  s_menu_icon_image_off    = gbitmap_create_with_resource(RESOURCE_ID_STATUS_OFF);
+  s_menu_icon_image_on     = gbitmap_create_with_resource(RESOURCE_ID_STATUS_ON);
+  s_menu_icon_image_toggle = gbitmap_create_with_resource(RESOURCE_ID_STATUS_TOGGLE);
+  */
+  
+  AddSettingsMenu(window);
+}
+
+void settings_window_unload(Window *window)
+{
+  DestroyMenu(s_settings_menu_layer);
+/*  gbitmap_destroy(s_menu_icon_image_toggle);
+  gbitmap_destroy(s_menu_icon_image_on);
+  gbitmap_destroy(s_menu_icon_image_off);
+  gbitmap_destroy(s_menu_icon_image_send);
+  gbitmap_destroy(s_menu_icon_image_failed);
+  gbitmap_destroy(s_menu_icon_image_ok); */
 }
 
 
@@ -1167,13 +1277,21 @@ int create_special_menu()
   };
   s_special_menu_id_ReqFHEM = MenuCnt++;
 
+  /*
   s_special_menu_items[MenuCnt] = (SimpleMenuItem) {
     .title = "Switch coms list",
     .callback = switch_stat_dyn_callback,
     .subtitle = Coms_UseDyn ? "dynamic" : "static",
   };
   s_special_menu_id_status = MenuCnt++;
-  // s_special_status_item=&s_special_menu_items[];
+  */
+
+  s_special_menu_items[MenuCnt] = (SimpleMenuItem) {
+    .title = "Settings",
+    .callback = settings_menu_push_callback,
+    .subtitle = "",
+  };
+  s_special_menu_id_status = MenuCnt++;
   
   return MenuCnt;
 }
@@ -1484,7 +1602,7 @@ static void init(void)
     s_menu_special_NumItems = persist_read_int(FHEM_PERSIST_MENU_SPECIAL_NUM);
   }
 
-  
+  // main window
   s_window = window_create();
 
   window_set_window_handlers(s_window, (WindowHandlers) {
@@ -1492,10 +1610,17 @@ static void init(void)
     .unload = main_window_unload,
   });
 
-
   const bool animated = true;
   window_stack_push(s_window, animated);
 
+  // settings window
+  s_settings_window = window_create();
+  
+  window_set_window_handlers(s_settings_window, (WindowHandlers) {
+    .load   = settings_window_load,
+    .unload = settings_window_unload,
+  });
+  
   app_message_register_inbox_received(inbox_received_callback);
   app_message_register_inbox_dropped(inbox_dropped_callback);
   app_message_register_outbox_failed(outbox_failed_callback);
@@ -1516,6 +1641,7 @@ static void deinit(void)
   
   persist_write_bool(FHEM_PERSIST_USEDYN, Coms_UseDyn);
   FreeStr();
+  window_destroy(s_settings_window);
   window_destroy(s_window);
 }
 
