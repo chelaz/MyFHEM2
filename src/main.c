@@ -247,6 +247,7 @@ typedef enum _MenuType {
   MENU_DEF_COMS   = 1,
   MENU_FAV_COMS   = 2,
   MENU_STATE_COMS = 3,
+  MENU_SETTINGS   = 4,
 } Menu_t;
 
 typedef enum _MsgID {
@@ -263,6 +264,9 @@ typedef enum _MsgID {
 // index IDs for set_menu_icon/text
 static int s_special_menu_id_status;
 static int s_special_menu_id_ReqFHEM;
+#ifdef ENABLE_DICTATION
+static int s_special_menu_id_Dictate;
+#endif
 
 bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status);
 // todo:
@@ -335,9 +339,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if ((data = dict_find(iterator, FHEM_URL_REQ_TYPE)) != NULL) {
     char* result = (char*)data->value->cstring;
     if (!strcmp("success", result)) {
-      set_menu_icon(MENU_SPECIAL, s_special_menu_id_ReqFHEM, OK);
+      set_menu_icon(MENU_SETTINGS, s_special_menu_id_ReqFHEM, OK);
     } else {
-      set_menu_icon(MENU_SPECIAL, s_special_menu_id_ReqFHEM, FAILED);      
+      set_menu_icon(MENU_SETTINGS, s_special_menu_id_ReqFHEM, FAILED);      
     }    
   } else
   if ((data = dict_find(iterator, FHEM_RESP_KEY)) != NULL) {
@@ -637,7 +641,7 @@ static SimpleMenuItem s_special_menu_items[MAX_NUM_MENU_ITEMS_FAVOURITES];
 static int s_menu_special_NumItems = 0;
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
 static int s_menu_sections_NumItems = 0;
-static SimpleMenuLayer* s_simple_menu_layer;
+static SimpleMenuLayer* s_simple_menu_layer = 0;
 
 // Create and destroy menu
 bool CreateMenu(bool InitialEmpty);
@@ -648,7 +652,7 @@ void DestroyMenu(SimpleMenuLayer* Layer);
 #define NUM_SETTINGS_MENU_ITEMS 8    // max value
 static SimpleMenuSection s_settings_menu_sections[NUM_SETTINGS_MENU_SECTIONS];
 static int s_settings_menu_sections_NumItems = 0;
-static SimpleMenuLayer* s_settings_menu_layer;
+static SimpleMenuLayer* s_settings_menu_layer = 0;
 static SimpleMenuItem s_settings_menu_items[NUM_SETTINGS_MENU_ITEMS];
 static int s_settings_menu_NumItems = 0;
 
@@ -665,6 +669,11 @@ bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
     default:
     case MENU_UNKNOWN:
       return false;
+    case MENU_SETTINGS:
+      pMenu = &s_settings_menu_items[index];
+    // todo
+    return false;
+      break;
     case MENU_SPECIAL:
       pMenu = &s_special_menu_items[index];
       break;
@@ -708,6 +717,8 @@ bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
       break;
   }
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+  if (s_settings_menu_layer)
+    layer_mark_dirty(simple_menu_layer_get_layer(s_settings_menu_layer));
  
   return true;
 }
@@ -735,6 +746,12 @@ bool set_menu_text(Menu_t Menu, MapIdx_t CmdIdx, int index, const char text[])
     case MENU_SPECIAL:
       pMenu = &s_special_menu_items[index];
       break;
+    case MENU_SETTINGS:
+      pMenu = &s_settings_menu_items[index];
+    // todo
+    return false;
+    
+      break;   
 #ifdef DICTATE_COMS_IN_MENU
     case MENU_DEF_COMS:
       pMenu = &s_def_menu_items[index];
@@ -767,6 +784,8 @@ bool set_menu_text(Menu_t Menu, MapIdx_t CmdIdx, int index, const char text[])
   pMenu->subtitle = SubTitle;
   
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
+  if (s_settings_menu_layer)
+    layer_mark_dirty(simple_menu_layer_get_layer(s_settings_menu_layer));
 
   return true;
 }
@@ -952,14 +971,14 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
     MapIdx_t CmdIdx = -1;
     if ((CmdIdx=ExamineText(s_dictation_text)) != -1) {
       if (SendCom(CmdIdx)) {
-        set_menu_icon(MENU_SPECIAL, 0, OK);
+        set_menu_icon(MENU_SPECIAL, s_special_menu_id_Dictate, OK);
 	      vibes_short_pulse(); // OK
       } else {
-        set_menu_icon(MENU_SPECIAL, 0, FAILED);
+        set_menu_icon(MENU_SPECIAL, s_special_menu_id_Dictate, FAILED);
 	      vibes_long_pulse();
       }
     } else {
-      set_menu_icon(MENU_SPECIAL, 0, FAILED);
+      set_menu_icon(MENU_SPECIAL, s_special_menu_id_Dictate, FAILED);
       vibes_double_pulse();
     }
 
@@ -971,7 +990,7 @@ static void dictation_session_callback(DictationSession *session, DictationSessi
            (int)status);
     menu_item->subtitle = s_failed_buff;
     layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
-    set_menu_icon(MENU_SPECIAL, 0, FAILED);  
+    set_menu_icon(MENU_SPECIAL, s_special_menu_id_Dictate, FAILED);  
   }
 }
 #endif // ENABLE_DICTATION
@@ -1107,7 +1126,7 @@ static void request_fs20_devices_callback(int index, void* ctx)
     return;
   }
 
-  set_menu_icon(MENU_SPECIAL, s_special_menu_id_ReqFHEM, SEND);
+  set_menu_icon(MENU_SETTINGS, s_special_menu_id_ReqFHEM, SEND);
 }
 
 
@@ -1161,12 +1180,21 @@ int CreateSettingsMenuItems()
 {
   int MenuCnt=0;
 
+  s_settings_menu_items[MenuCnt] = (SimpleMenuItem) {
+    .title    = "Request",
+    .subtitle = "FHEM Devices",
+    .callback = request_fs20_devices_callback,
+  };
+  s_special_menu_id_ReqFHEM = MenuCnt++;
+
+  /*
   s_settings_menu_items[MenuCnt++] = (SimpleMenuItem) {
     .title = "Settings 1",
-    .callback = request_states_select_callback, /* todo */
+    .callback = request_states_select_callback,
     .icon = s_menu_icon_image_send,
   };
-
+  */
+    
   s_settings_menu_items[MenuCnt++] = (SimpleMenuItem) {
     .title = "Version",
     .subtitle = "1.0.0",
@@ -1253,10 +1281,11 @@ int create_special_menu()
 {
   int MenuCnt=0;
 #ifdef ENABLE_DICTATION
-  s_special_menu_items[MenuCnt++] = (SimpleMenuItem) {
+  s_special_menu_items[MenuCnt] = (SimpleMenuItem) {
     .title = "Dictate",
     .callback = special_select_callback,
   };
+  s_special_menu_id_Dictate = MenuCnt++;
 #endif
   /*
   s_special_menu_items[MenuCnt++] = (SimpleMenuItem) {
@@ -1270,13 +1299,14 @@ int create_special_menu()
   };
   */
 
+  /*
   s_special_menu_items[MenuCnt] = (SimpleMenuItem) {
     .title    = "Request",
     .subtitle = "FHEM Devices",
     .callback = request_fs20_devices_callback,
   };
   s_special_menu_id_ReqFHEM = MenuCnt++;
-
+  */
   /*
   s_special_menu_items[MenuCnt] = (SimpleMenuItem) {
     .title = "Switch coms list",
