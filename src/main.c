@@ -1,6 +1,9 @@
 #include <pebble.h>
 
+#include "version.h"
+
 #include "ComsStaticDefs.h"
+
 
 ////////////////////////////////////////////////////////////////////
 // Documentation ///////////////////////////////////////////////////
@@ -308,7 +311,7 @@ static const uint32_t FHEM_PERSIST_USEDYN           = 0; // storage key to switc
 static const uint32_t FHEM_PERSIST_MENU_FAV_NUM     = 1; // save number of favourite menu items to build the menu on startup without content
 static const uint32_t FHEM_PERSIST_MENU_STATES_NUM  = 2; // save number of states menu items
 static const uint32_t FHEM_PERSIST_MENU_SPECIAL_NUM = 3; // save number of special menu items
-
+static const uint32_t FHEM_PERSIST_VERSIONSTR       = 4; // save version string (to be able to update persistent storage in case of future changes)
 
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context)
@@ -725,6 +728,8 @@ bool set_menu_icon(Menu_t Menu, int index, StatusIcon_t Status)
 
 void set_status(const char text[])
 {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Set Status: '%s'", text);
+
   s_special_menu_items[s_special_menu_id_status].subtitle = text;
   layer_mark_dirty(simple_menu_layer_get_layer(s_simple_menu_layer));
 }
@@ -1197,7 +1202,7 @@ int CreateSettingsMenuItems()
     
   s_settings_menu_items[MenuCnt++] = (SimpleMenuItem) {
     .title = "Version",
-    .subtitle = "1.0.0",
+    .subtitle = VersionStr,
     .callback = NULL,
     .icon = s_menu_icon_image_ok,
   };
@@ -1665,11 +1670,14 @@ static void init(void)
 
 static void deinit(void)
 {
+  // version number
+  persist_write_string(FHEM_PERSIST_VERSIONSTR, VersionStr);
   persist_write_int(FHEM_PERSIST_MENU_SPECIAL_NUM, s_menu_special_NumItems);
   persist_write_int(FHEM_PERSIST_MENU_STATES_NUM, s_menu_states_NumItems);
   persist_write_int(FHEM_PERSIST_MENU_FAV_NUM,    s_menu_fav_NumItems);
-  
+    
   persist_write_bool(FHEM_PERSIST_USEDYN, Coms_UseDyn);
+  
   FreeStr();
   window_destroy(s_settings_window);
   window_destroy(s_window);
