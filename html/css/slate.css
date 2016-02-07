@@ -18,6 +18,7 @@ ul, li {
   margin-left: 10px;
 }
 
+
 body {
   background-color: #EAEAEA;
   margin-bottom: 15px;
@@ -92,7 +93,21 @@ input[type=date] {
   border-top: 1px solid #DEDEDE;
   border-bottom: 1px solid #DEDEDE; 
   font-size: .8em;
+  display: block;
 }
+
+.item-container-screenshots {
+  padding: 3px;
+  background-color: #F7F7F7;
+  border-top: 1px solid #DEDEDE;
+  border-bottom: 1px solid #DEDEDE; 
+  font-size: .8em;
+  display: block;
+  text-align: center;
+  vertical-align: middle;
+  
+}
+
 
 .item-container-content-small {
   font-size: .7em; }
@@ -127,7 +142,7 @@ tr#header {
 .item {
   position: relative;
   padding: 10px;
-  display: block;
+  /* display: block; */
   overflow: hidden; }
 
 .item:not(:first-child) {
@@ -535,12 +550,13 @@ tr#header {
 }
 
 .watch_bg {
+  display: inline-block;
   height: 272px;
   width: 236px;
   margin-left: auto;
   margin-right: auto;
   padding-top: 104px;
-  background-image: url("../img/pebbles/bobby-silver.12387f469e95.png");
+  background-image: url("../img/bg_watch.png");
   padding-top: 91px;
   padding-left: 4px;
 }
