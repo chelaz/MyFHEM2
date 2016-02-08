@@ -25,17 +25,21 @@
   </head>
 
   <body>
-    <h1 class='title'>WristFHEM</h1>
+    <h1 class='title'><a href="http://www.chelaz.de/WristFHEM">WristFHEM</a></h1>
     <h1 class='subtitle'>Home Automation on your Wrist</h1>
 
     <div class='item-container'>
       <div class='item-container-content'>
         <div class='item-container-footer'>
-	  Please dontate to support and motivate the further development of
-	  this watch app by spending
+	      <p>
+	      This watch app is only working together with the <a
+		  href="http://www.fhem.de">FHEM Home Automation Server</a>.</p>
+
+	      <p>Please dontate to support and motivate the further development of
+		this watch app by spending
 	  <a
 	    href="bitcoin:18YzPQVfQ5ss51uvgGJQ5MfbbK28S9ebbP?label=WristFHEM"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Bitcoin_logo.svg/220px-Bitcoin_logo.svg.png" height="16" alt="Bitcoin" target="Donation"></a> (for more details see Wikipedia&#8217; <a href="http://en.wikipedia.org/wiki/Bitcoin">Bitcoin</a>&nbsp;article).
-	  
+		</p>
         </div>
       </div>
     </div>
@@ -67,8 +71,9 @@
         <div class='item-container-header'>Overview</div>
          <div class='item-container-content'>
 	  <ul>
-	    <li>Send FHEM commannds</li>
-	    <li>Receive status of FHEM devices</li>
+	    <li>Send <a href="http://www.fhem.de">FHEM</a> commannds</li>
+	    <li>Receive status of <a href="http://fhem.de/commandref.html">FHEM
+		   devices</a></li>
 	    <li>Show states with icons (on/off/toggle)</li>
 	    <li>Speak commands by using the Dictation API (Pebble) for watches with microphone</li>
 	  </ul>
@@ -91,12 +96,69 @@
         <div class='item-container-header'>Planned Features</div>
          <div class='item-container-content'>
 	  <ul>
-	    <li>Settings page on watch</li>
+	    <li>Reset custom strings to origin</li>
 	    <li>Add custom states on configuration page</li>
 	    <li>Default translation for built-in states: <em></em>toggle/on/off</em></li>
 	    <li>Sort favourites on configuration page</li>
 	    <li>Access dictation commands on pebble via menu</li>
 	    <li>(Quick access panel on watch)</li>
+	  </ul>
+        </div>
+       </div>    
+      </div>
+     </div>    
+    </div>
+
+    <div class='item-container'>
+      <div class='item-container-header'>Documentation</div>
+      <div class='item-container-content'>
+        <div class='item-container-header'>Installation</div>
+         <div class='item-container-content'>
+	  <ol>
+	    <li>Download WatchApp</li>
+	    <li>Preferrably add the devices you want to see on the WatchApp to
+		  the room <em>Pebble</em></li>
+	    <li>Go to settings page on phone and enter correct FHEM URL</li>
+	    <li>Start WatchApp and choose <em>Request FHEM Devices</em> in
+		  <em>settings</em> menu</li>
+	    <li>Go to settings page on phone. No you should see the list of
+		  your devices</li>
+	    <li>Check the first checkbox (favourites <img src='img/star.png'
+		    height='20ex' alt='Favourites'>) for all states of a device
+		    you want to see in the main menu.</li>
+	    <li>Check the second checkbox (dictation <img src='img/dict.png'
+		    height='20ex' alt='Dictation'>) for all states of a device
+		    you want to use as a spoken command.</li>
+	    <li>Check the <em>State of Device</em> checkbox if you want to see
+		  the state of the device in the main menu.</li>
+	    <li>After pressing the submit button all the chosen devices should
+		  appear in the WatchApp</li>
+	  </ol>
+        </div>
+        <div class='item-container-header'>Usage</div>
+         <div class='item-container-content'>
+	  <ul>
+	    <li><b>Special Menu:</b> <em>Dictate</em> can be used to speak a command
+		  in the sequence ROOM ALIAS STATE</li>
+	    <li><b>Favourites:</b> By pressing the middle button the command and state to the
+		  chosen device is sent</li>
+	    <li><b>States:</b> Everytime you start the WatchApp all states are
+		  updated. If you press the middle button on a state it will be
+		  updated as well</li>
+	  </ul>
+        </div>
+       </div>    
+      </div>
+     </div>    
+    </div>
+
+    <div class='item-container'>
+      <div class='item-container-header'>Known Bugs</div>
+      <div class='item-container-content'>
+        <div class='item-container-header'>Dictation</div>
+         <div class='item-container-content'>
+	  <ul>
+	    <li>Spaces are not filtered out correctly</li>
 	  </ul>
         </div>
        </div>    

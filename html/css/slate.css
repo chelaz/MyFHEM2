@@ -18,6 +18,9 @@ ul, li {
   margin-left: 10px;
 }
 
+ol, li {
+  margin-left: 20px;
+}
 
 body {
   background-color: #EAEAEA;
